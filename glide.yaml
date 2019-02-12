@@ -1,0 +1,9 @@
+package: github.com/INFURA/eth
+import:
+- package: github.com/pkg/errors
+  version: ^0.8.1
+testImport:
+- package: github.com/stretchr/testify
+  version: ^1.3.0
+  subpackages:
+  - require
