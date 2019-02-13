@@ -17,6 +17,117 @@ type Data256 Data
 type Hash = Data32
 type Topic = Data32
 
+func NewData(value string) (*Data, error) {
+	parsed, err := parseHex(value, 0, "data")
+	if err != nil {
+		return nil, err
+	}
+
+	d := Data(parsed)
+	return &d, nil
+}
+
+func NewData8(value string) (*Data8, error) {
+	parsed, err := parseHex(value, 8, "data")
+	if err != nil {
+		return nil, err
+	}
+
+	d := Data8(parsed)
+	return &d, nil
+}
+
+func NewData20(value string) (*Data20, error) {
+	parsed, err := parseHex(value, 20, "data")
+	if err != nil {
+		return nil, err
+	}
+
+	d := Data20(parsed)
+	return &d, nil
+}
+
+func NewData32(value string) (*Data32, error) {
+	parsed, err := parseHex(value, 32, "data")
+	if err != nil {
+		return nil, err
+	}
+
+	d := Data32(parsed)
+	return &d, nil
+}
+
+func NewHash(value string) (*Hash, error) {
+	return NewData32(value)
+}
+
+func NewTopic(value string) (*Hash, error) {
+	return NewData32(value)
+}
+
+func NewData256(value string) (*Data256, error) {
+	parsed, err := parseHex(value, 256, "data")
+	if err != nil {
+		return nil, err
+	}
+
+	d := Data256(parsed)
+	return &d, nil
+}
+
+func MustData(value string) *Data {
+	d, err := NewData(value)
+	if err != nil {
+		panic(err)
+	}
+
+	return d
+}
+
+func MustData8(value string) *Data8 {
+	d, err := NewData8(value)
+	if err != nil {
+		panic(err)
+	}
+
+	return d
+}
+
+func MustData20(value string) *Data20 {
+	d, err := NewData20(value)
+	if err != nil {
+		panic(err)
+	}
+
+	return d
+}
+
+func MustData32(value string) *Data32 {
+	d, err := NewData32(value)
+	if err != nil {
+		panic(err)
+	}
+
+	return d
+}
+
+func MustHash(value string) *Hash {
+	return MustData32(value)
+}
+
+func MustTopic(value string) *Hash {
+	return MustData32(value)
+}
+
+func MustData256(value string) *Data256 {
+	d, err := NewData256(value)
+	if err != nil {
+		panic(err)
+	}
+
+	return d
+}
+
 func (d Data) String() string {
 	return string(d)
 }
@@ -94,17 +205,21 @@ func unmarshalHex(data []byte, size int, typ string) (string, error) {
 		return "", err
 	}
 
-	if !strings.HasPrefix(str, "0x") {
+	return parseHex(str, size, typ)
+}
+
+func parseHex(value string, size int, typ string) (string, error) {
+	if !strings.HasPrefix(value, "0x") {
 		return "", errors.Errorf("%s types must start with 0x", typ)
 	}
 
 	if size != 0 {
-		dataSize := (len(str) - 2) / 2
+		dataSize := (len(value) - 2) / 2
 
 		if size != dataSize {
 			return "", errors.Errorf("%s type size mismatch, expected %d got %d", typ, size, dataSize)
 		}
 	}
 
-	return str, nil
+	return value, nil
 }

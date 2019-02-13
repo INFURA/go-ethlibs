@@ -13,26 +13,45 @@ type Quantity struct {
 	i big.Int
 }
 
+func MustQuantity(value string) *Quantity {
+	q, err := NewQuantity(value)
+	if err != nil {
+		panic(err)
+	}
+	return q
+}
+
+func NewQuantity(value string) (*Quantity, error) {
+	q := Quantity{}
+	// Save the string
+	q.s = value
+
+	// If the hex string is odd assume it's because a leading zero was removed
+	if len(value)%2 != 0 {
+		value = "0x0" + value[2:]
+	}
+
+	b, err := hex.DecodeString(value[2:])
+	if err != nil {
+		return nil, err
+	}
+
+	q.i.SetBytes(b)
+	return &q, nil
+}
+
 func (q *Quantity) UnmarshalJSON(data []byte) error {
 	str, err := unmarshalHex(data, 0, "quantity")
 	if err != nil {
 		return err
 	}
 
-	// Save the string
-	q.s = str
-
-	// If the hex string is odd assume it's because a leading zero was removed
-	if len(str)%2 != 0 {
-		str = "0x0" + str[2:]
-	}
-
-	b, err := hex.DecodeString(str[2:])
+	_q, err := NewQuantity(str)
 	if err != nil {
 		return err
 	}
 
-	q.i.SetBytes(b)
+	*q = *_q
 	return nil
 }
 
@@ -48,6 +67,10 @@ func (q *Quantity) MarshalJSON() ([]byte, error) {
 	h = strings.TrimLeft(h, "0")
 	s := fmt.Sprintf("0x%s", h)
 	return json.Marshal(&s)
+}
+
+func (q *Quantity) String() string {
+	return q.s
 }
 
 func (q *Quantity) UInt64() uint64 {
