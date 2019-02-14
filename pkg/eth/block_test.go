@@ -7,16 +7,16 @@ import (
 	"testing"
 )
 
-func RequireEqualJSON(t *testing.T, expected, actual []byte) {
+func RequireEqualJSON(t *testing.T, expected, actual []byte, msgAndArgs ...interface{}) {
 	var exp interface{}
 	var act interface{}
 
 	var err error
 	err = json.Unmarshal([]byte(expected), &exp)
-	require.NoError(t, err)
+	require.NoError(t, err, msgAndArgs...)
 	err = json.Unmarshal([]byte(actual), &act)
-	require.NoError(t, err)
-	require.Equal(t, exp, act)
+	require.NoError(t, err, msgAndArgs...)
+	require.Equal(t, exp, act, msgAndArgs...)
 }
 
 func TestMainnetGethBlocks(t *testing.T) {
@@ -100,6 +100,76 @@ func TestMainnetGethBlocks(t *testing.T) {
   }`
 
 	err = json.Unmarshal([]byte(full), &block)
+	require.NoError(t, err, "mainnet full block should deserialize")
+
+	require.Equal(t, 1, len(block.Transactions))
+	require.Equal(t, "0x99999", block.Number.String())
+	require.Equal(t, block.Hash, block.Transactions[0].BlockHash)
+	require.Equal(t, eth.Data("0xd783010302844765746887676f312e352e31856c696e7578"), block.ExtraData)
+	require.Equal(t, true, block.Transactions[0].Populated)
+	require.Equal(t, int64(0), block.Transactions[0].Index.Int64())
+	require.Equal(t, eth.Data("0x"), block.Transactions[0].Input)
+
+	j, err := json.Marshal(&block)
+	require.NoError(t, err)
+
+	RequireEqualJSON(t, []byte(full), j)
+}
+
+func TestMainnetParityBlocks(t *testing.T) {
+	full := `{
+    "author": "0x2a65aca4d5fc5b5c859090a6c34d164135398226",
+    "difficulty": "0x742a575f662",
+    "extraData": "0xd783010302844765746887676f312e352e31856c696e7578",
+    "gasLimit": "0x2fefd8",
+    "gasUsed": "0x5208",
+    "hash": "0x648509915efa19b169ccab758492c7525b8498747678b894befd9ff78ad05519",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "miner": "0x2a65aca4d5fc5b5c859090a6c34d164135398226",
+    "mixHash": "0x47e7eab7d034cf4b8b1501ebfc98edf715ee62f56283bf1a22a5423990600dff",
+    "nonce": "0xeacef1c5a2ca3a49",
+    "number": "0x99999",
+    "parentHash": "0xffa241fbb914038a429c90daeeb54885f31e431d05b12fe87de8007853a1f278",
+    "receiptsRoot": "0xb46f767bd3f69c0d7830eae6717f77560ee2ace0ea701d9e95fd41eb39a619ab",
+    "sealFields": [
+      "0xa047e7eab7d034cf4b8b1501ebfc98edf715ee62f56283bf1a22a5423990600dff",
+      "0x88eacef1c5a2ca3a49"
+    ],
+    "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+    "size": "0x290",
+    "stateRoot": "0x93e74cf453c3327075b7e252deeb2d115cf2fdb204ba89806cebbd32afdedaa8",
+    "timestamp": "0x565eafba",
+    "totalDifficulty": "0x336f973a0249a1e9",
+    "transactions": [
+      {
+        "blockHash": "0x648509915efa19b169ccab758492c7525b8498747678b894befd9ff78ad05519",
+        "blockNumber": "0x99999",
+        "chainId": null,
+        "condition": null,
+        "creates": null,
+        "from": "0x4bb96091ee9d802ed039c4d1a5f6216f90f81b01",
+        "gas": "0xa028",
+        "gasPrice": "0xba43b7400",
+        "hash": "0xb4c724bf1f01a5371c513389d5758d531b729f15c8c6af8f74a100585d2cf33f",
+        "input": "0x",
+        "nonce": "0x461e",
+        "publicKey": "0xa9177f27b99a4ad938359d77e0dca4b64e7ce3722c835d8087d4eecb27c8a54d59e2917e6b31ec12e44b1064d102d35815f9707af9571f15e92d1b6fbcd207e9",
+        "r": "0xd5ee485b95d5992a4ca7d210ff28d540aea3f4031ce39203298ae266bcdb3485",
+        "raw": "0xf86e82461e850ba43b740082a0289486d3856ad0105b9d4199936c1fd203664ba325dc8844b1eec6162f0000801ba0d5ee485b95d5992a4ca7d210ff28d540aea3f4031ce39203298ae266bcdb3485a071ecb17bdbbae8c57681649a95e8c7e22b90adac2e19c314de3b74ecfb5f8ce1",
+        "s": "0x71ecb17bdbbae8c57681649a95e8c7e22b90adac2e19c314de3b74ecfb5f8ce1",
+        "standardV": "0x0",
+        "to": "0x86d3856ad0105b9d4199936c1fd203664ba325dc",
+        "transactionIndex": "0x0",
+        "v": "0x1b",
+        "value": "0x44b1eec6162f0000"
+      }
+    ],
+    "transactionsRoot": "0x237e46a0a93850f7979546c717ffccce6715a6b2cb0bdb0d59a9c559a0d74f07",
+    "uncles": []
+  }`
+
+	var block eth.Block
+	err := json.Unmarshal([]byte(full), &block)
 	require.NoError(t, err, "mainnet full block should deserialize")
 
 	require.Equal(t, 1, len(block.Transactions))
@@ -419,19 +489,26 @@ func TestGoerliBlocks(t *testing.T) {
     "uncles": []
   }`
 
-	for _, payload := range []string{geth, parity} {
+	for i, payload := range []string{geth, parity} {
+		msg := ""
+		switch i {
+		case 0:
+			msg = "geth goerli block"
+		case 1:
+			msg = "parity goerli block"
+		}
 		var block eth.Block
 		err := json.Unmarshal([]byte(payload), &block)
-		require.NoError(t, err, "goerli block should deserialize")
+		require.NoError(t, err, msg)
 
-		require.Equal(t, "0x12b1d", block.Number.String())
-		require.Equal(t, 3, len(block.Transactions))
-		require.Equal(t, "0x59756df23b630a12f6e6d262b44b16c4170f35a7ac802df7419bb48045495275", block.Transactions[0].S.String())
-		require.Equal(t, uint64(0x146dd), block.GasUsed.UInt64())
+		require.Equal(t, "0x12b1d", block.Number.String(), msg)
+		require.Equal(t, 3, len(block.Transactions), msg)
+		require.Equal(t, "0x59756df23b630a12f6e6d262b44b16c4170f35a7ac802df7419bb48045495275", block.Transactions[0].S.String(), msg)
+		require.Equal(t, uint64(0x146dd), block.GasUsed.UInt64(), msg)
 
 		j, err := json.Marshal(&block)
-		require.NoError(t, err)
+		require.NoError(t, err, msg)
 
-		RequireEqualJSON(t, []byte(payload), j)
+		RequireEqualJSON(t, []byte(payload), j, msg)
 	}
 }
