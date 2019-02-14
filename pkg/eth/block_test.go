@@ -231,8 +231,13 @@ func TestRinkebyGethBlocks(t *testing.T) {
 	require.NoError(t, err, "rinkeby partial block should deserialize")
 
 	require.Equal(t, 15, len(block.Transactions))
-	require.Equal(t, "0x3ae0c1", block.Number.String())
+	require.Equal(t, eth.MustQuantity("0x3ae0c1"), block.Number)
 	require.Equal(t, uint64(0x2b3ddc), block.GasUsed.UInt64())
+
+	j, err := json.Marshal(&block)
+	require.NoError(t, err)
+
+	RequireEqualJSON(t, []byte(partial), j)
 }
 
 func TestKovanParityBlocks(t *testing.T) {
