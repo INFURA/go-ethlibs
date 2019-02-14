@@ -282,62 +282,6 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&u)
 }
 
-/*
-type BlockNumber struct {
-	i int64
-	s string
-}
-
-func (bn *BlockNumber) UnmarshalJSON(data []byte) error {
-	str, err := unmarshalHex(data, 0, "quantity")
-	if err != nil {
-		return err
-	}
-
-	// Save the string
-	bn.s = str
-
-	// If the hex string is odd assume it's because a leading zero was removed
-	if len(str)%2 != 0 {
-		str = "0x0" + str[2:]
-	}
-
-	b, err := hex.DecodeString(str[2:])
-	if err != nil {
-		return err
-	}
-
-	i := big.Int{}
-	i.SetBytes(b)
-
-	bn.i = i.Int64()
-	return nil
-}
-
-func (bn *BlockNumber) MarshalJSON() ([]byte, error) {
-	if bn.s != "" {
-		return json.Marshal(&bn.s)
-	}
-
-	i := big.NewInt(bn.i)
-	b := i.Bytes()
-	h := hex.EncodeToString(b)
-
-	// remove any leading 0s
-	h = strings.TrimLeft(h, "0")
-	s := fmt.Sprintf("0x%s", h)
-	return json.Marshal(&s)
-}
-
-func (bn *BlockNumber) String() string {
-	return bn.s
-}
-
-func (bn *BlockNumber) Int64() int64 {
-	return bn.i
-}
-*/
-
 type TxOrHash struct {
 	Transaction
 	Populated bool `json:"-"`
