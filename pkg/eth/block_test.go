@@ -326,17 +326,112 @@ func TestGoerliBlocks(t *testing.T) {
     "uncles": []
   }`
 
-	var block eth.Block
-	err := json.Unmarshal([]byte(geth), &block)
-	require.NoError(t, err, "geth goerli block should deserialize")
+	parity := `{
+    "author": "0x0000000000000000000000000000000000000000",
+    "difficulty": "0x2",
+    "extraData": "0x00000000000000000000000000000000000000000000000000000000000000003a69a356f8082954c675f1bb634c9ef5db6f1077b498a8c0a2a17afd0e7f8c5072ef2f3548bd013ae758a13b901f3b834c713c2391a2a6844c26a6ff386177a300",
+    "gasLimit": "0x7a1200",
+    "gasUsed": "0x146dd",
+    "hash": "0x2b27fe2bbc8ce01ac7ae8bf74f793a197cf7edbe82727588811fa9a2c4776f81",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "miner": "0x0000000000000000000000000000000000000000",
+    "number": "0x12b1d",
+    "parentHash": "0x68393bd212eb3dec1b97f3a7e4e84a9cb0d632309276b485dbdf5cb383ab25cf",
+    "receiptsRoot": "0x1ed4e3c3370adadd3eb3712fe87bb136e035ad2071d1a820de1ee1931ab677cf",
+    "sealFields": [
+      "0xa00000000000000000000000000000000000000000000000000000000000000000",
+      "0x880000000000000000"
+    ],
+    "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+    "size": "0x464",
+    "stateRoot": "0x0a31f0562a092a79e00680cdbaf089b65d76e720c2a358901fa696a9cb5dd3d8",
+    "timestamp": "0x5c64a101",
+    "totalDifficulty": "0x20422",
+    "transactions": [
+      {
+        "blockHash": "0x2b27fe2bbc8ce01ac7ae8bf74f793a197cf7edbe82727588811fa9a2c4776f81",
+        "blockNumber": "0x12b1d",
+        "chainId": null,
+        "condition": null,
+        "creates": null,
+        "from": "0x441a4060b5a1bf4ead6dd13acdcb7f83e4c374ca",
+        "gas": "0x6d5f",
+        "gasPrice": "0x3b9aca00",
+        "hash": "0x8b142669ff0013c85898f471bc7cc01440b5c23aa3a0f2e1db8b2daa3e3b6974",
+        "input": "0x9c0e3f7a0000000000000000000000000000000000000000000000068155a43676e00000000000000000000000000000000000000000000000000000000000000000002a",
+        "nonce": "0x19",
+        "publicKey": "0xc2423312402f1b4a75ef71dc1a2f43700c22c663e799e13776c81d9a18ad332504dd6668088edb02f03968025fcb25d90e164f184dc00fd43649307ee5f23309",
+        "r": "0x8b1d784d17627beb4c71269aa344ad1b49c2763f5062ec58e26dc3d1bd0e3fd3",
+        "raw": "0xf8a819843b9aca00826d5f942d6a9044a88e8b6e175f31b71117dbb344c5892c80b8449c0e3f7a0000000000000000000000000000000000000000000000068155a43676e00000000000000000000000000000000000000000000000000000000000000000002a1ca08b1d784d17627beb4c71269aa344ad1b49c2763f5062ec58e26dc3d1bd0e3fd3a059756df23b630a12f6e6d262b44b16c4170f35a7ac802df7419bb48045495275",
+        "s": "0x59756df23b630a12f6e6d262b44b16c4170f35a7ac802df7419bb48045495275",
+        "standardV": "0x1",
+        "to": "0x2d6a9044a88e8b6e175f31b71117dbb344c5892c",
+        "transactionIndex": "0x0",
+        "v": "0x1c",
+        "value": "0x0"
+      },
+      {
+        "blockHash": "0x2b27fe2bbc8ce01ac7ae8bf74f793a197cf7edbe82727588811fa9a2c4776f81",
+        "blockNumber": "0x12b1d",
+        "chainId": null,
+        "condition": null,
+        "creates": null,
+        "from": "0xddff50398536a8ba7f3840581e662f1c9bd21505",
+        "gas": "0x6d9f",
+        "gasPrice": "0x3b9aca00",
+        "hash": "0xe25fdf96c393dbd853dfb8a421b54c6bab645ac5037a3d90b679ebe7a3028d89",
+        "input": "0x9c0e3f7a00000000000000000000000000000000000000000000000004d498fb9e757a68000000000000000000000000000000000000000000000000000000000000002a",
+        "nonce": "0x19",
+        "publicKey": "0xc699e4a9b97ca35f973b2cf00760f895eb1d8b0aadbf65a3cf40ae39ad4481a50cd45bbd543dbbfba831dc55b3a16337e805e830045ff70551d4ea9f77f89efc",
+        "r": "0xd12898a69e49e3c0b97e28db161b97f5411169ee7934e51eec410a2b25d6bf14",
+        "raw": "0xf8a819843b9aca00826d9f944e10a95f0bb2fec6ec1c4296a16420a018a5f9fe80b8449c0e3f7a00000000000000000000000000000000000000000000000004d498fb9e757a68000000000000000000000000000000000000000000000000000000000000002a1ba0d12898a69e49e3c0b97e28db161b97f5411169ee7934e51eec410a2b25d6bf14a00809983bda5c292d4eb5434bf82c6cd00b5c9d615dd097c8c959cf35c7d49b7a",
+        "s": "0x809983bda5c292d4eb5434bf82c6cd00b5c9d615dd097c8c959cf35c7d49b7a",
+        "standardV": "0x0",
+        "to": "0x4e10a95f0bb2fec6ec1c4296a16420a018a5f9fe",
+        "transactionIndex": "0x1",
+        "v": "0x1b",
+        "value": "0x0"
+      },
+      {
+        "blockHash": "0x2b27fe2bbc8ce01ac7ae8bf74f793a197cf7edbe82727588811fa9a2c4776f81",
+        "blockNumber": "0x12b1d",
+        "chainId": null,
+        "condition": null,
+        "creates": null,
+        "from": "0x2b371c0262ceab27face32fbb5270ddc6aa01ba4",
+        "gas": "0x6bdf",
+        "gasPrice": "0x3b9aca00",
+        "hash": "0xbddbb685774d8a3df036ed9fb920b48f876090a57e9e90ee60921e0510ef7090",
+        "input": "0x9c0e3f7a0000000000000000000000000000000000000000000000000000000000000078000000000000000000000000000000000000000000000000000000000000002a",
+        "nonce": "0x1c",
+        "publicKey": "0xc4e6c6c19ab79c1dcc7bbd2c76f52cb110ac90ee56728e588cda4b6eb763848203ce9e3a12322a9128b0c3572f99f5786d6569946785b1d1b0b97ade516cad03",
+        "r": "0x2a98c51c2782f664d3ce571fef0491b48f5ebbc5845fa513192e6e6b24ecdaa1",
+        "raw": "0xf8a81c843b9aca00826bdf948e730df7c70d33118d9e5f79ab81aed0be6f663580b8449c0e3f7a0000000000000000000000000000000000000000000000000000000000000078000000000000000000000000000000000000000000000000000000000000002a1ba02a98c51c2782f664d3ce571fef0491b48f5ebbc5845fa513192e6e6b24ecdaa1a029b8e0c67aa9c11327e16556c591dc84a7aac2f6fc57c7f93901be8ee867aebc",
+        "s": "0x29b8e0c67aa9c11327e16556c591dc84a7aac2f6fc57c7f93901be8ee867aebc",
+        "standardV": "0x0",
+        "to": "0x8e730df7c70d33118d9e5f79ab81aed0be6f6635",
+        "transactionIndex": "0x2",
+        "v": "0x1b",
+        "value": "0x0"
+      }
+    ],
+    "transactionsRoot": "0xa0548c58d46cc59673308c31437c9b3bd718a1f44236b208eb3bc7991ff19040",
+    "uncles": []
+  }`
 
-	require.Equal(t, "0x12b1d", block.Number.String())
-	require.Equal(t, 3, len(block.Transactions))
-	require.Equal(t, "0x59756df23b630a12f6e6d262b44b16c4170f35a7ac802df7419bb48045495275", block.Transactions[0].S.String())
-	require.Equal(t, uint64(0x146dd), block.GasUsed.UInt64())
+	for _, payload := range []string{geth, parity} {
+		var block eth.Block
+		err := json.Unmarshal([]byte(payload), &block)
+		require.NoError(t, err, "goerli block should deserialize")
 
-	j, err := json.Marshal(&block)
-	require.NoError(t, err)
+		require.Equal(t, "0x12b1d", block.Number.String())
+		require.Equal(t, 3, len(block.Transactions))
+		require.Equal(t, "0x59756df23b630a12f6e6d262b44b16c4170f35a7ac802df7419bb48045495275", block.Transactions[0].S.String())
+		require.Equal(t, uint64(0x146dd), block.GasUsed.UInt64())
 
-	RequireEqualJSON(t, []byte(geth), j)
+		j, err := json.Marshal(&block)
+		require.NoError(t, err)
+
+		RequireEqualJSON(t, []byte(payload), j)
+	}
 }
