@@ -30,9 +30,11 @@ type Block struct {
 	MixHash *Data  `json:"mixHash"`
 
 	// POA Fields (Aura)
+	Step      *string `json:"step,omitempty"`
+	Signature *string `json:"signature,omitempty"`
+
+	// Parity Specific Fields
 	SealFields *[]Data `json:"sealFields,omitempty"`
-	Step       *string `json:"step,omitempty"`
-	Signature  *string `json:"signature,omitempty"`
 
 	// Track the flavor so we can re-encode correctly
 	flavor string `json:"-"`
@@ -91,8 +93,9 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 			Timestamp        Quantity   `json:"timestamp"`
 			Transactions     []TxOrHash `json:"transactions"`
 			Uncles           []Hash     `json:"uncles"`
-			Nonce            *Data8     `json:"nonce"`
-			MixHash          *Data      `json:"mixHash"`
+
+			Nonce   *Data8 `json:"nonce"`
+			MixHash *Data  `json:"mixHash"`
 		}
 
 		g := geth{
@@ -141,7 +144,6 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 			Transactions     []TxOrHash `json:"transactions"`
 			Uncles           []Hash     `json:"uncles"`
 
-			// POA Fields (Aura)
 			SealFields *[]Data `json:"sealFields,omitempty"`
 			Step       *string `json:"step,omitempty"`
 			Signature  *string `json:"signature,omitempty"`
@@ -167,11 +169,9 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 			Timestamp:        b.Timestamp,
 			Transactions:     b.Transactions,
 			Uncles:           b.Uncles,
-
-			// POA Fields (Aura)
-			SealFields: b.SealFields,
-			Step:       b.Step,
-			Signature:  b.Signature,
+			SealFields:       b.SealFields,
+			Step:             b.Step,
+			Signature:        b.Signature,
 		}
 
 		return json.Marshal(&a)
@@ -196,7 +196,8 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 			Timestamp        Quantity   `json:"timestamp"`
 			Transactions     []TxOrHash `json:"transactions"`
 			Uncles           []Hash     `json:"uncles"`
-			SealFields       *[]Data    `json:"sealFields,omitempty"`
+
+			SealFields *[]Data `json:"sealFields,omitempty"`
 		}
 
 		c := clique{
@@ -244,9 +245,10 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 			Timestamp        Quantity   `json:"timestamp"`
 			Transactions     []TxOrHash `json:"transactions"`
 			Uncles           []Hash     `json:"uncles"`
-			Nonce            *Data8     `json:"nonce"`
-			MixHash          *Data      `json:"mixHash"`
-			SealFields       *[]Data    `json:"sealFields,omitempty"`
+
+			Nonce      *Data8  `json:"nonce"`
+			MixHash    *Data   `json:"mixHash"`
+			SealFields *[]Data `json:"sealFields,omitempty"`
 		}
 
 		e := ethhash{
