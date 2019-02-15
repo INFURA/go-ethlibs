@@ -40,6 +40,20 @@ func NewQuantity(value string) (*Quantity, error) {
 	return &q, nil
 }
 
+func QuantityFromInt64(value int64) Quantity {
+	return Quantity{
+		s: "",
+		i: *big.NewInt(value),
+	}
+}
+
+func QuantityFromUInt64(value uint64) Quantity {
+	return Quantity{
+		s: "",
+		i: *big.NewInt(0).SetUint64(value),
+	}
+}
+
 func (q *Quantity) UnmarshalJSON(data []byte) error {
 	str, err := unmarshalHex(data, 0, "quantity")
 	if err != nil {
@@ -81,6 +95,6 @@ func (q *Quantity) Int64() int64 {
 	return q.i.Int64()
 }
 
-func (q *Quantity) Big() big.Int {
-	return q.i
+func (q *Quantity) Big() *big.Int {
+	return &q.i
 }

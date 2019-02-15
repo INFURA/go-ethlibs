@@ -15,7 +15,7 @@ type Transaction struct {
 	Hash        Hash      `json:"hash"`
 	Input       Data      `json:"input"`
 	Nonce       Quantity  `json:"nonce"`
-	To          Address   `json:"to"`
+	To          *Address  `json:"to"`
 	Index       *Quantity `json:"transactionIndex"`
 	Value       Quantity  `json:"value"`
 	V           Quantity  `json:"v"`
@@ -64,7 +64,7 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 			Hash        Hash      `json:"hash"`
 			Input       Data      `json:"input"`
 			Nonce       Quantity  `json:"nonce"`
-			To          Address   `json:"to"`
+			To          *Address  `json:"to"`
 			Index       *Quantity `json:"transactionIndex"`
 			Value       Quantity  `json:"value"`
 			V           Quantity  `json:"v"`
