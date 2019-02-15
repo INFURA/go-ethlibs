@@ -1,17 +1,27 @@
-hash: 1f7975e6ad24c26852d8403fab09289ec6beb740b0e7177d5580a3f63d101571
-updated: 2019-02-11T18:27:56.088922-08:00
+hash: a0bf94ce956a870740e5b920ee97b278409cc893a7c23edd5b0c839f30dbcdf9
+updated: 2019-02-15T15:47:37.823465-08:00
 imports:
+- name: github.com/gorilla/websocket
+  version: 66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d
 - name: github.com/pkg/errors
   version: ba968bfe8b2f7e042a574c888954fccecfa385b4
+- name: golang.org/x/crypto
+  version: e73bf333ef8920dbb52ad18d4bd38ad9d9bc76d7
+  subpackages:
+  - sha3
+- name: golang.org/x/net
+  version: 5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec
+  subpackages:
+  - context
+- name: golang.org/x/sync
+  version: 1d60e4601c6fd243af51cc01ddf169918a5407ca
+  subpackages:
+  - errgroup
 testImports:
 - name: github.com/davecgh/go-spew
   version: 8991bc29aa16c548c550c7ff78260e27b9ab7c73
   subpackages:
   - spew
-- name: github.com/hashicorp/packer
-  version: d367c1ba8beea8d5984ce1aaa43eb545a2ec8e43
-  subpackages:
-  - common/json
 - name: github.com/pmezard/go-difflib
   version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:

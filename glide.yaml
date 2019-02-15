@@ -1,9 +1,18 @@
-package: github.com/INFURA/eth
+package: github.com/INFURA/ethereum-interaction
 import:
+- package: github.com/gorilla/websocket
+  version: ^1.4.0
 - package: github.com/pkg/errors
   version: ^0.8.1
+- package: golang.org/x/crypto
+  subpackages:
+  - sha3
+- package: golang.org/x/sync
+  subpackages:
+  - errgroup
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.3.0
   subpackages:
+  - assert
   - require
