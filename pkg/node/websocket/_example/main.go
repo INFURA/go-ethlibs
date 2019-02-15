@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/INFURA/eth/pkg/eth"
-	"github.com/INFURA/eth/pkg/node/websocket"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/INFURA/ethereum-interaction/pkg/eth"
+	"github.com/INFURA/ethereum-interaction/pkg/node/websocket"
 )
 
 var endpoint = flag.String("URL", "wss://mainnet.infura.io/ws", "The websocket endpoint to connect to")

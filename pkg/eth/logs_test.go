@@ -1,10 +1,12 @@
 package eth_test
 
 import (
-	"github.com/INFURA/eth/pkg/eth"
-	"github.com/hashicorp/packer/common/json"
-	"github.com/stretchr/testify/require"
+	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/INFURA/ethereum-interaction/pkg/eth"
 )
 
 func TestLogFilterParsing(t *testing.T) {

@@ -3,10 +3,11 @@ package websocket
 import (
 	"context"
 	"encoding/json"
-	"github.com/pkg/errors"
 	"sync"
 
-	"github.com/INFURA/eth/pkg/jsonrpc"
+	"github.com/pkg/errors"
+
+	"github.com/INFURA/ethereum-interaction/pkg/jsonrpc"
 )
 
 type Subscription interface {

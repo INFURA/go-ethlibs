@@ -1,6 +1,8 @@
 package jsonrpc
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // Currently NotificationParams are always a JSON object, but this may change, in which
 // case the code around NotificationParams will need to be updated.

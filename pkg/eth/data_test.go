@@ -1,9 +1,11 @@
 package eth_test
 
 import (
-	"github.com/INFURA/eth/pkg/eth"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/INFURA/ethereum-interaction/pkg/eth"
 )
 
 func TestData(t *testing.T) {

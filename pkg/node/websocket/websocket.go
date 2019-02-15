@@ -3,9 +3,6 @@ package websocket
 import (
 	"context"
 	"encoding/json"
-	"github.com/gorilla/websocket"
-	"github.com/pkg/errors"
-	"golang.org/x/sync/errgroup"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -13,8 +10,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/INFURA/eth/pkg/eth"
-	"github.com/INFURA/eth/pkg/jsonrpc"
+	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
+
+	"github.com/INFURA/ethereum-interaction/pkg/eth"
+	"github.com/INFURA/ethereum-interaction/pkg/jsonrpc"
 )
 
 // Connection represents a websocket connection to a backend ethereum client node.

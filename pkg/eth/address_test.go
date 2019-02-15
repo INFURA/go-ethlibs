@@ -2,10 +2,12 @@ package eth_test
 
 import (
 	"encoding/json"
-	"github.com/INFURA/eth/pkg/eth"
-	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/INFURA/ethereum-interaction/pkg/eth"
 )
 
 func TestAddressChecksums(t *testing.T) {

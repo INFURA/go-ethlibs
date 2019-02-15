@@ -2,9 +2,11 @@ package eth_test
 
 import (
 	"encoding/json"
-	"github.com/INFURA/eth/pkg/eth"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/INFURA/ethereum-interaction/pkg/eth"
 )
 
 func RequireEqualJSON(t *testing.T, expected, actual []byte, msgAndArgs ...interface{}) {

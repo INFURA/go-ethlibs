@@ -3,10 +3,11 @@ package eth
 import (
 	"encoding/hex"
 	"encoding/json"
-	"github.com/pkg/errors"
-	"golang.org/x/crypto/sha3"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
+	"golang.org/x/crypto/sha3"
 )
 
 type Address Data20

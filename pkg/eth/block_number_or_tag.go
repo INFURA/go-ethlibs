@@ -1,7 +1,7 @@
 package eth
 
 import (
-	"github.com/hashicorp/packer/common/json"
+	"encoding/json"
 )
 
 const (

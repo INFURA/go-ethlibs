@@ -2,10 +2,12 @@ package eth_test
 
 import (
 	"encoding/json"
-	"github.com/INFURA/eth/pkg/eth"
-	"github.com/INFURA/eth/pkg/jsonrpc"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/INFURA/ethereum-interaction/pkg/eth"
+	"github.com/INFURA/ethereum-interaction/pkg/jsonrpc"
 )
 
 func TestQuantityFromUInt64(t *testing.T) {
