@@ -13,7 +13,6 @@ func TestQuantityFromUInt64(t *testing.T) {
 
 	b, err := json.Marshal(&q)
 	require.NoError(t, err)
-
 	require.Equal(t, []byte(`"0x1234"`), b)
 
 	params := jsonrpc.MustParams(&q, true)
@@ -21,4 +20,9 @@ func TestQuantityFromUInt64(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, []byte(`["0x1234",true]`), b)
+
+	zero := eth.Quantity{}
+	b, err = json.Marshal(&zero)
+	require.NoError(t, err)
+	require.Equal(t, []byte(`"0x0"`), b)
 }

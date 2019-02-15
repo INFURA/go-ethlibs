@@ -75,6 +75,12 @@ func (q *Quantity) MarshalJSON() ([]byte, error) {
 	}
 
 	b := q.i.Bytes()
+	if len(b) == 0 {
+		// If we are a 0 value Quantity, make sure we return 0x0 and not 0x.
+		s := "0x0"
+		return json.Marshal(&s)
+	}
+
 	h := hex.EncodeToString(b)
 
 	// remove any leading 0s
