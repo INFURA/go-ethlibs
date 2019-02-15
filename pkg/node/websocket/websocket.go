@@ -17,9 +17,9 @@ import (
 	"github.com/INFURA/eth/pkg/jsonrpc"
 )
 
-// Backend represents a backend websocket connection to an ethereum client node.
-type Backend interface {
-	// URL returns the backends URL
+// Connection represents a websocket connection to a backend ethereum client node.
+type Connection interface {
+	// URL returns the backend URL we are connected to
 	URL() string
 
 	// BlockNumber returns the current block number at head
@@ -38,7 +38,7 @@ type Backend interface {
 	NewHeads(ctx context.Context) (Subscription, error)
 }
 
-type backend struct {
+type connection struct {
 	url  string
 	conn *websocket.Conn
 	ctx  context.Context
@@ -70,15 +70,15 @@ type outboundRequest struct {
 	chError  chan error
 }
 
-// NewBackend creates a Backend from the passed in URL.  Use the supplied Context to shutdown the connection by
+// NewConnection creates a Connection to the passed in URL.  Use the supplied Context to shutdown the connection by
 // cancelling or otherwise aborting the context.
-func NewBackend(ctx context.Context, url string) (Backend, error) {
+func NewConnection(ctx context.Context, url string) (Connection, error) {
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	b := backend{
+	b := connection{
 		conn:                   conn,
 		url:                    url,
 		ctx:                    ctx,
@@ -95,19 +95,19 @@ func NewBackend(ctx context.Context, url string) (Backend, error) {
 	return &b, nil
 }
 
-func (b *backend) loop() {
-	g, ctx := errgroup.WithContext(b.ctx)
+func (c *connection) loop() {
+	g, ctx := errgroup.WithContext(c.ctx)
 
 	// Reader
 	g.Go(func() error {
 		for {
-			typ, r, err := b.conn.NextReader()
+			typ, r, err := c.conn.NextReader()
 			if err != nil {
 				if ctx.Err() == context.Canceled {
 					log.Printf("[DEBUG] Context cancelled during read")
 					return nil
 				}
-				return errors.Wrap(err, "error reading from backend")
+				return errors.Wrap(err, "error reading from backend websocket connection")
 			}
 
 			if typ != websocket.TextMessage {
@@ -121,7 +121,7 @@ func (b *backend) loop() {
 					return nil
 				}
 
-				return errors.Wrap(err, "error reading from backend")
+				return errors.Wrap(err, "error reading from backend websocket connection")
 			}
 
 			// log.Printf("[SPAM] read: %s", string(payload))
@@ -129,7 +129,7 @@ func (b *backend) loop() {
 			// is it a request, notification, or response?
 			msg, err := jsonrpc.Unmarshal(payload)
 			if err != nil {
-				return errors.Wrap(err, "unrecognized message from backend")
+				return errors.Wrap(err, "unrecognized message from backend websocket connection")
 			}
 
 			switch msg := msg.(type) {
@@ -137,10 +137,10 @@ func (b *backend) loop() {
 				// log.Printf("[SPAM] response: %v", msg)
 
 				// subscriptions
-				b.requestMu.Lock()
-				if start, ok := b.subscriptonRequests[msg.ID]; ok {
-					delete(b.subscriptonRequests, msg.ID)
-					b.requestMu.Unlock()
+				c.requestMu.Lock()
+				if start, ok := c.subscriptonRequests[msg.ID]; ok {
+					delete(c.subscriptonRequests, msg.ID)
+					c.requestMu.Unlock()
 
 					patchedResponse := *msg
 					patchedResponse.ID = start.request.ID
@@ -157,26 +157,26 @@ func (b *backend) loop() {
 					var result interface{}
 					err = json.Unmarshal(patchedResponse.Result, &result)
 					if err != nil {
-						return errors.Wrap(err, "unparsable result from backend")
+						return errors.Wrap(err, "unparsable result from backend websocket connection")
 					}
 
 					// log.Printf("[SPAM]: Result: %v", result)
 
 					switch result := result.(type) {
 					case string:
-						subCtx, subCancel := context.WithCancel(b.ctx)
+						subCtx, subCancel := context.WithCancel(c.ctx)
 
 						subscription := &subscription{
 							response:       &patchedResponse,
 							subscriptionID: result,
 							ch:             make(chan *jsonrpc.Notification),
-							backend:        b,
+							conn:           c,
 							ctx:            subCtx,
 							cancel:         subCancel,
 						}
-						b.subscriptionsMu.Lock()
-						b.subscriptions[result] = subscription
-						b.subscriptionsMu.Unlock()
+						c.subscriptionsMu.Lock()
+						c.subscriptions[result] = subscription
+						c.subscriptionsMu.Unlock()
 
 						go func() {
 							select {
@@ -198,9 +198,9 @@ func (b *backend) loop() {
 				}
 
 				// other responses
-				if outbound, ok := b.outboundRequests[msg.ID]; ok {
-					delete(b.outboundRequests, msg.ID)
-					b.requestMu.Unlock()
+				if outbound, ok := c.outboundRequests[msg.ID]; ok {
+					delete(c.outboundRequests, msg.ID)
+					c.requestMu.Unlock()
 
 					go func(r *jsonrpc.RawResponse) {
 						patchedResponse := *r
@@ -215,7 +215,7 @@ func (b *backend) loop() {
 					}(msg)
 					continue
 				}
-				b.requestMu.Unlock()
+				c.requestMu.Unlock()
 
 			case *jsonrpc.Request:
 				// log.Printf("[SPAM] request: %v", msg)
@@ -232,8 +232,8 @@ func (b *backend) loop() {
 					continue
 				}
 
-				b.subscriptionsMu.RLock()
-				if subscription, ok := b.subscriptions[sp.Subscription]; ok {
+				c.subscriptionsMu.RLock()
+				if subscription, ok := c.subscriptions[sp.Subscription]; ok {
 					go func(n *jsonrpc.Notification) {
 						_copy := *n
 						select {
@@ -245,7 +245,7 @@ func (b *backend) loop() {
 
 					}(msg)
 				}
-				b.subscriptionsMu.RUnlock()
+				c.subscriptionsMu.RUnlock()
 			}
 		}
 
@@ -255,16 +255,16 @@ func (b *backend) loop() {
 	g.Go(func() error {
 		for {
 			select {
-			case r := <-b.chToBackend:
+			case r := <-c.chToBackend:
 				// log.Printf("[SPAM] Writing %v", r)
-				err := b.conn.WriteJSON(&r)
+				err := c.conn.WriteJSON(&r)
 				if err != nil {
 					if ctx.Err() == context.Canceled {
 						log.Printf("[DEBUG] Context cancelled during write")
 						return nil
 					}
 
-					return errors.Wrap(err, "error writing to backend")
+					return errors.Wrap(err, "error writing to backend websocket connection")
 				}
 
 			case <-ctx.Done():
@@ -278,39 +278,39 @@ func (b *backend) loop() {
 		for {
 			select {
 			// subscriptions
-			case s := <-b.chSubscriptionRequests:
+			case s := <-c.chSubscriptionRequests:
 				// log.Printf("[SPAM] Sub request %v", s)
-				id := b.nextID()
+				id := c.nextID()
 				proxy := *s.request
 				proxy.ID = id
 
-				b.requestMu.Lock()
-				b.subscriptonRequests[id] = s
-				b.requestMu.Unlock()
+				c.requestMu.Lock()
+				c.subscriptonRequests[id] = s
+				c.requestMu.Unlock()
 
 				select {
 				case <-ctx.Done():
 					return ctx.Err()
-				case b.chToBackend <- proxy:
+				case c.chToBackend <- proxy:
 					continue
 				}
 
 			// outbound requests
-			case o := <-b.chOutboundRequests:
+			case o := <-c.chOutboundRequests:
 				// log.Printf("[SPAM] outbound request %v", *o)
-				id := b.nextID()
+				id := c.nextID()
 				proxy := *o.request
 				proxy.ID = id
 				// log.Printf("[SPAM] outbound proxied request %v", proxy)
 
-				b.requestMu.Lock()
-				b.outboundRequests[id] = o
-				b.requestMu.Unlock()
+				c.requestMu.Lock()
+				c.outboundRequests[id] = o
+				c.requestMu.Unlock()
 
 				select {
 				case <-ctx.Done():
 					return ctx.Err()
-				case b.chToBackend <- proxy:
+				case c.chToBackend <- proxy:
 					continue
 				}
 
@@ -325,8 +325,8 @@ func (b *backend) loop() {
 		select {
 		case <-ctx.Done():
 			log.Printf("[DEBUG] Context done, setting deadlines to now")
-			_ = b.conn.SetReadDeadline(time.Now())
-			_ = b.conn.SetWriteDeadline(time.Now())
+			_ = c.conn.SetReadDeadline(time.Now())
+			_ = c.conn.SetWriteDeadline(time.Now())
 		}
 
 		return nil
@@ -338,28 +338,30 @@ func (b *backend) loop() {
 	}
 
 	// let's clean up all the remaining subscriptions
-	b.subscriptionsMu.Lock()
-	for id, sub := range b.subscriptions {
+	c.subscriptionsMu.Lock()
+	for id, sub := range c.subscriptions {
 		sub.mu.Lock()
 		sub.err = err
 		sub.mu.Unlock()
 		sub.cancel()
-		delete(b.subscriptions, id)
+		delete(c.subscriptions, id)
 	}
-	b.subscriptionsMu.Unlock()
+	c.subscriptionsMu.Unlock()
+
+	_ = c.conn.Close()
 }
 
-func (b *backend) nextID() jsonrpc.ID {
+func (c *connection) nextID() jsonrpc.ID {
 	return jsonrpc.ID{
-		Num: atomic.AddUint64(&b.counter, 1),
+		Num: atomic.AddUint64(&c.counter, 1),
 	}
 }
 
-func (b *backend) URL() string {
-	return b.url
+func (c *connection) URL() string {
+	return c.url
 }
 
-func (b *backend) Request(ctx context.Context, r *jsonrpc.Request) (*jsonrpc.RawResponse, error) {
+func (c *connection) Request(ctx context.Context, r *jsonrpc.Request) (*jsonrpc.RawResponse, error) {
 
 	outbound := outboundRequest{
 		request:  r,
@@ -373,7 +375,7 @@ func (b *backend) Request(ctx context.Context, r *jsonrpc.Request) (*jsonrpc.Raw
 	}()
 
 	select {
-	case b.chOutboundRequests <- &outbound:
+	case c.chOutboundRequests <- &outbound:
 		// log.Printf("[SPAM] outbound request sent")
 	case <-ctx.Done():
 		return nil, errors.Wrap(ctx.Err(), "context finished waiting for response")
@@ -389,7 +391,7 @@ func (b *backend) Request(ctx context.Context, r *jsonrpc.Request) (*jsonrpc.Raw
 	}
 }
 
-func (b *backend) Subscribe(ctx context.Context, r *jsonrpc.Request) (Subscription, error) {
+func (c *connection) Subscribe(ctx context.Context, r *jsonrpc.Request) (Subscription, error) {
 	if r.Method != "eth_subscribe" && r.Method != "parity_subscribe" {
 		return nil, errors.New("request is not a subscription request")
 	}
@@ -404,7 +406,7 @@ func (b *backend) Subscribe(ctx context.Context, r *jsonrpc.Request) (Subscripti
 	defer close(start.chError)
 
 	select {
-	case b.chSubscriptionRequests <- &start:
+	case c.chSubscriptionRequests <- &start:
 		// log.Printf("[SPAM] start request sent")
 	case <-ctx.Done():
 		return nil, errors.Wrap(ctx.Err(), "context finished waiting for subscription")
@@ -420,13 +422,13 @@ func (b *backend) Subscribe(ctx context.Context, r *jsonrpc.Request) (Subscripti
 	}
 }
 
-func (b *backend) BlockNumber(ctx context.Context) (uint64, error) {
+func (c *connection) BlockNumber(ctx context.Context) (uint64, error) {
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
 		Method: "eth_blockNumber",
 	}
 
-	response, err := b.Request(ctx, &request)
+	response, err := c.Request(ctx, &request)
 	if err != nil {
 		return 0, err
 	}
@@ -444,7 +446,7 @@ func (b *backend) BlockNumber(ctx context.Context) (uint64, error) {
 	return q.UInt64(), nil
 }
 
-func (b *backend) BlockByNumber(ctx context.Context, number uint64, full bool) (*eth.Block, error) {
+func (c *connection) BlockByNumber(ctx context.Context, number uint64, full bool) (*eth.Block, error) {
 	n := eth.QuantityFromUInt64(number)
 
 	request := jsonrpc.Request{
@@ -455,15 +457,15 @@ func (b *backend) BlockByNumber(ctx context.Context, number uint64, full bool) (
 
 	// log.Printf("[SPAM] params: [%s, %s]", string(request.Params[0]), string(request.Params[1]))
 
-	response, err := b.Request(ctx, &request)
+	response, err := c.Request(ctx, &request)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not make request")
 	}
 
-	return b.parseBlockResponse(response)
+	return c.parseBlockResponse(response)
 }
 
-func (b *backend) parseBlockResponse(response *jsonrpc.RawResponse) (*eth.Block, error) {
+func (c *connection) parseBlockResponse(response *jsonrpc.RawResponse) (*eth.Block, error) {
 	if response.Error != nil {
 		return nil, errors.New(string(*response.Error))
 	}
@@ -479,7 +481,7 @@ func (b *backend) parseBlockResponse(response *jsonrpc.RawResponse) (*eth.Block,
 	return &block, nil
 }
 
-func (b *backend) BlockByHash(ctx context.Context, hash string, full bool) (*eth.Block, error) {
+func (c *connection) BlockByHash(ctx context.Context, hash string, full bool) (*eth.Block, error) {
 	// TODO: Support full=false, requires handling block.transactions as just strings instead of objects
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
@@ -487,15 +489,15 @@ func (b *backend) BlockByHash(ctx context.Context, hash string, full bool) (*eth
 		Params: jsonrpc.MustParams(hash, full),
 	}
 
-	response, err := b.Request(ctx, &request)
+	response, err := c.Request(ctx, &request)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not make request")
 	}
 
-	return b.parseBlockResponse(response)
+	return c.parseBlockResponse(response)
 }
 
-func (b *backend) NewHeads(ctx context.Context) (Subscription, error) {
+func (c *connection) NewHeads(ctx context.Context) (Subscription, error) {
 	r := jsonrpc.Request{
 		JSONRPC: "2.0",
 		ID:      jsonrpc.ID{Str: "test", IsString: true},
@@ -503,5 +505,5 @@ func (b *backend) NewHeads(ctx context.Context) (Subscription, error) {
 		Params:  jsonrpc.MustParams("newHeads"),
 	}
 
-	return b.Subscribe(ctx, &r)
+	return c.Subscribe(ctx, &r)
 }

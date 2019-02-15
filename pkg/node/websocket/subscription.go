@@ -23,11 +23,11 @@ type subscription struct {
 	subscriptionID string
 	ch             chan *jsonrpc.Notification
 
-	backend *backend
-	ctx     context.Context
-	cancel  context.CancelFunc
-	err     error
-	mu      sync.RWMutex
+	conn   *connection
+	ctx    context.Context
+	cancel context.CancelFunc
+	err    error
+	mu     sync.RWMutex
 }
 
 func (s *subscription) Response() *jsonrpc.RawResponse {
@@ -56,7 +56,7 @@ func (s *subscription) Unsubscribe(ctx context.Context) error {
 		Params: jsonrpc.MustParams(s.subscriptionID),
 	}
 
-	response, err := s.backend.Request(ctx, &request)
+	response, err := s.conn.Request(ctx, &request)
 	if err != nil {
 		return errors.Wrap(err, "unsubscribe failed")
 	}

@@ -16,7 +16,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	url := "wss://mainnet.infura.io/ws"
 
-	client, err := websocket.NewBackend(ctx, url)
+	client, err := websocket.NewConnection(ctx, url)
 	if err != nil {
 		log.Fatalf("[FATAL] could not connect to %s: %v", url, err)
 	}
