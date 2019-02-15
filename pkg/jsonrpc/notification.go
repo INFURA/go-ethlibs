@@ -4,7 +4,7 @@ import "encoding/json"
 
 // Currently NotificationParams are always a JSON object, but this may change, in which
 // case the code around NotificationParams will need to be updated.
-type NotificationParams map[string]interface{}
+type NotificationParams = json.RawMessage
 
 type Notification struct {
 	JSONRPC string             `json:"jsonrpc"`
