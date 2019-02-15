@@ -16,7 +16,7 @@ func TestNewHeadsNotificationParams(t *testing.T) {
 
 		err := json.Unmarshal([]byte(geth), &params)
 		require.NoError(t, err)
-		require.Equal(t, eth.MustHash("0xcf026edb3d84e540aed9ca11b3c1dfa678bd4bda2d4cc31953e006de6292d53a"), params.Result.Hash)
+		require.Equal(t, *eth.MustHash("0xcf026edb3d84e540aed9ca11b3c1dfa678bd4bda2d4cc31953e006de6292d53a"), params.Result.Hash)
 
 		j, err := json.Marshal(&params)
 		require.NoError(t, err)

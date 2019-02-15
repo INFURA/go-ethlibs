@@ -12,17 +12,17 @@ type NewHeadsNotificationParams struct {
 // NewHeadsResult is the "result" payload in a newHeads notification.
 // It looks a lot like a Block but is missing important fields, namely .TotalDifficulty and .Uncles
 type NewHeadsResult struct {
-	Number           *Quantity `json:"number"`
-	Hash             *Hash     `json:"hash"`
-	ParentHash       Hash      `json:"parentHash"`
-	SHA3Uncles       Data32    `json:"sha3Uncles"`
-	LogsBloom        Data256   `json:"logsBloom"`
-	TransactionsRoot Data32    `json:"transactionsRoot"`
-	StateRoot        Data32    `json:"stateRoot"`
-	ReceiptsRoot     Data32    `json:"receiptsRoot"`
-	Miner            Address   `json:"miner"`
-	Author           Address   `json:"author,omitempty"` // Parity-specific alias of miner
-	Difficulty       Quantity  `json:"difficulty"`
+	Number           Quantity `json:"number"`
+	Hash             Hash     `json:"hash"`
+	ParentHash       Hash     `json:"parentHash"`
+	SHA3Uncles       Data32   `json:"sha3Uncles"`
+	LogsBloom        Data256  `json:"logsBloom"`
+	TransactionsRoot Data32   `json:"transactionsRoot"`
+	StateRoot        Data32   `json:"stateRoot"`
+	ReceiptsRoot     Data32   `json:"receiptsRoot"`
+	Miner            Address  `json:"miner"`
+	Author           Address  `json:"author,omitempty"` // Parity-specific alias of miner
+	Difficulty       Quantity `json:"difficulty"`
 	// TotalDifficulty  Quantity   `json:"totalDifficulty"`
 	ExtraData Data      `json:"extraData"`
 	Size      *Quantity `json:"size,omitempty"` // parity includes this geth does not
@@ -46,6 +46,35 @@ type NewHeadsResult struct {
 
 	// Track the flavor so we can re-encode correctly
 	flavor string `json:"-"`
+}
+
+func (nh *NewHeadsResult) FromBlock(block *Block) {
+	*nh = NewHeadsResult{
+		Number:           *block.Number,
+		Hash:             *block.Hash,
+		ParentHash:       block.ParentHash,
+		SHA3Uncles:       block.SHA3Uncles,
+		LogsBloom:        block.LogsBloom,
+		TransactionsRoot: block.TransactionsRoot,
+		StateRoot:        block.StateRoot,
+		ReceiptsRoot:     block.ReceiptsRoot,
+		Miner:            block.Miner,
+		Author:           block.Author,
+		Difficulty:       block.Difficulty,
+		ExtraData:        block.ExtraData,
+		// Size:             nh.Size,
+		GasLimit:  block.GasLimit,
+		GasUsed:   block.GasUsed,
+		Timestamp: block.Timestamp,
+		// Transactions:     nh.Transactions,
+		Nonce:      block.Nonce,
+		MixHash:    block.MixHash,
+		SealFields: block.SealFields,
+		Step:       block.Step,
+		Signature:  block.Signature,
+
+		flavor: block.flavor,
+	}
 }
 
 func (nh *NewHeadsResult) UnmarshalJSON(data []byte) error {
@@ -83,16 +112,16 @@ func (nh *NewHeadsResult) MarshalJSON() ([]byte, error) {
 	switch nh.flavor {
 	case "geth":
 		type geth struct {
-			Number           *Quantity `json:"number"`
-			Hash             *Hash     `json:"hash"`
-			ParentHash       Hash      `json:"parentHash"`
-			SHA3Uncles       Data32    `json:"sha3Uncles"`
-			LogsBloom        Data256   `json:"logsBloom"`
-			TransactionsRoot Data32    `json:"transactionsRoot"`
-			StateRoot        Data32    `json:"stateRoot"`
-			ReceiptsRoot     Data32    `json:"receiptsRoot"`
-			Miner            Address   `json:"miner"`
-			Difficulty       Quantity  `json:"difficulty"`
+			Number           Quantity `json:"number"`
+			Hash             Hash     `json:"hash"`
+			ParentHash       Hash     `json:"parentHash"`
+			SHA3Uncles       Data32   `json:"sha3Uncles"`
+			LogsBloom        Data256  `json:"logsBloom"`
+			TransactionsRoot Data32   `json:"transactionsRoot"`
+			StateRoot        Data32   `json:"stateRoot"`
+			ReceiptsRoot     Data32   `json:"receiptsRoot"`
+			Miner            Address  `json:"miner"`
+			Difficulty       Quantity `json:"difficulty"`
 			// TotalDifficulty  Quantity   `json:"totalDifficulty"`
 			ExtraData Data `json:"extraData"`
 			// Size      Quantity `json:"size"` not included by geth
@@ -130,17 +159,17 @@ func (nh *NewHeadsResult) MarshalJSON() ([]byte, error) {
 		return json.Marshal(&g)
 	case "parity-aura":
 		type aura struct {
-			Number           *Quantity `json:"number"`
-			Hash             *Hash     `json:"hash"`
-			ParentHash       Hash      `json:"parentHash"`
-			SHA3Uncles       Data32    `json:"sha3Uncles"`
-			LogsBloom        Data256   `json:"logsBloom"`
-			TransactionsRoot Data32    `json:"transactionsRoot"`
-			StateRoot        Data32    `json:"stateRoot"`
-			ReceiptsRoot     Data32    `json:"receiptsRoot"`
-			Miner            Address   `json:"miner"`
-			Author           Address   `json:"author,omitempty"` // Parity-specific alias of miner
-			Difficulty       Quantity  `json:"difficulty"`
+			Number           Quantity `json:"number"`
+			Hash             Hash     `json:"hash"`
+			ParentHash       Hash     `json:"parentHash"`
+			SHA3Uncles       Data32   `json:"sha3Uncles"`
+			LogsBloom        Data256  `json:"logsBloom"`
+			TransactionsRoot Data32   `json:"transactionsRoot"`
+			StateRoot        Data32   `json:"stateRoot"`
+			ReceiptsRoot     Data32   `json:"receiptsRoot"`
+			Miner            Address  `json:"miner"`
+			Author           Address  `json:"author,omitempty"` // Parity-specific alias of miner
+			Difficulty       Quantity `json:"difficulty"`
 			// TotalDifficulty  Quantity   `json:"totalDifficulty"`
 			ExtraData Data     `json:"extraData"`
 			Size      Quantity `json:"size"`
@@ -181,17 +210,17 @@ func (nh *NewHeadsResult) MarshalJSON() ([]byte, error) {
 		return json.Marshal(&a)
 	case "parity-clique":
 		type clique struct {
-			Number           *Quantity `json:"number"`
-			Hash             *Hash     `json:"hash"`
-			ParentHash       Hash      `json:"parentHash"`
-			SHA3Uncles       Data32    `json:"sha3Uncles"`
-			LogsBloom        Data256   `json:"logsBloom"`
-			TransactionsRoot Data32    `json:"transactionsRoot"`
-			StateRoot        Data32    `json:"stateRoot"`
-			ReceiptsRoot     Data32    `json:"receiptsRoot"`
-			Miner            Address   `json:"miner"`
-			Author           Address   `json:"author,omitempty"` // Parity-specific alias of miner
-			Difficulty       Quantity  `json:"difficulty"`
+			Number           Quantity `json:"number"`
+			Hash             Hash     `json:"hash"`
+			ParentHash       Hash     `json:"parentHash"`
+			SHA3Uncles       Data32   `json:"sha3Uncles"`
+			LogsBloom        Data256  `json:"logsBloom"`
+			TransactionsRoot Data32   `json:"transactionsRoot"`
+			StateRoot        Data32   `json:"stateRoot"`
+			ReceiptsRoot     Data32   `json:"receiptsRoot"`
+			Miner            Address  `json:"miner"`
+			Author           Address  `json:"author,omitempty"` // Parity-specific alias of miner
+			Difficulty       Quantity `json:"difficulty"`
 			// TotalDifficulty  Quantity   `json:"totalDifficulty"`
 			ExtraData Data     `json:"extraData"`
 			Size      Quantity `json:"size"`
@@ -228,17 +257,17 @@ func (nh *NewHeadsResult) MarshalJSON() ([]byte, error) {
 		return json.Marshal(&c)
 	case "parity-ethhash":
 		type ethhash struct {
-			Number           *Quantity `json:"number"`
-			Hash             *Hash     `json:"hash"`
-			ParentHash       Hash      `json:"parentHash"`
-			SHA3Uncles       Data32    `json:"sha3Uncles"`
-			LogsBloom        Data256   `json:"logsBloom"`
-			TransactionsRoot Data32    `json:"transactionsRoot"`
-			StateRoot        Data32    `json:"stateRoot"`
-			ReceiptsRoot     Data32    `json:"receiptsRoot"`
-			Miner            Address   `json:"miner"`
-			Author           Address   `json:"author,omitempty"` // Parity-specific alias of miner
-			Difficulty       Quantity  `json:"difficulty"`
+			Number           Quantity `json:"number"`
+			Hash             Hash     `json:"hash"`
+			ParentHash       Hash     `json:"parentHash"`
+			SHA3Uncles       Data32   `json:"sha3Uncles"`
+			LogsBloom        Data256  `json:"logsBloom"`
+			TransactionsRoot Data32   `json:"transactionsRoot"`
+			StateRoot        Data32   `json:"stateRoot"`
+			ReceiptsRoot     Data32   `json:"receiptsRoot"`
+			Miner            Address  `json:"miner"`
+			Author           Address  `json:"author,omitempty"` // Parity-specific alias of miner
+			Difficulty       Quantity `json:"difficulty"`
 			// TotalDifficulty  Quantity   `json:"totalDifficulty"`
 			ExtraData Data     `json:"extraData"`
 			Size      Quantity `json:"size"`
