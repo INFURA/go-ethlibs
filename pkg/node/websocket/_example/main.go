@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/INFURA/eth/pkg/eth"
 	"github.com/INFURA/eth/pkg/node/websocket"
@@ -12,10 +13,13 @@ import (
 	"syscall"
 )
 
-func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	url := "wss://mainnet.infura.io/ws"
+var endpoint = flag.String("URL", "wss://mainnet.infura.io/ws", "The websocket endpoint to connect to")
 
+func main() {
+	flag.Parse()
+	ctx, cancel := context.WithCancel(context.Background())
+
+	url := *endpoint
 	client, err := websocket.NewConnection(ctx, url)
 	if err != nil {
 		log.Fatalf("[FATAL] could not connect to %s: %v", url, err)
