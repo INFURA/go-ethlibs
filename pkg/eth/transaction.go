@@ -27,7 +27,7 @@ type Transaction struct {
 	Raw       *Data      `json:"raw,omitempty"`
 	PublicKey *Data      `json:"publicKey,omitempty"`
 	ChainId   *Quantity  `json:"chainId,omitempty"`
-	Creates   *Hash      `json:"creates,omitempty"`
+	Creates   *Address   `json:"creates,omitempty"` // Parity wiki claims this is a Hash
 	Condition *Condition `json:"condition,omitempty"`
 
 	// Keep the source so we can recreate its expected representation
@@ -76,7 +76,7 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 			Raw       *Data      `json:"raw"`
 			PublicKey *Data      `json:"publicKey"`
 			ChainId   *Quantity  `json:"chainId"`
-			Creates   *Hash      `json:"creates"`
+			Creates   *Address   `json:"creates"`
 			Condition *Condition `json:"condition"`
 		}
 
