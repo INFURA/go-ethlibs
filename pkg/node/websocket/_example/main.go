@@ -14,6 +14,7 @@ import (
 )
 
 var endpoint = flag.String("URL", "wss://mainnet.infura.io/ws", "The websocket endpoint to connect to")
+var verbose = flag.Bool("verbose", false, "if set newHeads and block JSON will be printed")
 
 func main() {
 	flag.Parse()
@@ -60,7 +61,23 @@ func main() {
 				log.Fatalf("[FATAL] could not decode notification params: %v", err)
 			}
 
-			log.Printf("[INFO] New block %d hash: %s, parent: %s", params.Result.Number.UInt64(), params.Result.Hash.String(), params.Result.ParentHash.String())
+			if *verbose {
+				block, err := client.BlockByHash(ctx, params.Result.Hash.String(), false)
+				if err != nil {
+					log.Fatalf("[FATAL] could not get latest block: %v", err)
+				}
+
+				b, err := json.Marshal(&block)
+				if err != nil {
+					log.Fatalf("[FATAL] could not marshal latest block: %v", err)
+				}
+
+				log.Printf("[INFO] Raw newHead: %s", string(notification.Params))
+				log.Printf("[INFO] Block JSON: %s", string(b))
+
+			} else {
+				log.Printf("[INFO] New block %d hash: %s, parent: %s", params.Result.Number.UInt64(), params.Result.Hash.String(), params.Result.ParentHash.String())
+			}
 
 		case <-subscription.Done():
 			log.Printf("[WARN] Disconnected: %v", subscription.Err())
