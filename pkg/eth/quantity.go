@@ -54,6 +54,13 @@ func QuantityFromUInt64(value uint64) Quantity {
 	}
 }
 
+func QuantityFromBigInt(value *big.Int) Quantity {
+	return Quantity{
+		s: "",
+		i: *value,
+	}
+}
+
 func (q *Quantity) UnmarshalJSON(data []byte) error {
 	str, err := unmarshalHex(data, 0, "quantity")
 	if err != nil {
