@@ -2,6 +2,7 @@ package eth
 
 import (
 	"encoding/json"
+	"strings"
 )
 
 type NewHeadsNotificationParams struct {
@@ -48,7 +49,10 @@ type NewHeadsResult struct {
 	flavor string `json:"-"`
 }
 
+// FromBlock can be used to populate a NewHeadsResult with the contents of a Block.
+// It does a best effort to emulate a NewHeadsResult with the same flavor as the Block.
 func (nh *NewHeadsResult) FromBlock(block *Block) {
+
 	*nh = NewHeadsResult{
 		Number:           *block.Number,
 		Hash:             *block.Hash,
@@ -62,7 +66,7 @@ func (nh *NewHeadsResult) FromBlock(block *Block) {
 		Author:           block.Author,
 		Difficulty:       block.Difficulty,
 		ExtraData:        block.ExtraData,
-		// Size:             nh.Size,
+		// Size:          SEE BELOW,
 		GasLimit:  block.GasLimit,
 		GasUsed:   block.GasUsed,
 		Timestamp: block.Timestamp,
@@ -74,6 +78,12 @@ func (nh *NewHeadsResult) FromBlock(block *Block) {
 		Signature:  block.Signature,
 
 		flavor: block.flavor,
+	}
+
+	// Parity includes .Size in its newHeads results while geth doesn't
+	if strings.HasPrefix(nh.flavor, "parity") {
+		size := block.Size
+		nh.Size = &size
 	}
 }
 
