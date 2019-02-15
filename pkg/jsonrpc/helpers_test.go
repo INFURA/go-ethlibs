@@ -81,10 +81,7 @@ func TestJSONRPCUnmarhsal(t *testing.T) {
 			Expected: &Notification{
 				JSONRPC: "2.0",
 				Method:  "parity_subscription",
-				Params: NotificationParams{
-					"result":       "0x3342d6",
-					"subscription": "0x0c2f1dc472de1be0",
-				},
+				Params:  NotificationParams(`{"result":"0x3342d6","subscription":"0x0c2f1dc472de1be0"}`),
 			},
 		},
 		{
@@ -93,13 +90,7 @@ func TestJSONRPCUnmarhsal(t *testing.T) {
 			Expected: &Notification{
 				JSONRPC: "2.0",
 				Method:  "eth_subscription",
-				Params: NotificationParams{
-					"subscription": "0x3eb3487232a1bf601f92757e0a5d0b18",
-					"result": map[string]interface{}{
-						"parentHash": "0x28f2668a84038a5b07d13564b7b11421c7ca74867f80a06c8bf429057c5000dd",
-						"truncated":  "...",
-					},
-				},
+				Params:  NotificationParams(`{"subscription":"0x3eb3487232a1bf601f92757e0a5d0b18","result":{"parentHash":"0x28f2668a84038a5b07d13564b7b11421c7ca74867f80a06c8bf429057c5000dd","truncated":"..."}}`),
 			},
 		},
 	}
