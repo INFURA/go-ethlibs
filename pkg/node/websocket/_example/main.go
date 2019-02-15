@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/INFURA/eth/pkg/eth"
-	"github.com/INFURA/eth/pkg/node"
+	"github.com/INFURA/eth/pkg/node/websocket"
 	"log"
 	"os"
 	"os/signal"
@@ -16,7 +16,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	url := "wss://mainnet.infura.io/ws"
 
-	client, err := node.NewBackend(ctx, url)
+	client, err := websocket.NewBackend(ctx, url)
 	if err != nil {
 		log.Fatalf("[FATAL] could not connect to %s: %v", url, err)
 	}
