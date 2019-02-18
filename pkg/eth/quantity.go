@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type Quantity struct {
@@ -25,6 +27,10 @@ func NewQuantity(value string) (*Quantity, error) {
 	q := Quantity{}
 	// Save the string
 	q.s = value
+
+	if !strings.HasPrefix(value, "0x") {
+		return nil, errors.New("quantity values must start with 0x")
+	}
 
 	// If the hex string is odd assume it's because a leading zero was removed
 	if len(value)%2 != 0 {
