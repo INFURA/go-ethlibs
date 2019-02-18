@@ -53,7 +53,7 @@ func (a *Address) MarshalJSON() ([]byte, error) {
 }
 
 /*
-toChecksumAddress converts a string to the proper EIP55 casing.
+ToChecksumAddress converts a string to the proper EIP55 casing.
 
 Transliteration of this code from the EIP55 wiki page:
 
