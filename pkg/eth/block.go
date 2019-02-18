@@ -40,6 +40,12 @@ type Block struct {
 	flavor string `json:"-"`
 }
 
+func (b *Block) DepopulateTransactions() {
+	for i := range b.Transactions {
+		b.Transactions[i].Populated = false
+	}
+}
+
 func (b *Block) UnmarshalJSON(data []byte) error {
 	type block Block
 	aliased := block(*b)
