@@ -29,7 +29,7 @@ type Connection interface {
 	// BlockByNumber can be used to get a block by its number
 	BlockByNumber(ctx context.Context, number uint64, full bool) (*eth.Block, error)
 
-	// BlockByHash can be used to get a block by it's hash
+	// BlockByHash can be used to get a block by its hash
 	BlockByHash(ctx context.Context, hash string, full bool) (*eth.Block, error)
 
 	// Request method can be used by downstream consumers of ChangeEvent to make generic JSONRPC requests
