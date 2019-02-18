@@ -62,7 +62,7 @@ func QuantityFromBigInt(value *big.Int) Quantity {
 }
 
 func (q *Quantity) UnmarshalJSON(data []byte) error {
-	str, err := unmarshalHex(data, 0, "quantity")
+	str, err := unmarshalHex(data, -1, "quantity")
 	if err != nil {
 		return err
 	}

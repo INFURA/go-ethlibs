@@ -18,7 +18,7 @@ type Hash = Data32
 type Topic = Data32
 
 func NewData(value string) (*Data, error) {
-	parsed, err := parseHex(value, 0, "data")
+	parsed, err := parseHex(value, -1, "data")
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (d Data256) String() string {
 }
 
 func (d *Data) UnmarshalJSON(data []byte) error {
-	str, err := unmarshalHex(data, 0, "data")
+	str, err := unmarshalHex(data, -1, "data")
 	if err != nil {
 		return err
 	}
@@ -213,12 +213,17 @@ func parseHex(value string, size int, typ string) (string, error) {
 		return "", errors.Errorf("%s types must start with 0x", typ)
 	}
 
-	if size != 0 {
-		dataSize := (len(value) - 2) / 2
+	// TODO: This function doesn't actually validate that the input characters after 0x are only 0-9, a-f, A-F
 
-		if size != dataSize {
-			return "", errors.Errorf("%s type size mismatch, expected %d got %d", typ, size, dataSize)
-		}
+	if size == -1 {
+		// don't do any size validation
+		return value, nil
+	}
+
+	dataSize := (len(value) - 2) / 2
+
+	if size != dataSize {
+		return "", errors.Errorf("%s type size mismatch, expected %d got %d", typ, size, dataSize)
 	}
 
 	return value, nil
