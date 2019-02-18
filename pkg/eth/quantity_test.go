@@ -2,6 +2,7 @@ package eth_test
 
 import (
 	"encoding/json"
+	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -27,4 +28,16 @@ func TestQuantityFromUInt64(t *testing.T) {
 	b, err = json.Marshal(&zero)
 	require.NoError(t, err)
 	require.Equal(t, []byte(`"0x0"`), b)
+
+	fromBig := eth.QuantityFromBigInt(big.NewInt(0x4567))
+	b, err = json.Marshal(&fromBig)
+	require.NoError(t, err)
+
+	require.Equal(t, []byte(`"0x4567"`), b)
+
+	fromUI64 := eth.QuantityFromUInt64(0xABCD)
+	b, err = json.Marshal(&fromUI64)
+	require.NoError(t, err)
+
+	require.Equal(t, []byte(`"0xabcd"`), b)
 }

@@ -47,22 +47,24 @@ func NewQuantity(value string) (*Quantity, error) {
 }
 
 func QuantityFromInt64(value int64) Quantity {
+	i := big.NewInt(value)
 	return Quantity{
-		s: "",
-		i: *big.NewInt(value),
+		s: bigToQuantityString(i),
+		i: *i,
 	}
 }
 
 func QuantityFromUInt64(value uint64) Quantity {
+	i := big.NewInt(0).SetUint64(value)
 	return Quantity{
-		s: "",
-		i: *big.NewInt(0).SetUint64(value),
+		s: bigToQuantityString(i),
+		i: *i,
 	}
 }
 
 func QuantityFromBigInt(value *big.Int) Quantity {
 	return Quantity{
-		s: "",
+		s: bigToQuantityString(value),
 		i: *value,
 	}
 }
@@ -83,23 +85,11 @@ func (q *Quantity) UnmarshalJSON(data []byte) error {
 }
 
 func (q *Quantity) MarshalJSON() ([]byte, error) {
-	if q.s != "" {
-		return json.Marshal(&q.s)
+	if q.s == "" {
+		q.s = bigToQuantityString(&q.i)
 	}
 
-	b := q.i.Bytes()
-	if len(b) == 0 {
-		// If we are a 0 value Quantity, make sure we return 0x0 and not 0x.
-		s := "0x0"
-		return json.Marshal(&s)
-	}
-
-	h := hex.EncodeToString(b)
-
-	// remove any leading 0s
-	h = strings.TrimLeft(h, "0")
-	s := fmt.Sprintf("0x%s", h)
-	return json.Marshal(&s)
+	return json.Marshal(&q.s)
 }
 
 func (q *Quantity) String() string {
@@ -116,4 +106,18 @@ func (q *Quantity) Int64() int64 {
 
 func (q *Quantity) Big() *big.Int {
 	return &q.i
+}
+
+func bigToQuantityString(i *big.Int) string {
+	b := i.Bytes()
+	if len(b) == 0 {
+		// If we are a 0 value Quantity, make sure we return 0x0 and not 0x.
+		return "0x0"
+	}
+
+	h := hex.EncodeToString(b)
+
+	// remove any leading 0s
+	h = strings.TrimLeft(h, "0")
+	return fmt.Sprintf("0x%s", h)
 }
