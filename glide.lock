@@ -1,12 +1,12 @@
-hash: a0bf94ce956a870740e5b920ee97b278409cc893a7c23edd5b0c839f30dbcdf9
-updated: 2019-02-15T15:47:37.823465-08:00
+hash: 9c5ca319ce17aca0ffa2a5d93753e42ed27d0153d4af0810ef2b71648c4c4081
+updated: 2019-02-19T15:07:30.222038-08:00
 imports:
 - name: github.com/gorilla/websocket
   version: 66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d
 - name: github.com/pkg/errors
   version: ba968bfe8b2f7e042a574c888954fccecfa385b4
 - name: golang.org/x/crypto
-  version: e73bf333ef8920dbb52ad18d4bd38ad9d9bc76d7
+  version: a4c6cb3142f211c99e4bf4cd769535b29a9b616f
   subpackages:
   - sha3
 - name: golang.org/x/net

@@ -5,6 +5,7 @@ import:
 - package: github.com/pkg/errors
   version: ^0.8.1
 - package: golang.org/x/crypto
+  version: origin/master
   subpackages:
   - sha3
 - package: golang.org/x/sync
