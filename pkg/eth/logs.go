@@ -49,16 +49,6 @@ func (f *LogFilter) UnmarshalJSON(data []byte) error {
 	f.BlockHash = parser.BlockHash
 	f.Address = parser.Address.Array()
 	f.Topics = parser.Topics.Array()
-
-	// if fromBlock is earliest just set it to nil
-	if tag, ok := f.FromBlock.Tag(); ok && tag == TagEarliest {
-		f.FromBlock = nil
-	}
-
-	// if toBlock is latest just set it to nil
-	if tag, ok := f.ToBlock.Tag(); ok && tag == TagLatest {
-		f.ToBlock = nil
-	}
 	return nil
 }
 

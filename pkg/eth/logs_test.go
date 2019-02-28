@@ -179,12 +179,23 @@ func TestLogFilterParsing(t *testing.T) {
 			},
 		},
 		{
-			Message: "block tags must be supported, tags matching defaults should be nil",
-			Payload: `{"fromBlock":"earliest", "toBlock": "latest"}`,
+			Message: "block tags must be supported, tags matching defaults should still be present",
+			Payload: `{"fromBlock":"latest", "toBlock": "latest"}`,
 			Expected: eth.LogFilter{
 				Address:   nil,
-				FromBlock: nil,
-				ToBlock:   nil,
+				FromBlock: eth.MustBlockNumberOrTag("latest"),
+				ToBlock:   eth.MustBlockNumberOrTag("latest"),
+				BlockHash: nil,
+				Topics:    nil,
+			},
+		},
+		{
+			Message: "block tags must be supported",
+			Payload: `{"fromBlock":"earliest", "toBlock": "earliest"}`,
+			Expected: eth.LogFilter{
+				Address:   nil,
+				FromBlock: eth.MustBlockNumberOrTag("earliest"),
+				ToBlock:   eth.MustBlockNumberOrTag("earliest"),
 				BlockHash: nil,
 				Topics:    nil,
 			},
@@ -215,7 +226,7 @@ func TestLogFilterParsing(t *testing.T) {
 					*eth.MustAddress("0x5717adf502fd8830456bd5dc26801a4db394e6b2"),
 				},
 				FromBlock: eth.MustBlockNumberOrTag("0x1234"),
-				ToBlock:   nil,
+				ToBlock:   eth.MustBlockNumberOrTag("latest"),
 				BlockHash: eth.MustHash("0xb509a2149556380fbff167f2fdfad07cf9cfe8eb605e83298683008f46f419b5"),
 				Topics: [][]eth.Topic{
 					{
