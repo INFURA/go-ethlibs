@@ -29,6 +29,17 @@ func TestLogFilterParsing(t *testing.T) {
 			},
 		},
 		{
+			Message: "null params should parse",
+			Payload: `{"address":null, "topics":null, "blockHash": null, "fromBlock": null, "toBlock": null}`,
+			Expected: eth.LogFilter{
+				Address:   nil,
+				FromBlock: nil,
+				ToBlock:   nil,
+				BlockHash: nil,
+				Topics:    nil,
+			},
+		},
+		{
 			Message: "single address as a string should be supported",
 			Payload: `{"address": "0xcdbf1d1c64faad6d8484fd3dd5be2b4ea57f5f4c"}`,
 			Expected: eth.LogFilter{
