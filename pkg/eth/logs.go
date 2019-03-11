@@ -57,7 +57,9 @@ type addrOrArray []Address
 func (a *addrOrArray) UnmarshalJSON(data []byte) error {
 	str := ""
 	err := json.Unmarshal(data, &str)
-	if err == nil {
+
+	// If successfully unmarshaled to non-default value, then data represented a single address
+	if err == nil && str != "" {
 		addr, err := NewAddress(str)
 		if err != nil {
 			return err
@@ -66,6 +68,7 @@ func (a *addrOrArray) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
+	// otherwise it should be unmarshaled as an array
 	// usually log filters specify at most a single Address, so let's
 	// start with a capacity of one
 	arr := make([]Address, 0, 1)
