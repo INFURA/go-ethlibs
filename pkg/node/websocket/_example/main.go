@@ -85,6 +85,13 @@ func main() {
 					log.Printf("[INFO] Sample transaction receipt hash=%s, gasUsed=%v", tx.Hash.String(), receipt.GasUsed.UInt64())
 				}
 
+				_logs, err := client.GetLogs(ctx, eth.LogFilter{BlockHash: block.Hash})
+				if err != nil {
+					log.Fatalf("[FATAL] could not get block logs: %v", err)
+				}
+
+				log.Printf("[INFO] Logs: %d", len(_logs))
+
 			} else {
 				log.Printf("[INFO] New block %d hash: %s, parent: %s", params.Result.Number.UInt64(), params.Result.Hash.String(), params.Result.ParentHash.String())
 			}
