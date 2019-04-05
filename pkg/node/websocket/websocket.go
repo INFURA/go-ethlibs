@@ -41,6 +41,9 @@ type Connection interface {
 
 	// TransactionReceipt for a particular transaction
 	TransactionReceipt(ctx context.Context, hash string) (*eth.TransactionReceipt, error)
+
+	// GetLogs
+	GetLogs(ctx context.Context, filter eth.LogFilter) ([]eth.Log, error)
 }
 
 type connection struct {
@@ -266,6 +269,8 @@ func (c *connection) loop() {
 				if err != nil {
 					return errors.Wrap(err, "error marshalling request for backend")
 				}
+
+				// log.Printf("[SPAM] Writing %s", string(b))
 				err = c.conn.WriteMessage(websocket.TextMessage, b)
 				if err != nil {
 					if ctx.Err() == context.Canceled {
@@ -544,4 +549,29 @@ func (c *connection) TransactionReceipt(ctx context.Context, hash string) (*eth.
 	}
 
 	return &receipt, nil
+}
+
+func (c *connection) GetLogs(ctx context.Context, filter eth.LogFilter) ([]eth.Log, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_getLogs",
+		Params: jsonrpc.MustParams(filter),
+	}
+
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not make request")
+	}
+
+	if response.Error != nil {
+		return nil, errors.New(string(*response.Error))
+	}
+
+	_logs := make([]eth.Log, 0)
+	err = json.Unmarshal(response.Result, &_logs)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not unmarshal result")
+	}
+
+	return _logs, nil
 }
