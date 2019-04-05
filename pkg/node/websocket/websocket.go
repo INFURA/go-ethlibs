@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io/ioutil"
@@ -35,8 +36,11 @@ type Connection interface {
 	// Request method can be used by downstream consumers of ChangeEvent to make generic JSONRPC requests
 	Request(ctx context.Context, r *jsonrpc.Request) (*jsonrpc.RawResponse, error)
 
-	// NewHeads should generally not be used externally
+	// NewHeads subscription
 	NewHeads(ctx context.Context) (Subscription, error)
+
+	// TransactionReceipt for a particular transaction
+	TransactionReceipt(ctx context.Context, hash string) (*eth.TransactionReceipt, error)
 }
 
 type connection struct {
@@ -258,7 +262,11 @@ func (c *connection) loop() {
 			select {
 			case r := <-c.chToBackend:
 				// log.Printf("[SPAM] Writing %v", r)
-				err := c.conn.WriteJSON(&r)
+				b, err := json.Marshal(&r)
+				if err != nil {
+					return errors.Wrap(err, "error marshalling request for backend")
+				}
+				err = c.conn.WriteMessage(websocket.TextMessage, b)
 				if err != nil {
 					if ctx.Err() == context.Canceled {
 						log.Printf("[DEBUG] Context cancelled during write")
@@ -483,7 +491,6 @@ func (c *connection) parseBlockResponse(response *jsonrpc.RawResponse) (*eth.Blo
 }
 
 func (c *connection) BlockByHash(ctx context.Context, hash string, full bool) (*eth.Block, error) {
-	// TODO: Support full=false, requires handling block.transactions as just strings instead of objects
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
 		Method: "eth_getBlockByHash",
@@ -507,4 +514,34 @@ func (c *connection) NewHeads(ctx context.Context) (Subscription, error) {
 	}
 
 	return c.Subscribe(ctx, &r)
+}
+
+func (c *connection) TransactionReceipt(ctx context.Context, hash string) (*eth.TransactionReceipt, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_getTransactionReceipt",
+		Params: jsonrpc.MustParams(hash),
+	}
+
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not make request")
+	}
+
+	if response.Error != nil {
+		return nil, errors.New(string(*response.Error))
+	}
+
+	if bytes.Compare(response.Result, json.RawMessage(`null`)) == 0 {
+		// Then the transaction isn't recognized
+		return nil, errors.Errorf("receipt for transaction %s not found", hash)
+	}
+
+	receipt := eth.TransactionReceipt{}
+	err = json.Unmarshal(response.Result, &receipt)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not unmarshal result")
+	}
+
+	return &receipt, nil
 }

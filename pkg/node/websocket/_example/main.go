@@ -76,6 +76,15 @@ func main() {
 				log.Printf("[INFO] Raw newHead: %s", string(notification.Params))
 				log.Printf("[INFO] Block JSON: %s", string(b))
 
+				if len(block.Transactions) > 0 {
+					tx := block.Transactions[0]
+					receipt, err := client.TransactionReceipt(ctx, tx.Hash.String())
+					if err != nil {
+						log.Fatalf("[FATAL] could not get transaction receipt: %v", err)
+					}
+					log.Printf("[INFO] Sample transaction receipt hash=%s, gasUsed=%v", tx.Hash.String(), receipt.GasUsed.UInt64())
+				}
+
 			} else {
 				log.Printf("[INFO] New block %d hash: %s, parent: %s", params.Result.Number.UInt64(), params.Result.Hash.String(), params.Result.ParentHash.String())
 			}
