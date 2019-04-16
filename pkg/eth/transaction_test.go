@@ -38,3 +38,52 @@ func TestTransactionSuccessfulContractCreation(t *testing.T) {
 
 	RequireEqualJSON(t, []byte(payload), j)
 }
+
+func TestNewPendingTxNotificationParams(t *testing.T) {
+
+	{
+		params := eth.NewPendingTxNotificationParams{}
+
+		pTrx := `{"subscription":"0x70b8a3979a9df0ae3c2e006a192bbd27","result":"0xa2d258a5f2b0ff053a7bb7daa9fba98834dbb5aa6815dbad1c5c7837bbb436a3"}`
+
+		err := json.Unmarshal([]byte(pTrx), &params)
+		require.NoError(t, err)
+		require.Equal(t, *eth.MustHash("0xa2d258a5f2b0ff053a7bb7daa9fba98834dbb5aa6815dbad1c5c7837bbb436a3"), params.Result)
+
+		j, err := json.Marshal(&params)
+		require.NoError(t, err)
+
+		RequireEqualJSON(t, []byte(pTrx), j)
+	}
+
+	{
+		params := eth.NewPendingTxNotificationParams{}
+
+		parity := `{"result":"0x1c40d1cface680124774279a5806014c9d1768e46b5520e5ab1f6239b9ee2e76","subscription":"0x5beac702152c0d1f"}`
+
+		err := json.Unmarshal([]byte(parity), &params)
+		require.NoError(t, err)
+		require.Equal(t, *eth.MustHash("0x1c40d1cface680124774279a5806014c9d1768e46b5520e5ab1f6239b9ee2e76"), params.Result)
+
+		j, err := json.Marshal(&params)
+		require.NoError(t, err)
+
+		RequireEqualJSON(t, []byte(parity), j)
+	}
+
+	{
+		params := eth.NewPendingTxNotificationParams{}
+
+
+		kovan := `{"result":"0xc1baf4fd2b6a4f26f53ee6da7b82a69e055ea97b03a1b023afe028643dc12dc0","subscription":"0x5beac702152c0d1f"}`
+
+		err := json.Unmarshal([]byte(kovan), &params)
+		require.NoError(t, err)
+		require.Equal(t, *eth.MustHash("0xc1baf4fd2b6a4f26f53ee6da7b82a69e055ea97b03a1b023afe028643dc12dc0"), params.Result)
+
+		j, err := json.Marshal(&params)
+		require.NoError(t, err)
+
+		RequireEqualJSON(t, []byte(kovan), j)
+	}
+}

@@ -34,6 +34,12 @@ type Transaction struct {
 	source string `json:"-"`
 }
 
+type NewPendingTxNotificationParams struct {
+	Subscription string `json:"subscription"`
+	Result       Hash   `json:"result"`
+}
+
+
 func (t *Transaction) UnmarshalJSON(data []byte) error {
 	type tx Transaction
 	aliased := tx(*t)

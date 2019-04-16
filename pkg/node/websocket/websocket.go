@@ -33,17 +33,24 @@ type Connection interface {
 	// BlockByHash can be used to get a block by its hash
 	BlockByHash(ctx context.Context, hash string, full bool) (*eth.Block, error)
 
+	// eth_getTransactionByHash can be used to get transaction by its hash
+	TransactionByHash(ctx context.Context, hash string) (*eth.Transaction, error)
+
 	// Request method can be used by downstream consumers of ChangeEvent to make generic JSONRPC requests
 	Request(ctx context.Context, r *jsonrpc.Request) (*jsonrpc.RawResponse, error)
 
 	// NewHeads subscription
 	NewHeads(ctx context.Context) (Subscription, error)
 
+	// NewPendingTransactions subscriptions
+	NewPendingTransaction(ctx context.Context) (Subscription, error)
+
 	// TransactionReceipt for a particular transaction
 	TransactionReceipt(ctx context.Context, hash string) (*eth.TransactionReceipt, error)
 
 	// GetLogs
 	GetLogs(ctx context.Context, filter eth.LogFilter) ([]eth.Log, error)
+
 }
 
 type connection struct {
@@ -510,12 +517,40 @@ func (c *connection) BlockByHash(ctx context.Context, hash string, full bool) (*
 	return c.parseBlockResponse(response)
 }
 
+func (c *connection) TransactionByHash(ctx context.Context, hash string) (*eth.Transaction, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_getTransactionByHash",
+		Params: jsonrpc.MustParams(hash),
+	}
+
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not make transaction by hash request")
+	}
+
+	tx := eth.Transaction{}
+	err = tx.UnmarshalJSON(response.Result)
+	return &tx, err
+}
+
 func (c *connection) NewHeads(ctx context.Context) (Subscription, error) {
 	r := jsonrpc.Request{
 		JSONRPC: "2.0",
 		ID:      jsonrpc.ID{Str: "test", IsString: true},
 		Method:  "eth_subscribe",
 		Params:  jsonrpc.MustParams("newHeads"),
+	}
+
+	return c.Subscribe(ctx, &r)
+}
+
+func (c *connection) NewPendingTransaction(ctx context.Context) (Subscription, error) {
+	r := jsonrpc.Request{
+		JSONRPC: "2.0",
+		ID:      jsonrpc.ID{Str: "pending", IsString: true},
+		Method:  "eth_subscribe",
+		Params:  jsonrpc.MustParams("newPendingTransactions"),
 	}
 
 	return c.Subscribe(ctx, &r)
