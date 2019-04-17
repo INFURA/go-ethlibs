@@ -89,3 +89,11 @@ func (b *BlockNumberOrTag) UnmarshalJSON(data []byte) error {
 	*b = *_b
 	return nil
 }
+
+func (b *BlockNumberOrTag) MarshalJSON() ([]byte, error) {
+	if b.tag != "" {
+		return json.Marshal(&b.tag)
+	}
+
+	return json.Marshal(&b.number)
+}
