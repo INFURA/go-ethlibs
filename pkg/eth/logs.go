@@ -25,6 +25,10 @@ type Log struct {
 	Address     Address   `json:"address"`
 	Data        Data      `json:"data"`
 	Topics      []Topic   `json:"topics"`
+
+	// Parity-specific fields
+	TxLogIndex *Quantity `json:"transactionLogIndex,omitempty"`
+	Type       *string   `json:"type,omitempty"`
 }
 
 func (f *LogFilter) UnmarshalJSON(data []byte) error {
