@@ -30,6 +30,10 @@ func (rc *RequestContext) HTTPRequest() *http.Request {
 	return rc.Value(contextKeyHTTPRequest).(*http.Request)
 }
 
+func (rc *RequestContext) HTTPResponseWriter() http.ResponseWriter {
+	return rc.Value(contextKeyHTTPResponseWriter).(http.ResponseWriter)
+}
+
 func (rc *RequestContext) RawJSON() json.RawMessage {
 	return rc.Value(contextKeyRawJSON).(json.RawMessage)
 }
@@ -41,8 +45,9 @@ func (c contextKey) String() string {
 }
 
 var (
-	contextKeyHTTPRequest = contextKey("HTTP Request")
-	contextKeyRawJSON     = contextKey("Raw JSON")
+	contextKeyHTTPRequest        = contextKey("HTTP Request")
+	contextKeyHTTPResponseWriter = contextKey("HTTP Response Writer")
+	contextKeyRawJSON            = contextKey("Raw JSON")
 )
 
 type requestHandlerFunc func(ctx RequestContext, request *Request) (interface{}, *Error)
@@ -70,13 +75,9 @@ func (h requestHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	ctx := context.WithValue(r.Context(), contextKeyHTTPRequest, r)
 	ctx = context.WithValue(ctx, contextKeyRawJSON, json.RawMessage(buff))
+	ctx = context.WithValue(ctx, contextKeyHTTPResponseWriter, w)
 
 	result, e := h(RequestContext{ctx}, &request)
-	if err != nil {
-		WriteResponse(w, &request, nil, InternalError(err.Error()))
-		return
-	}
-
 	WriteResponse(w, &request, result, e)
 	return
 }
