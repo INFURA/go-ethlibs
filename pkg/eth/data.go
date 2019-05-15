@@ -18,7 +18,7 @@ type Hash = Data32
 type Topic = Data32
 
 func NewData(value string) (*Data, error) {
-	parsed, err := parseHex(value, -1, "data")
+	parsed, err := validateHex(value, -1, "data")
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +28,7 @@ func NewData(value string) (*Data, error) {
 }
 
 func NewData8(value string) (*Data8, error) {
-	parsed, err := parseHex(value, 8, "data")
+	parsed, err := validateHex(value, 8, "data")
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func NewData8(value string) (*Data8, error) {
 }
 
 func NewData20(value string) (*Data20, error) {
-	parsed, err := parseHex(value, 20, "data")
+	parsed, err := validateHex(value, 20, "data")
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func NewData20(value string) (*Data20, error) {
 }
 
 func NewData32(value string) (*Data32, error) {
-	parsed, err := parseHex(value, 32, "data")
+	parsed, err := validateHex(value, 32, "data")
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func NewTopic(value string) (*Hash, error) {
 }
 
 func NewData256(value string) (*Data256, error) {
-	parsed, err := parseHex(value, 256, "data")
+	parsed, err := validateHex(value, 256, "data")
 	if err != nil {
 		return nil, err
 	}
@@ -205,10 +205,10 @@ func unmarshalHex(data []byte, size int, typ string) (string, error) {
 		return "", err
 	}
 
-	return parseHex(str, size, typ)
+	return validateHex(str, size, typ)
 }
 
-func parseHex(value string, size int, typ string) (string, error) {
+func validateHex(value string, size int, typ string) (string, error) {
 	if !strings.HasPrefix(value, "0x") {
 		return "", errors.Errorf("%s types must start with 0x", typ)
 	}
