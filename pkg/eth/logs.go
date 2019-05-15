@@ -101,8 +101,11 @@ func (t *topicOrArray) UnmarshalJSON(data []byte) error {
 	str := ""
 	err := json.Unmarshal(data, &str)
 	if err == nil {
-		topic := Topic(str)
-		*t = []Topic{topic}
+		topic, err := NewTopic(str)
+		if err != nil {
+			return err
+		}
+		*t = []Topic{*topic}
 		return nil
 	}
 

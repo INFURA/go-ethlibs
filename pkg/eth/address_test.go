@@ -57,4 +57,15 @@ func TestAddressJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, lj, aj)
+
+	{
+		// invalid addresses should be invalid
+		invalid, err := eth.NewAddress("0xinvalid")
+		require.Error(t, err, "invalid address must not parse")
+		require.Nil(t, invalid, "invalid address must not be returned")
+
+		var addr eth.Address
+		err = json.Unmarshal([]byte(`"0xinvalid"`), &addr)
+		require.Error(t, err, "invalid address must not parse")
+	}
 }

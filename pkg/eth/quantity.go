@@ -32,6 +32,14 @@ func NewQuantity(value string) (*Quantity, error) {
 		return nil, errors.New("quantity values must start with 0x")
 	}
 
+	if value == "0x" {
+		return nil, errors.New("quantity values must include at least one digit")
+	}
+
+	if strings.HasPrefix(value, "0x0") && value != "0x0" {
+		return nil, errors.New("quantity values should not have leading zeroes")
+	}
+
 	// If the hex string is odd assume it's because a leading zero was removed
 	if len(value)%2 != 0 {
 		value = "0x0" + value[2:]
@@ -92,19 +100,19 @@ func (q *Quantity) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&q.s)
 }
 
-func (q *Quantity) String() string {
+func (q Quantity) String() string {
 	return q.s
 }
 
-func (q *Quantity) UInt64() uint64 {
+func (q Quantity) UInt64() uint64 {
 	return q.i.Uint64()
 }
 
-func (q *Quantity) Int64() int64 {
+func (q Quantity) Int64() int64 {
 	return q.i.Int64()
 }
 
-func (q *Quantity) Big() *big.Int {
+func (q Quantity) Big() *big.Int {
 	return &q.i
 }
 
