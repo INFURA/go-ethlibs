@@ -213,17 +213,26 @@ func parseHex(value string, size int, typ string) (string, error) {
 		return "", errors.Errorf("%s types must start with 0x", typ)
 	}
 
-	// TODO: This function doesn't actually validate that the input characters after 0x are only 0-9, a-f, A-F
+	if size != -1 {
+		dataSize := (len(value) - 2) / 2
 
-	if size == -1 {
-		// don't do any size validation
-		return value, nil
+		if size != dataSize {
+			return "", errors.Errorf("%s type size mismatch, expected %d got %d", typ, size, dataSize)
+		}
 	}
 
-	dataSize := (len(value) - 2) / 2
+	// validate that the input characters after 0x are only 0-9, a-f, A-F
+	for i, c := range value[2:] {
+		switch {
+		case '0' <= c && c <= '9':
+			continue
+		case 'a' <= c && c <= 'f':
+			continue
+		case 'A' <= c && c <= 'F':
+			continue
+		}
 
-	if size != dataSize {
-		return "", errors.Errorf("%s type size mismatch, expected %d got %d", typ, size, dataSize)
+		return "", errors.Errorf("invalid hex string, invalid character '%c' at index %d", c, i+2)
 	}
 
 	return value, nil

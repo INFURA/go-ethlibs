@@ -20,4 +20,7 @@ func TestData(t *testing.T) {
 
 	_, err = eth.NewData256("0x00")
 	require.Error(t, err)
+
+	_, err = eth.NewData("0xfoodbarr")
+	require.Error(t, err)
 }
