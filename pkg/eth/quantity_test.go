@@ -43,6 +43,8 @@ func TestQuantityFromUInt64(t *testing.T) {
 
 	require.Equal(t, fromUI64.Big().Int64(), eth.QuantityFromInt64(fromUI64.Int64()).Int64())
 
+	require.Equal(t, int64(1), eth.MustQuantity("0x1").Int64())
+
 	{
 		invalid, err := eth.NewQuantity("bad")
 		require.Error(t, err)
