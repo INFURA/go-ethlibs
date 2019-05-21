@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (v *Value) Encode() (string, error) {
+func (v Value) Encode() (string, error) {
 	if v.String != "" {
 		if !strings.HasPrefix(v.String, "0x") {
 			return "", errors.New("invalid string value before encoding")

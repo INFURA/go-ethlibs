@@ -1,8 +1,6 @@
 package eth
 
 import (
-	"strconv"
-
 	"github.com/pkg/errors"
 
 	"github.com/INFURA/ethereum-interaction/pkg/rlp"
@@ -41,17 +39,17 @@ func (t *Transaction) FromRaw(input string) error {
 	}
 
 	items := decoded.List
-	nonce, err := NewQuantity(items[0].String)
+	nonce, err := NewQuantityFromRLP(items[0])
 	if err != nil {
 		return errors.Wrap(err, "could not parse transaction nonce")
 	}
 
-	gasPrice, err := NewQuantity(items[1].String)
+	gasPrice, err := NewQuantityFromRLP(items[1])
 	if err != nil {
 		return errors.Wrap(err, "could not parse transaction gasPrice")
 	}
 
-	gasLimit, err := NewQuantity(items[2].String)
+	gasLimit, err := NewQuantityFromRLP(items[2])
 	if err != nil {
 		return errors.Wrap(err, "could not parse transaction gasLimit")
 	}
@@ -61,7 +59,7 @@ func (t *Transaction) FromRaw(input string) error {
 		return errors.Wrap(err, "could not parse transaction to address")
 	}
 
-	value, err := NewQuantity(items[4].String)
+	value, err := NewQuantityFromRLP(items[4])
 	if err != nil {
 		return errors.Wrap(err, "could not parse transaction value")
 	}
@@ -73,17 +71,17 @@ func (t *Transaction) FromRaw(input string) error {
 
 	// TODO: unsigned transactions end here
 
-	v, err := NewQuantity(items[6].String)
+	v, err := NewQuantityFromRLP(items[6])
 	if err != nil {
 		return errors.Wrap(err, "could not parse transaction v field")
 	}
 
-	r, err := NewQuantity(items[7].String)
+	r, err := NewQuantityFromRLP(items[7])
 	if err != nil {
 		return errors.Wrap(err, "could not parse transaction r field")
 	}
 
-	s, err := NewQuantity(items[8].String)
+	s, err := NewQuantityFromRLP(items[8])
 	if err != nil {
 		return errors.Wrap(err, "could not parse transaction s field")
 	}
@@ -103,9 +101,9 @@ func (t *Transaction) FromRaw(input string) error {
 
 	if chainId != 0 {
 		raw.List = append(raw.List,
-			rlp.Value{String: "0x" + strconv.FormatInt(chainId, 16)},
-			rlp.Value{String: MustData("0x00").String()},
-			rlp.Value{String: MustData("0x00").String()},
+			QuantityFromInt64(chainId).RLP(),
+			rlp.Value{String: "0x"},
+			rlp.Value{String: "0x"},
 		)
 		recovery -= (chainId * 2) + 8
 	}
