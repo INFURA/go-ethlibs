@@ -11,6 +11,9 @@ import:
 - package: golang.org/x/sync
   subpackages:
   - errgroup
+- package: github.com/btcsuite/btcd
+  subpackages:
+  - btcec
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.3.0

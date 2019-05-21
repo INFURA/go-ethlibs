@@ -1,12 +1,16 @@
-hash: 9c5ca319ce17aca0ffa2a5d93753e42ed27d0153d4af0810ef2b71648c4c4081
-updated: 2019-03-28T15:35:22.085669-07:00
+hash: 145739ae2c9f50d73f2262529e88d10be36c9759932afdbf2743fce417b9ff95
+updated: 2019-05-20T18:40:43.676855-07:00
 imports:
+- name: github.com/btcsuite/btcd
+  version: 5bda5314ca9549a589e63d7b2e6104492a0d5328
+  subpackages:
+  - btcec
 - name: github.com/gorilla/websocket
   version: 66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d
 - name: github.com/pkg/errors
   version: ba968bfe8b2f7e042a574c888954fccecfa385b4
 - name: golang.org/x/crypto
-  version: a5d413f7728c81fb97d96a2b722368945f651e78
+  version: 22d7a77e9e5f409e934ed268692e56707cd169e5
   subpackages:
   - sha3
 - name: golang.org/x/net

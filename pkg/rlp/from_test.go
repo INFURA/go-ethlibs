@@ -26,4 +26,8 @@ func TestFrom(t *testing.T) {
 	require.Equal(t, "0x2b", payload[6].String, "V")
 	require.Equal(t, "0xe2539a5d9f056d7095bd19d6b77b850910eeafb71534ebd45159915fab202e91", payload[7].String, "R")
 	require.Equal(t, "0x07484420f3968697974413fc55d1142dc76285d30b1b9231ccb71ed1e720faae", payload[8].String, "S")
+
+	encoded, err := decoded.Encode()
+	require.NoError(t, err)
+	require.Equal(t, input, encoded)
 }
