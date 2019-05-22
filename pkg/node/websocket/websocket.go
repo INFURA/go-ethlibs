@@ -340,13 +340,10 @@ func (c *connection) loop() {
 
 	// Aborter
 	g.Go(func() error {
-		select {
-		case <-ctx.Done():
-			log.Printf("[DEBUG] Context done, setting deadlines to now")
-			_ = c.conn.SetReadDeadline(time.Now())
-			_ = c.conn.SetWriteDeadline(time.Now())
-		}
-
+		<-ctx.Done()
+		log.Printf("[DEBUG] Context done, setting deadlines to now")
+		_ = c.conn.SetReadDeadline(time.Now())
+		_ = c.conn.SetWriteDeadline(time.Now())
 		return nil
 	})
 
@@ -569,7 +566,7 @@ func (c *connection) TransactionReceipt(ctx context.Context, hash string) (*eth.
 		return nil, errors.New(string(*response.Error))
 	}
 
-	if bytes.Compare(response.Result, json.RawMessage(`null`)) == 0 {
+	if bytes.Equal(response.Result, json.RawMessage(`null`)) {
 		// Then the transaction isn't recognized
 		return nil, errors.Errorf("receipt for transaction %s not found", hash)
 	}
