@@ -46,7 +46,7 @@ type NewHeadsResult struct {
 	SealFields *[]Data `json:"sealFields,omitempty"`
 
 	// Track the flavor so we can re-encode correctly
-	flavor string `json:"-"`
+	flavor string
 }
 
 // FromBlock can be used to populate a NewHeadsResult with the contents of a Block.
