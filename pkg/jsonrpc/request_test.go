@@ -255,7 +255,8 @@ func TestRemarshalRequestWithNetworks(t *testing.T) {
 		assert.Nil(t, err, "Got err '%v' re-Marshaling parsed JSON")
 
 		var m interface{}
-		json.Unmarshal(b, &m)
+		err = json.Unmarshal(b, &m)
+		assert.Nil(t, err, "Got err '%v' unmarshaling re-marshaled JSON")
 
 		assert.Equal(t, network, m.(map[string]interface{})["network"])
 	}

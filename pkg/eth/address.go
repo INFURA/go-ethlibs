@@ -76,7 +76,7 @@ Transliteration of this code from the EIP55 wiki page:
 func ToChecksumAddress(address string) string {
 	address = strings.Replace(strings.ToLower(address), "0x", "", 1)
 	hash := sha3.NewLegacyKeccak256()
-	hash.Write([]byte(address))
+	_, _ = hash.Write([]byte(address))
 	sum := hash.Sum(nil)
 	digest := hex.EncodeToString(sum)
 
