@@ -1,0 +1,17 @@
+sudo: false
+
+language: go
+
+go:
+  - 1.x
+
+env:
+  - GO111MODULE=on
+
+install:
+  - go get github.com/gordonklaus/ineffassign
+
+script:
+  - diff -u <(echo -n) <(gofmt -d .)
+  - ineffassign .
+  - go test -vet "all" -v ./...
