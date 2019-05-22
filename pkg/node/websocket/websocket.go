@@ -50,7 +50,6 @@ type Connection interface {
 
 	// GetLogs
 	GetLogs(ctx context.Context, filter eth.LogFilter) ([]eth.Log, error)
-
 }
 
 type connection struct {
@@ -73,14 +72,12 @@ type connection struct {
 
 type subscriptionRequest struct {
 	request  *jsonrpc.Request
-	response *jsonrpc.Response
 	chResult chan *subscription
 	chError  chan error
 }
 
 type outboundRequest struct {
 	request  *jsonrpc.Request
-	response *jsonrpc.RawResponse
 	chResult chan *jsonrpc.RawResponse
 	chError  chan error
 }
