@@ -28,6 +28,18 @@ func (t *Transaction) FromRaw(input string) error {
 		return errors.Errorf("unexpected decoded list size %d", len(decoded.List))
 	}
 
+	/*
+		// Uncomment this code to double check re-encoding is correct for hashing
+		reencode, err := decoded.Encode()
+		if err != nil {
+			return errors.Wrap(err, "could not reencode transaction")
+		}
+
+		if reencode != input {
+			return errors.New("encoding lead to different value")
+		}
+	*/
+
 	dh, err := decoded.Hash()
 	if err != nil {
 		return errors.Wrap(err, "could not hash decoded transaction")
@@ -54,9 +66,15 @@ func (t *Transaction) FromRaw(input string) error {
 		return errors.Wrap(err, "could not parse transaction gasLimit")
 	}
 
-	to, err := NewAddress(items[3].String)
-	if err != nil {
-		return errors.Wrap(err, "could not parse transaction to address")
+	// To address may be nil for contract creation
+	var to *Address
+	if items[3].String != "0x" {
+		t, err := NewAddress(items[3].String)
+		if err != nil {
+			return errors.Wrap(err, "could not parse transaction to address")
+		}
+
+		to = t
 	}
 
 	value, err := NewQuantityFromRLP(items[4])
