@@ -60,7 +60,7 @@ func TestTransactionReceipts(t *testing.T) {
 
 	// double check that we can back back to JSON as well
 	b, err := json.Marshal(&receipt)
-	require.NoError(t, err, "unmarshal must succeed")
+	require.NoError(t, err, "marshal must succeed")
 	require.JSONEq(t, raw, string(b))
 
 	// Let double check that contract creation receipts work too
