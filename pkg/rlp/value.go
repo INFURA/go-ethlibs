@@ -1,6 +1,8 @@
 package rlp
 
+// Value represents a decoded RLP value, which is either a String or List.
 type Value struct {
-	List   []Value
+	// Only one of String or List is valid.  If String is "" then List is assumed valid.
 	String string
+	List   []Value
 }
