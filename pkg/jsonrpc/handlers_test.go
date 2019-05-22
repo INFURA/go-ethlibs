@@ -61,7 +61,7 @@ func TestSimpleRequestServer(t *testing.T) {
 	assert.NotContains(t, string(b), `"result"`, "response should not contain result element")
 }
 
-func ExampleRequestServer() {
+func ExampleRequestHandlerFunc() {
 	http.Handle("/", RequestHandlerFunc(func(ctx RequestContext, r *Request) (interface{}, *Error) {
 		if r.Method != "eth_blockNumber" {
 			return nil, MethodNotSupported(r)
