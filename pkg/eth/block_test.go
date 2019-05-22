@@ -13,8 +13,7 @@ func RequireEqualJSON(t *testing.T, expected, actual []byte, msgAndArgs ...inter
 	var exp interface{}
 	var act interface{}
 
-	var err error
-	err = json.Unmarshal([]byte(expected), &exp)
+	err := json.Unmarshal([]byte(expected), &exp)
 	require.NoError(t, err, msgAndArgs...)
 	err = json.Unmarshal([]byte(actual), &act)
 	require.NoError(t, err, msgAndArgs...)
