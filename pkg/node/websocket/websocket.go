@@ -50,7 +50,6 @@ type Connection interface {
 
 	// GetLogs
 	GetLogs(ctx context.Context, filter eth.LogFilter) ([]eth.Log, error)
-
 }
 
 type connection struct {
@@ -73,14 +72,12 @@ type connection struct {
 
 type subscriptionRequest struct {
 	request  *jsonrpc.Request
-	response *jsonrpc.Response
 	chResult chan *subscription
 	chError  chan error
 }
 
 type outboundRequest struct {
 	request  *jsonrpc.Request
-	response *jsonrpc.RawResponse
 	chResult chan *jsonrpc.RawResponse
 	chError  chan error
 }
@@ -343,13 +340,10 @@ func (c *connection) loop() {
 
 	// Aborter
 	g.Go(func() error {
-		select {
-		case <-ctx.Done():
-			log.Printf("[DEBUG] Context done, setting deadlines to now")
-			_ = c.conn.SetReadDeadline(time.Now())
-			_ = c.conn.SetWriteDeadline(time.Now())
-		}
-
+		<-ctx.Done()
+		log.Printf("[DEBUG] Context done, setting deadlines to now")
+		_ = c.conn.SetReadDeadline(time.Now())
+		_ = c.conn.SetWriteDeadline(time.Now())
 		return nil
 	})
 
@@ -572,7 +566,7 @@ func (c *connection) TransactionReceipt(ctx context.Context, hash string) (*eth.
 		return nil, errors.New(string(*response.Error))
 	}
 
-	if bytes.Compare(response.Result, json.RawMessage(`null`)) == 0 {
+	if bytes.Equal(response.Result, json.RawMessage(`null`)) {
 		// Then the transaction isn't recognized
 		return nil, errors.Errorf("receipt for transaction %s not found", hash)
 	}
