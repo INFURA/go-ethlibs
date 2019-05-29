@@ -17,7 +17,7 @@ func ECRecover(h *Hash, r, s, v *Quantity) (*Address, error) {
 
 	// For the meantime, we will use btcd's eliptic curve implementation.
 	// The code below is based heavily on the secp256k1.recoverAddress implementation at:
-	//   https://github.com/ethers-io/ethers.js/blob/master/utils/secp256k1.js#L93
+	//   https://github.com/ethers-io/ethers.js/blob/master/src.ts/utils/secp256k1.ts#L109
 	// with some trial and error to get working with btcd.
 	// I also used some of the code changes proposed in:
 	//   https://github.com/tendermint/tendermint/pull/3441
