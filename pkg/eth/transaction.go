@@ -34,6 +34,11 @@ type Transaction struct {
 	source string
 }
 
+type NewPendingTxBodyNotificationParams struct {
+	Subscription string `json:"subscription"`
+	Result Transaction `json:"result"`
+}
+
 type NewPendingTxNotificationParams struct {
 	Subscription string `json:"subscription"`
 	Result       Hash   `json:"result"`

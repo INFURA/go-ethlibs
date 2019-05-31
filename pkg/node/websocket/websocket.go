@@ -39,11 +39,14 @@ type Connection interface {
 	// Request method can be used by downstream consumers of ChangeEvent to make generic JSONRPC requests
 	Request(ctx context.Context, r *jsonrpc.Request) (*jsonrpc.RawResponse, error)
 
+	// Subscibe method can be used to make subscription requests
+	Subscribe(ctx context.Context, r *jsonrpc.Request) (Subscription, error)
+
 	// NewHeads subscription
 	NewHeads(ctx context.Context) (Subscription, error)
 
 	// NewPendingTransactions subscriptions
-	NewPendingTransaction(ctx context.Context) (Subscription, error)
+	NewPendingTransaction(ctx context.Context, full ...bool) (Subscription, error)
 
 	// TransactionReceipt for a particular transaction
 	TransactionReceipt(ctx context.Context, hash string) (*eth.TransactionReceipt, error)
@@ -539,14 +542,25 @@ func (c *connection) NewHeads(ctx context.Context) (Subscription, error) {
 	return c.Subscribe(ctx, &r)
 }
 
-func (c *connection) NewPendingTransaction(ctx context.Context) (Subscription, error) {
-	r := jsonrpc.Request{
-		JSONRPC: "2.0",
-		ID:      jsonrpc.ID{Str: "pending", IsString: true},
-		Method:  "eth_subscribe",
-		Params:  jsonrpc.MustParams("newPendingTransactions"),
-	}
+// if full is set to true, includeTransactions will be set to true for subscription parameters
+func (c *connection) NewPendingTransaction(ctx context.Context, full ...bool) (Subscription, error) {
 
+	var r jsonrpc.Request
+	if full != nil {
+		r = jsonrpc.Request{
+			JSONRPC: "2.0",
+			ID:      jsonrpc.ID{Str: "pending", IsString: true},
+			Method:  "eth_subscribe",
+			Params:  jsonrpc.MustParams("newPendingTransactions", map[string]interface{}{"includeTransactions": full[0]}),
+		}
+	} else {
+		r = jsonrpc.Request{
+			JSONRPC: "2.0",
+			ID:      jsonrpc.ID{Str: "pending", IsString: true},
+			Method:  "eth_subscribe",
+			Params:  jsonrpc.MustParams("newPendingTransactions"),
+		}
+	}
 	return c.Subscribe(ctx, &r)
 }
 
