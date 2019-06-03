@@ -1,3 +1,7 @@
+[![GoDoc](https://godoc.org/github.com/INFURA/ethereum-interaction?status.svg)](http://godoc.org/github.com/INFURA/ethereum-interaction)
+[![Build Status](https://travis-ci.org/INFURA/ethereum-interaction.svg?branch=master)](https://travis-ci.org/INFURA/ethereum-interaction)
+[![Go Report Card](https://goreportcard.com/badge/github.com/INFURA/ethereum-interaction)](https://goreportcard.com/report/github.com/INFURA/ethereum-interaction)
+
 # Ethereum Interactions
 
 A sandbox of helpers related to interacting with Ethereum nodes.
