@@ -2,7 +2,7 @@ package eth_test
 
 import (
 	"encoding/json"
-	"github.com/INFURA/ethereum-interaction/pkg/eth"
+	"github.com/INFURA/go-ethlibs/eth"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

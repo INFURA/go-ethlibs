@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/INFURA/ethereum-interaction/pkg/jsonrpc"
+	"github.com/INFURA/go-ethlibs/jsonrpc"
 )
 
 type Subscription interface {
