@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/INFURA/ethereum-interaction/pkg/eth"
-	"github.com/INFURA/ethereum-interaction/pkg/jsonrpc"
+	"github.com/INFURA/go-ethlibs/eth"
+	"github.com/INFURA/go-ethlibs/jsonrpc"
 )
 
 func TestQuantityFromUInt64(t *testing.T) {
