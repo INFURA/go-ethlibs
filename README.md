@@ -13,9 +13,9 @@ eventually graduate into stand-alone packages.
 
 ## Overview
 
-- `pkgs/eth`: Ethereum JSON parsing in `eth` namespace
-- `pkgs/jsonrpc`: JSONRPC request and response parsing
-- `pkgs/node`: A proto-ethclient in the `node` namespace
+- `eth`: Ethereum JSON parsing in `eth` namespace
+- `jsonrpc`: JSONRPC request and response parsing
+- `node`: A proto-ethclient in the `node` namespace
 
 
 ## License
