@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/INFURA/ethereum-interaction/pkg/eth"
+	"github.com/INFURA/go-ethlibs/eth"
 )
 
 func RequireEqualJSON(t *testing.T, expected, actual []byte, msgAndArgs ...interface{}) {

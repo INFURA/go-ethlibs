@@ -10,8 +10,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/INFURA/ethereum-interaction/pkg/eth"
-	"github.com/INFURA/ethereum-interaction/pkg/node/websocket"
+	"github.com/INFURA/go-ethlibs/eth"
+	"github.com/INFURA/go-ethlibs/node/websocket"
 )
 
 var endpoint = flag.String("URL", "wss://mainnet.infura.io/ws", "The websocket endpoint to connect to")

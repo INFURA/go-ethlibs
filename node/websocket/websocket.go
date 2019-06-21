@@ -15,8 +15,8 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/INFURA/ethereum-interaction/pkg/eth"
-	"github.com/INFURA/ethereum-interaction/pkg/jsonrpc"
+	"github.com/INFURA/go-ethlibs/eth"
+	"github.com/INFURA/go-ethlibs/jsonrpc"
 )
 
 // Connection represents a websocket connection to a backend ethereum client node.
