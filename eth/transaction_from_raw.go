@@ -3,7 +3,7 @@ package eth
 import (
 	"github.com/pkg/errors"
 
-	"github.com/INFURA/ethereum-interaction/pkg/rlp"
+	"github.com/INFURA/go-ethlibs/rlp"
 )
 
 // FromRaw populates a Transaction fields from the RLP-encoded raw transaction input string.

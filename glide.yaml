@@ -1,4 +1,4 @@
-package: github.com/INFURA/ethereum-interaction
+package: github.com/INFURA/go-ethlibs
 import:
 - package: github.com/gorilla/websocket
   version: ^1.4.0
