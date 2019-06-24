@@ -74,7 +74,6 @@ func TestNewPendingTxNotificationParams(t *testing.T) {
 	{
 		params := eth.NewPendingTxNotificationParams{}
 
-
 		kovan := `{"result":"0xc1baf4fd2b6a4f26f53ee6da7b82a69e055ea97b03a1b023afe028643dc12dc0","subscription":"0x5beac702152c0d1f"}`
 
 		err := json.Unmarshal([]byte(kovan), &params)
