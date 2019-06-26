@@ -13,7 +13,7 @@ eventually graduate into stand-alone packages.
 
 ## Overview
 
-- `eth`: Ethereum JSON parsing in `eth` namespace
+- `eth`: Helpers for serializing/deserializing Ethereum JSONRPC types
 - `jsonrpc`: JSONRPC request and response parsing
 - `node`: A proto-ethclient in the `node` namespace
 - `rlp`: Independent implementation of RLP parsing
