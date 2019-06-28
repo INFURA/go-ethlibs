@@ -78,30 +78,36 @@ func (t *websocketTransport) loop() {
 
 	// Reader
 	g.Go(func() error {
-		for {
+		readMessage := func() (payload []byte, err error) {
 			typ, r, err := t.conn.NextReader()
 			if err != nil {
-				if ctx.Err() == context.Canceled {
-					log.Printf("[DEBUG] Context cancelled during read")
-					return nil
-				}
-				return errors.Wrap(err, "error reading from backend websocket connection")
+				return nil, errors.Wrap(err, "error reading from backend websocket connection")
 			}
 
 			if typ != websocket.TextMessage {
-				continue
+				return nil, nil
 			}
 
-			payload, err := ioutil.ReadAll(r)
+			payload, err = ioutil.ReadAll(r)
+			if err != nil {
+				return nil, errors.Wrap(err, "error reading from backend websocket connection")
+			}
+
+			return payload, err
+		}
+
+		for {
+			payload, err := readMessage()
 			if err != nil {
 				if ctx.Err() == context.Canceled {
 					log.Printf("[DEBUG] Context cancelled during read")
 					return nil
 				}
-
-				return errors.Wrap(err, "error reading from backend websocket connection")
 			}
 
+			if payload == nil {
+				continue
+			}
 			// log.Printf("[SPAM] read: %s", string(payload))
 
 			// is it a request, notification, or response?
@@ -226,11 +232,16 @@ func (t *websocketTransport) loop() {
 				t.subscriptionsMu.RUnlock()
 			}
 		}
-
 	})
 
 	// Writer
 	g.Go(func() error {
+
+		writeMessage := func(payload []byte) error {
+			err := t.conn.WriteMessage(websocket.TextMessage, payload)
+			return err
+		}
+
 		for {
 			select {
 			case r := <-t.chToBackend:
@@ -241,7 +252,7 @@ func (t *websocketTransport) loop() {
 				}
 
 				// log.Printf("[SPAM] Writing %s", string(b))
-				err = t.conn.WriteMessage(websocket.TextMessage, b)
+				err = writeMessage(b)
 				if err != nil {
 					if ctx.Err() == context.Canceled {
 						log.Printf("[DEBUG] Context cancelled during write")

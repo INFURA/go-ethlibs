@@ -63,12 +63,32 @@ func (t *ipcTransport) loop() {
 	g.Go(func() error {
 		scanner := bufio.NewScanner(t.conn)
 
-		for scanner.Scan() {
-			if err := scanner.Err(); err != nil {
-				return err
+		readMessage := func() (payload []byte, err error) {
+			if !scanner.Scan() {
+				return nil, ctx.Err()
 			}
 
-			payload := []byte(scanner.Text())
+			if err := scanner.Err(); err != nil {
+				return nil, err
+			}
+
+			payload = []byte(scanner.Text())
+			err = nil
+			return
+		}
+
+		for {
+			payload, err := readMessage()
+			if err != nil {
+				if ctx.Err() == context.Canceled {
+					log.Printf("[DEBUG] Context cancelled during read")
+					return nil
+				}
+			}
+
+			if payload == nil {
+				continue
+			}
 			// log.Printf("[SPAM] read: %s", string(payload))
 
 			// is it a request, notification, or response?
@@ -193,12 +213,16 @@ func (t *ipcTransport) loop() {
 				t.subscriptionsMu.RUnlock()
 			}
 		}
-
-		return ctx.Err()
 	})
 
 	// Writer
 	g.Go(func() error {
+
+		writeMessage := func(payload []byte) error {
+			_, err := t.conn.Write(payload)
+			return err
+		}
+
 		for {
 			select {
 			case r := <-t.chToBackend:
@@ -209,7 +233,7 @@ func (t *ipcTransport) loop() {
 				}
 
 				// log.Printf("[SPAM] Writing %s", string(b))
-				_, err = t.conn.Write(b)
+				err = writeMessage(b)
 				if err != nil {
 					if ctx.Err() == context.Canceled {
 						log.Printf("[DEBUG] Context cancelled during write")
