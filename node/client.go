@@ -108,6 +108,23 @@ func (c *client) BlockByNumber(ctx context.Context, number uint64, full bool) (*
 	return c.parseBlockResponse(response)
 }
 
+func (c *client) BlockByNumberOrTag(ctx context.Context, numberOrTag eth.BlockNumberOrTag, full bool) (*eth.Block, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_getBlockByNumber",
+		Params: jsonrpc.MustParams(&numberOrTag, full),
+	}
+
+	// log.Printf("[SPAM] params: [%s, %s]", string(request.Params[0]), string(request.Params[1]))
+
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not make request")
+	}
+
+	return c.parseBlockResponse(response)
+}
+
 func (c *client) BlockByHash(ctx context.Context, hash string, full bool) (*eth.Block, error) {
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
