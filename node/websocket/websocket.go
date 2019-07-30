@@ -55,6 +55,11 @@ type Connection interface {
 	GetLogs(ctx context.Context, filter eth.LogFilter) ([]eth.Log, error)
 }
 
+var (
+	ErrBlockNotFound       = errors.New("block not found")
+	ErrTransactionNotFound = errors.New("transaction not found")
+)
+
 type connection struct {
 	url  string
 	conn *websocket.Conn
@@ -488,6 +493,10 @@ func (c *connection) parseBlockResponse(response *jsonrpc.RawResponse) (*eth.Blo
 		return nil, errors.New(string(*response.Error))
 	}
 
+	if len(response.Result) == 0 || bytes.Equal(response.Result, json.RawMessage(`null`)) {
+		return nil, ErrBlockNotFound
+	}
+
 	// log.Printf("[SPAM] Result: %s", string(response.Result))
 
 	block := eth.Block{}
@@ -500,10 +509,15 @@ func (c *connection) parseBlockResponse(response *jsonrpc.RawResponse) (*eth.Blo
 }
 
 func (c *connection) BlockByHash(ctx context.Context, hash string, full bool) (*eth.Block, error) {
+	h, err := eth.NewHash(hash)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid hash")
+	}
+
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
 		Method: "eth_getBlockByHash",
-		Params: jsonrpc.MustParams(hash, full),
+		Params: jsonrpc.MustParams(h, full),
 	}
 
 	response, err := c.Request(ctx, &request)
@@ -515,15 +529,25 @@ func (c *connection) BlockByHash(ctx context.Context, hash string, full bool) (*
 }
 
 func (c *connection) TransactionByHash(ctx context.Context, hash string) (*eth.Transaction, error) {
+	h, err := eth.NewHash(hash)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid hash")
+	}
+
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
 		Method: "eth_getTransactionByHash",
-		Params: jsonrpc.MustParams(hash),
+		Params: jsonrpc.MustParams(h),
 	}
 
 	response, err := c.Request(ctx, &request)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not make transaction by hash request")
+	}
+
+	if len(response.Result) == 0 || bytes.Equal(response.Result, json.RawMessage(`null`)) {
+		// Then the transaction isn't recognized
+		return nil, ErrTransactionNotFound
 	}
 
 	tx := eth.Transaction{}
@@ -580,7 +604,7 @@ func (c *connection) TransactionReceipt(ctx context.Context, hash string) (*eth.
 		return nil, errors.New(string(*response.Error))
 	}
 
-	if bytes.Equal(response.Result, json.RawMessage(`null`)) {
+	if len(response.Result) == 0 || bytes.Equal(response.Result, json.RawMessage(`null`)) {
 		// Then the transaction isn't recognized
 		return nil, errors.Errorf("receipt for transaction %s not found", hash)
 	}
