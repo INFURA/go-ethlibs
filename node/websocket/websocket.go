@@ -480,12 +480,16 @@ func (c *connection) BlockByNumber(ctx context.Context, number uint64, full bool
 		return nil, errors.Wrap(err, "could not make request")
 	}
 
-	return c.parseBlockResponse(response)
+	return c.parseBlockResponse(response, n)
 }
 
-func (c *connection) parseBlockResponse(response *jsonrpc.RawResponse) (*eth.Block, error) {
+func (c *connection) parseBlockResponse(response *jsonrpc.RawResponse, lookup interface{}) (*eth.Block, error) {
 	if response.Error != nil {
 		return nil, errors.New(string(*response.Error))
+	}
+
+	if bytes.Equal(response.Result, json.RawMessage("null")) {
+		return nil, errors.Errorf("block %v not found", lookup)
 	}
 
 	// log.Printf("[SPAM] Result: %s", string(response.Result))
@@ -500,10 +504,15 @@ func (c *connection) parseBlockResponse(response *jsonrpc.RawResponse) (*eth.Blo
 }
 
 func (c *connection) BlockByHash(ctx context.Context, hash string, full bool) (*eth.Block, error) {
+	h, err := eth.NewHash(hash)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid hash")
+	}
+
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
 		Method: "eth_getBlockByHash",
-		Params: jsonrpc.MustParams(hash, full),
+		Params: jsonrpc.MustParams(h, full),
 	}
 
 	response, err := c.Request(ctx, &request)
@@ -511,19 +520,29 @@ func (c *connection) BlockByHash(ctx context.Context, hash string, full bool) (*
 		return nil, errors.Wrap(err, "could not make request")
 	}
 
-	return c.parseBlockResponse(response)
+	return c.parseBlockResponse(response, h)
 }
 
 func (c *connection) TransactionByHash(ctx context.Context, hash string) (*eth.Transaction, error) {
+	h, err := eth.NewHash(hash)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid hash")
+	}
+
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
 		Method: "eth_getTransactionByHash",
-		Params: jsonrpc.MustParams(hash),
+		Params: jsonrpc.MustParams(h),
 	}
 
 	response, err := c.Request(ctx, &request)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not make transaction by hash request")
+	}
+
+	if bytes.Equal(response.Result, json.RawMessage(`null`)) {
+		// Then the transaction isn't recognized
+		return nil, errors.Errorf("transaction %s not found", h)
 	}
 
 	tx := eth.Transaction{}
