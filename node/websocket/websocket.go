@@ -55,6 +55,11 @@ type Connection interface {
 	GetLogs(ctx context.Context, filter eth.LogFilter) ([]eth.Log, error)
 }
 
+var (
+	ErrBlockNotFound       = errors.New("block not found")
+	ErrTransactionNotFound = errors.New("transaction not found")
+)
+
 type connection struct {
 	url  string
 	conn *websocket.Conn
@@ -480,16 +485,16 @@ func (c *connection) BlockByNumber(ctx context.Context, number uint64, full bool
 		return nil, errors.Wrap(err, "could not make request")
 	}
 
-	return c.parseBlockResponse(response, n)
+	return c.parseBlockResponse(response)
 }
 
-func (c *connection) parseBlockResponse(response *jsonrpc.RawResponse, lookup interface{}) (*eth.Block, error) {
+func (c *connection) parseBlockResponse(response *jsonrpc.RawResponse) (*eth.Block, error) {
 	if response.Error != nil {
 		return nil, errors.New(string(*response.Error))
 	}
 
-	if bytes.Equal(response.Result, json.RawMessage("null")) {
-		return nil, errors.Errorf("block %v not found", lookup)
+	if len(response.Result) == 0 || bytes.Equal(response.Result, json.RawMessage("null")) {
+		return nil, ErrBlockNotFound
 	}
 
 	// log.Printf("[SPAM] Result: %s", string(response.Result))
@@ -520,7 +525,7 @@ func (c *connection) BlockByHash(ctx context.Context, hash string, full bool) (*
 		return nil, errors.Wrap(err, "could not make request")
 	}
 
-	return c.parseBlockResponse(response, h)
+	return c.parseBlockResponse(response)
 }
 
 func (c *connection) TransactionByHash(ctx context.Context, hash string) (*eth.Transaction, error) {
@@ -540,9 +545,9 @@ func (c *connection) TransactionByHash(ctx context.Context, hash string) (*eth.T
 		return nil, errors.Wrap(err, "could not make transaction by hash request")
 	}
 
-	if bytes.Equal(response.Result, json.RawMessage(`null`)) {
+	if len(response.Result) == 0 || bytes.Equal(response.Result, json.RawMessage(`null`)) {
 		// Then the transaction isn't recognized
-		return nil, errors.Errorf("transaction %s not found", h)
+		return nil, ErrTransactionNotFound
 	}
 
 	tx := eth.Transaction{}

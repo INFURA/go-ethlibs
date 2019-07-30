@@ -23,7 +23,7 @@ func getRopstenConnection(t *testing.T, ctx context.Context) websocket.Connectio
 }
 
 func TestConnection_FutureBlockByNumber(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	conn := getRopstenConnection(t, ctx)
 
 	blockNumber, err := conn.BlockNumber(ctx)
@@ -32,6 +32,7 @@ func TestConnection_FutureBlockByNumber(t *testing.T) {
 	next, err := conn.BlockByNumber(ctx, blockNumber+1000, false)
 	require.Nil(t, next, "future block should be nil")
 	require.Error(t, err, "requesting a future block should return an error")
+	require.Equal(t, websocket.ErrBlockNotFound, err)
 
 	// get a the genesis block by number which should _not_ fail
 	genesis, err := conn.BlockByNumber(ctx, 0, false)
@@ -40,7 +41,7 @@ func TestConnection_FutureBlockByNumber(t *testing.T) {
 }
 
 func TestConnection_InvalidBlockByHash(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	conn := getRopstenConnection(t, ctx)
 
 	b, err := conn.BlockByHash(ctx, "invalid", false)
@@ -54,6 +55,7 @@ func TestConnection_InvalidBlockByHash(t *testing.T) {
 	b, err = conn.BlockByHash(ctx, "0x0badf00dbadf00dbadf00dbadf00dbadf00dbadf00dbadf00dbadf00dbadf00d", false)
 	require.Error(t, err, "requesting a non-existent block should should return an error")
 	require.Nil(t, b, "block from non-existent hash should be nil")
+	require.Equal(t, websocket.ErrBlockNotFound, err)
 
 	// get the genesis block which should _not_ fail
 	b, err = conn.BlockByHash(ctx, "0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d", true)
@@ -62,7 +64,7 @@ func TestConnection_InvalidBlockByHash(t *testing.T) {
 }
 
 func TestConnection_InvalidTransactionByHash(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	conn := getRopstenConnection(t, ctx)
 
 	tx, err := conn.TransactionByHash(ctx, "invalid")
@@ -76,6 +78,7 @@ func TestConnection_InvalidTransactionByHash(t *testing.T) {
 	tx, err = conn.TransactionByHash(ctx, "0x0badf00dbadf00dbadf00dbadf00dbadf00dbadf00dbadf00dbadf00dbadf00d")
 	require.Error(t, err, "requesting an non-existent hash should return an error")
 	require.Nil(t, tx, "tx from non-existent hash should be nil")
+	require.Equal(t, websocket.ErrTransactionNotFound, err)
 
 	// get an early tx which should _not_ fail
 	tx, err = conn.TransactionByHash(ctx, "0x230f6e1739286f9cbf768e34a9ff3d69a2a72b92c8c3383fbdf163035c695332")
