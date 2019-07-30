@@ -12,9 +12,9 @@ import (
 
 func getRopstenConnection(t *testing.T, ctx context.Context) websocket.Connection {
 	// These test require a ropsten websocket URL to test with, for example ws://localhost:8546 or wss://ropsten.infura.io/ws/v3/:YOUR_PROJECT_ID
-	url := os.Getenv("INFURA_TEST_ROPSTEN_WS_URL")
+	url := os.Getenv("ETHLIBS_TEST_ROPSTEN_WS_URL")
 	if url == "" {
-		t.Skip("INFURA_TEST_ROPSTEN_WS_URL not set, skipping test.  Set to a valid websocket URL to execute this test.")
+		t.Skip("ETHLIBS_TEST_ROPSTEN_WS_URL not set, skipping test.  Set to a valid websocket URL to execute this test.")
 	}
 
 	conn, err := websocket.NewConnection(ctx, url)

@@ -493,7 +493,7 @@ func (c *connection) parseBlockResponse(response *jsonrpc.RawResponse) (*eth.Blo
 		return nil, errors.New(string(*response.Error))
 	}
 
-	if len(response.Result) == 0 || bytes.Equal(response.Result, json.RawMessage("null")) {
+	if len(response.Result) == 0 || bytes.Equal(response.Result, json.RawMessage(`null`)) {
 		return nil, ErrBlockNotFound
 	}
 
@@ -604,7 +604,7 @@ func (c *connection) TransactionReceipt(ctx context.Context, hash string) (*eth.
 		return nil, errors.New(string(*response.Error))
 	}
 
-	if bytes.Equal(response.Result, json.RawMessage(`null`)) {
+	if len(response.Result) == 0 || bytes.Equal(response.Result, json.RawMessage(`null`)) {
 		// Then the transaction isn't recognized
 		return nil, errors.Errorf("receipt for transaction %s not found", hash)
 	}
