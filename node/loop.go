@@ -15,7 +15,7 @@ import (
 	"github.com/INFURA/go-ethlibs/jsonrpc"
 )
 
-func newLoopingTransport(ctx context.Context, conn connCloser, readMessage readMessageFunc, writeMessage writeMessageFunc) loopingTransport {
+func newLoopingTransport(ctx context.Context, conn connCloser, readMessage readMessageFunc, writeMessage writeMessageFunc) *loopingTransport {
 	t := loopingTransport{
 		conn:                   conn,
 		ctx:                    ctx,
@@ -31,7 +31,7 @@ func newLoopingTransport(ctx context.Context, conn connCloser, readMessage readM
 	}
 
 	go t.loop()
-	return t
+	return &t
 }
 
 type connCloser interface {

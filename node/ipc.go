@@ -42,5 +42,5 @@ func newIPCTransport(ctx context.Context, parsedURL *url.URL) (*ipcTransport, er
 }
 
 type ipcTransport struct {
-	loopingTransport
+	*loopingTransport
 }

@@ -10,7 +10,7 @@ import (
 )
 
 type websocketTransport struct {
-	loopingTransport
+	*loopingTransport
 }
 
 // NewConnection creates a Connection to the passed in URL.  Use the supplied Context to shutdown the connection by
