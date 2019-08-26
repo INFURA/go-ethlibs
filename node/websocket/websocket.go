@@ -1,3 +1,8 @@
+// Package websocket implements a websocket connection to an Ethereum node.
+//
+// Deprecated: This package has been superseded by the node.Client interface.
+//
+// This package is frozen and no new functionality will be added.
 package websocket
 
 import (

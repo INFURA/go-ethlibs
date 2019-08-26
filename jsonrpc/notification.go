@@ -38,3 +38,18 @@ func (n *Notification) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
+
+// UnmarshalParamsInto will decode Notification.Params into the passed in value, which
+// must be a pointer receiver.  The type of the passed in value is used to Unmarshal the data.
+// UnmarshalInto will fail if the parameters cannot be converted to the passed-in types.
+//
+// Example:
+//
+//   var newHead eth.NewHeads
+//   err := notification.UnmarshalParamsInto(&newHead)
+//
+// IMPORTANT: While Go will compile with non-pointer receivers, the Unmarshal attempt will
+// *always* fail with an error.
+func (n *Notification) UnmarshalParamsInto(receiver interface{}) error {
+	return json.Unmarshal(n.Params, receiver)
+}
