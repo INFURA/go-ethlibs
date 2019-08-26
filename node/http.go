@@ -50,7 +50,7 @@ func (t *httpTransport) Subscribe(ctx context.Context, r *jsonrpc.Request) (Subs
 	return nil, errors.New("subscriptions not supported over HTTP")
 }
 
-func (t *httpTransport) SupportsSubscriptions() bool {
+func (t *httpTransport) IsBidirectional() bool {
 	return false
 }
 

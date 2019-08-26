@@ -35,9 +35,9 @@ func main() {
 
 	log.Printf("[INFO] Current Block number: %d", num)
 
-	if client.SupportsSubscriptions() {
+	if client.IsBidirectional() {
 		log.Printf("[INFO] Client should support subscriptions, attempting newHeads")
-		newHeads, err := client.NewHeads(ctx)
+		newHeads, err := client.SubscribeNewHeads(ctx)
 		if err != nil {
 			log.Fatalf("[FATAL] NewHeads error: %v", err)
 		}

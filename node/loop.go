@@ -405,6 +405,6 @@ func (t *loopingTransport) Subscribe(ctx context.Context, r *jsonrpc.Request) (S
 	}
 }
 
-func (t *loopingTransport) SupportsSubscriptions() bool {
+func (t *loopingTransport) IsBidirectional() bool {
 	return true
 }

@@ -46,7 +46,7 @@ type transport interface {
 	Requester
 	Subscriber
 
-	SupportsSubscriptions() bool
+	IsBidirectional() bool
 }
 
 type client struct {
@@ -62,8 +62,8 @@ func (c *client) Subscribe(ctx context.Context, r *jsonrpc.Request) (Subscriptio
 	return c.transport.Subscribe(ctx, r)
 }
 
-func (c *client) SupportsSubscriptions() bool {
-	return c.transport.SupportsSubscriptions()
+func (c *client) IsBidirectional() bool {
+	return c.transport.IsBidirectional()
 }
 
 func (c *client) URL() string {
@@ -200,7 +200,7 @@ func (c *client) TransactionReceipt(ctx context.Context, hash string) (*eth.Tran
 	return &receipt, nil
 }
 
-func (c *client) GetLogs(ctx context.Context, filter eth.LogFilter) ([]eth.Log, error) {
+func (c *client) Logs(ctx context.Context, filter eth.LogFilter) ([]eth.Log, error) {
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
 		Method: "eth_getLogs",
@@ -252,7 +252,7 @@ func (c *client) TransactionByHash(ctx context.Context, hash string) (*eth.Trans
 	return &tx, err
 }
 
-func (c *client) NewHeads(ctx context.Context) (Subscription, error) {
+func (c *client) SubscribeNewHeads(ctx context.Context) (Subscription, error) {
 	r := jsonrpc.Request{
 		JSONRPC: "2.0",
 		ID:      jsonrpc.ID{Str: "test", IsString: true},
@@ -263,7 +263,7 @@ func (c *client) NewHeads(ctx context.Context) (Subscription, error) {
 	return c.Subscribe(ctx, &r)
 }
 
-func (c *client) NewPendingTransaction(ctx context.Context) (Subscription, error) {
+func (c *client) SubscribeNewPendingTransaction(ctx context.Context) (Subscription, error) {
 	r := jsonrpc.Request{
 		JSONRPC: "2.0",
 		ID:      jsonrpc.ID{Str: "pending", IsString: true},

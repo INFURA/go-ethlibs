@@ -37,22 +37,23 @@ type Client interface {
 	// BlockByHash can be used to get a block by its hash
 	BlockByHash(ctx context.Context, hash string, full bool) (*eth.Block, error)
 
-	// eth_getTransactionByHash can be used to get transaction by its hash
+	// TransactionByHash can be used to get transaction by its hash
 	TransactionByHash(ctx context.Context, hash string) (*eth.Transaction, error)
 
-	// NewHeads subscription
-	NewHeads(ctx context.Context) (Subscription, error)
+	// Initiate a NewHeads subscription
+	SubscribeNewHeads(ctx context.Context) (Subscription, error)
 
-	// NewPendingTransactions subscriptions
-	NewPendingTransaction(ctx context.Context) (Subscription, error)
+	// Initiate a NewPendingTransactions subscription
+	SubscribeNewPendingTransaction(ctx context.Context) (Subscription, error)
 
-	// TransactionReceipt for a particular transaction
+	// TransactionReceipt can be used to get a TransactionReceipt for a particular transaction
 	TransactionReceipt(ctx context.Context, hash string) (*eth.TransactionReceipt, error)
 
-	// GetLogs
-	GetLogs(ctx context.Context, filter eth.LogFilter) ([]eth.Log, error)
+	// Logs returns an array of Logs matching the passed in filter
+	Logs(ctx context.Context, filter eth.LogFilter) ([]eth.Log, error)
 
-	SupportsSubscriptions() bool
+	// IsBidirectional returns true if the under laying transport supports bidirectional features such as subscriptions
+	IsBidirectional() bool
 }
 
 type Subscription interface {
