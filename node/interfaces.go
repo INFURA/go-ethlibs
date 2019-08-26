@@ -40,11 +40,11 @@ type Client interface {
 	// TransactionByHash can be used to get transaction by its hash
 	TransactionByHash(ctx context.Context, hash string) (*eth.Transaction, error)
 
-	// Initiate a NewHeads subscription
+	// SubscribeNewHeads initiates a subscription for newHead events
 	SubscribeNewHeads(ctx context.Context) (Subscription, error)
 
-	// Initiate a NewPendingTransactions subscription
-	SubscribeNewPendingTransaction(ctx context.Context) (Subscription, error)
+	// SubscribeNewPendingTransactions initiates a subscription for newPendingTransaction events
+	SubscribeNewPendingTransactions(ctx context.Context) (Subscription, error)
 
 	// TransactionReceipt can be used to get a TransactionReceipt for a particular transaction
 	TransactionReceipt(ctx context.Context, hash string) (*eth.TransactionReceipt, error)

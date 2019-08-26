@@ -263,7 +263,7 @@ func (c *client) SubscribeNewHeads(ctx context.Context) (Subscription, error) {
 	return c.Subscribe(ctx, &r)
 }
 
-func (c *client) SubscribeNewPendingTransaction(ctx context.Context) (Subscription, error) {
+func (c *client) SubscribeNewPendingTransactions(ctx context.Context) (Subscription, error) {
 	r := jsonrpc.Request{
 		JSONRPC: "2.0",
 		ID:      jsonrpc.ID{Str: "pending", IsString: true},
