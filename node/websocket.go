@@ -13,7 +13,7 @@ type websocketTransport struct {
 	*loopingTransport
 }
 
-// NewConnection creates a Connection to the passed in URL.  Use the supplied Context to shutdown the connection by
+// newWebsocketTransport creates a Connection to the passed in URL.  Use the supplied Context to shutdown the connection by
 // cancelling or otherwise aborting the context.
 func newWebsocketTransport(ctx context.Context, addr *url.URL) (transport, error) {
 	wsConn, _, err := websocket.DefaultDialer.Dial(addr.String(), nil)
