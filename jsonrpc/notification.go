@@ -39,7 +39,7 @@ func (n *Notification) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// UnmarshalParamsInto will decode NotificationParams into the passed in value, which
+// UnmarshalParamsInto will decode Notification.Params into the passed in value, which
 // must be a pointer receiver.  The type of the passed in value is used to Unmarshal the data.
 // UnmarshalInto will fail if the parameters cannot be converted to the passed-in types.
 //
