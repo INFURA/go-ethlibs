@@ -42,6 +42,18 @@ func NewClient(ctx context.Context, rawURL string) (Client, error) {
 	}, nil
 }
 
+func NewCustomClient(requester Requester, subscriber Subscriber) (Client, error) {
+	t, err := newCustomTransport(requester, subscriber)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not create custom transport")
+	}
+
+	return &client{
+		transport: t,
+		rawURL:    "",
+	}, nil
+}
+
 type transport interface {
 	Requester
 	Subscriber
