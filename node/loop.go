@@ -101,6 +101,8 @@ func (t *loopingTransport) loop() {
 					log.Printf("[DEBUG] Context cancelled during read")
 					return nil
 				}
+
+				return errors.Wrap(err, "error reading message")
 			}
 
 			if payload == nil {
