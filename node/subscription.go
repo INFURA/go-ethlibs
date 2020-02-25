@@ -56,8 +56,7 @@ func (s *subscription) Unsubscribe(ctx context.Context) error {
 	if response.Error != nil {
 		return errors.Errorf("%v", response.Error)
 	}
-
-	s.cancel()
+	
 	return nil
 }
 
