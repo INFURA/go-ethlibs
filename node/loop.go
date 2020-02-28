@@ -207,7 +207,7 @@ func (t *loopingTransport) loop() {
 					continue
 				}
 
-				func(n jsonrpc.Notification) {
+				go func(n jsonrpc.Notification) {
 					t.subscriptionsMu.RLock()
 					defer t.subscriptionsMu.RUnlock()
 					if subscription, ok := t.subscriptions[sp.Subscription]; ok {
