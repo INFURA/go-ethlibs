@@ -108,11 +108,11 @@ func newSubscription(response *jsonrpc.RawResponse, id string, r Requester) *sub
 
 func (s *subscription) dispatch(ctx context.Context, n jsonrpc.Notification) {
 	// we've been given a notification that needs to be dispatched to notificationsCh
-	// however we can't do it directly here, sine we only want one goroutine sending
+	// however we can't do it directly here, since we only want one goroutine sending
 	// notifications on this channel, so that it can be stopped cleanly.
 	// Instead, we'll write it to an intermediate work/dispatch channel.
 	//
-	// Important note: the `n` argument to this function is intentional a a by-value copy
+	// Important note: the `n` argument to this function is intentionally a by-value copy
 	// of the full struct rahter than a pointer.  This is to ensure that this function owns
 	// the pointer that is written to the dispatch channel.
 
