@@ -59,8 +59,6 @@ type Client interface {
 type Subscription interface {
 	Response() *jsonrpc.RawResponse
 	ID() string
-	Ch() chan *jsonrpc.Notification
+	Ch() <-chan *jsonrpc.Notification
 	Unsubscribe(ctx context.Context) error
-	Done() <-chan struct{}
-	Err() error
 }

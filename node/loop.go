@@ -148,25 +148,16 @@ func (t *loopingTransport) loop() {
 
 					switch result := result.(type) {
 					case string:
-						subCtx, subCancel := context.WithCancel(t.ctx)
-
-						subscription := &subscription{
-							response:       &patchedResponse,
-							subscriptionID: result,
-							ch:             make(chan *jsonrpc.Notification),
-							conn:           t,
-							ctx:            subCtx,
-							cancel:         subCancel,
-						}
+						sub := newSubscription(&patchedResponse, result, t)
 						t.subscriptionsMu.Lock()
-						t.subscriptions[result] = subscription
+						t.subscriptions[result] = sub
 						t.subscriptionsMu.Unlock()
 
 						go func() {
 							select {
 							case <-ctx.Done():
 								return
-							case start.chResult <- subscription:
+							case start.chResult <- sub:
 								return
 							}
 						}()
@@ -216,20 +207,13 @@ func (t *loopingTransport) loop() {
 					continue
 				}
 
-				t.subscriptionsMu.RLock()
-				if subscription, ok := t.subscriptions[sp.Subscription]; ok {
-					go func(n *jsonrpc.Notification) {
-						_copy := *n
-						select {
-						case <-ctx.Done():
-							return
-						case subscription.ch <- &_copy:
-							return
-						}
-
-					}(msg)
-				}
-				t.subscriptionsMu.RUnlock()
+				go func(n jsonrpc.Notification) {
+					t.subscriptionsMu.RLock()
+					defer t.subscriptionsMu.RUnlock()
+					if subscription, ok := t.subscriptions[sp.Subscription]; ok {
+						subscription.dispatch(ctx, n)
+					}
+				}(*msg)
 			}
 		}
 	})
@@ -243,6 +227,21 @@ func (t *loopingTransport) loop() {
 				b, err := json.Marshal(&r)
 				if err != nil {
 					return errors.Wrap(err, "error marshalling request for backend")
+				}
+
+				if r.Method == "eth_unsubscribe" {
+					// process the unsubscribe here just in case someone
+					// manually creates the eth_unsubscribe RPC versus calling subscription.Unsubscribe()
+					var id string
+					if r.Params.UnmarshalInto(&id) == nil {
+						log.Printf("[DEBUG] removing subscription id %s", id)
+						t.subscriptionsMu.Lock()
+						if sub, ok := t.subscriptions[id]; ok {
+							sub.stop(ctx)
+							delete(t.subscriptions, id)
+						}
+						t.subscriptionsMu.Unlock()
+					}
 				}
 
 				// log.Printf("[SPAM] Writing %s", string(b))
@@ -329,10 +328,8 @@ func (t *loopingTransport) loop() {
 	// let's clean up all the remaining subscriptions
 	t.subscriptionsMu.Lock()
 	for id, sub := range t.subscriptions {
-		sub.mu.Lock()
-		sub.err = err
-		sub.mu.Unlock()
-		sub.cancel()
+		// don't pass in our ctx here, it's already been stopped
+		sub.stop(context.Background())
 		delete(t.subscriptions, id)
 	}
 	t.subscriptionsMu.Unlock()
