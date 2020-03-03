@@ -74,30 +74,30 @@ func newSubscription(response *jsonrpc.RawResponse, id string, r Requester) *sub
 	// is shut down in the proper order and no one tries writing
 	// to a closed channel.  See for example variant #5 on https://go101.org/article/channel-closing.html
 	go func() {
+		defer func() {
+			// Close the stopped channel so it signals to everyone that this goroutine
+			// is no longer running, which will cause .dispatch and .stop to return without blocking
+			close(s.stoppedCh)
+
+			// then close the notifications channel so any consumers of
+			// subscription.Ch() are unblocked
+			close(s.notificationsCh)
+		}()
+
 		for {
 			select {
 			case <-s.signalCh:
-				// we've been signalled to stop.  Close the stopped channel so it
-				// signals to everyone we've already been stopped.
-				close(s.stoppedCh)
-
-				// then close the notifications channel so any consumers of
-				// subscription.Ch() are unblocked
-				close(s.notificationsCh)
+				// we've been signalled to stop, we can end this goroutine
+				return
 			case n := <-s.dispatchCh:
 				// we have a notification to dispatch to the external channel
 				select {
 				case s.notificationsCh <- n:
 					// we successfully dispatched the notification
 				case <-s.signalCh:
-					// we were told to stop while trying to write the notification
-					// Close the stopped channel so it signals to everyone we've
-					// already been stopped.
-					close(s.stoppedCh)
-
-					// then close the notifications channel so any consumers of
-					// subscription.Ch() are unblocked
-					close(s.notificationsCh)
+					// we were told to stop while trying to write the notification,
+					// we can end this goroutine
+					return
 				}
 			}
 		}
