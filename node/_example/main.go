@@ -54,7 +54,17 @@ func main() {
 				log.Fatalf("[FATAL] Cannot parse newHeads params: %v", err)
 			}
 
-			log.Printf("[INFO] got notification for newHead %v %v", newHead.Result.Number.UInt64(), newHead.Result.Hash)
+			// get the full block details, using a custom jsonrpc ID as a test
+			block, err := client.BlockByHash(
+				ctx, newHead.Result.Hash.String(),
+				true,
+				node.WithRequestID(jsonrpc.ID{Str: "foo"}),
+			)
+			if err != nil {
+				log.Fatalf("[FATAL] Block for newHead notification not found: %v", err)
+			}
+
+			log.Printf("[INFO] got notification for new block %v %v", block.Number.UInt64(), block.Hash)
 
 			received += 1
 			// unsubscribe after 3rd block (just as a test)

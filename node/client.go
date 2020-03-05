@@ -15,6 +15,8 @@ var (
 	ErrTransactionNotFound = errors.New("transaction not found")
 )
 
+var _ Client = (*client)(nil)
+
 func NewClient(ctx context.Context, rawURL string) (Client, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
@@ -82,12 +84,13 @@ func (c *client) URL() string {
 	return c.rawURL
 }
 
-func (c *client) BlockNumber(ctx context.Context) (uint64, error) {
+func (c *client) BlockNumber(ctx context.Context, options ...RequestOption) (uint64, error) {
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
 		Method: "eth_blockNumber",
 	}
 
+	applyOptions(&request, options)
 	response, err := c.Request(ctx, &request)
 	if err != nil {
 		return 0, err
@@ -106,7 +109,7 @@ func (c *client) BlockNumber(ctx context.Context) (uint64, error) {
 	return q.UInt64(), nil
 }
 
-func (c *client) BlockByNumber(ctx context.Context, number uint64, full bool) (*eth.Block, error) {
+func (c *client) BlockByNumber(ctx context.Context, number uint64, full bool, options ...RequestOption) (*eth.Block, error) {
 	n := eth.QuantityFromUInt64(number)
 
 	request := jsonrpc.Request{
@@ -115,8 +118,7 @@ func (c *client) BlockByNumber(ctx context.Context, number uint64, full bool) (*
 		Params: jsonrpc.MustParams(&n, full),
 	}
 
-	// log.Printf("[SPAM] params: [%s, %s]", string(request.Params[0]), string(request.Params[1]))
-
+	applyOptions(&request, options)
 	response, err := c.Request(ctx, &request)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not make request")
@@ -125,15 +127,14 @@ func (c *client) BlockByNumber(ctx context.Context, number uint64, full bool) (*
 	return c.parseBlockResponse(response)
 }
 
-func (c *client) BlockByNumberOrTag(ctx context.Context, numberOrTag eth.BlockNumberOrTag, full bool) (*eth.Block, error) {
+func (c *client) BlockByNumberOrTag(ctx context.Context, numberOrTag eth.BlockNumberOrTag, full bool, options ...RequestOption) (*eth.Block, error) {
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
 		Method: "eth_getBlockByNumber",
 		Params: jsonrpc.MustParams(&numberOrTag, full),
 	}
 
-	// log.Printf("[SPAM] params: [%s, %s]", string(request.Params[0]), string(request.Params[1]))
-
+	applyOptions(&request, options)
 	response, err := c.Request(ctx, &request)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not make request")
@@ -142,7 +143,7 @@ func (c *client) BlockByNumberOrTag(ctx context.Context, numberOrTag eth.BlockNu
 	return c.parseBlockResponse(response)
 }
 
-func (c *client) BlockByHash(ctx context.Context, hash string, full bool) (*eth.Block, error) {
+func (c *client) BlockByHash(ctx context.Context, hash string, full bool, options ...RequestOption) (*eth.Block, error) {
 	h, err := eth.NewHash(hash)
 	if err != nil {
 		return nil, errors.Wrap(err, "invalid hash")
@@ -154,6 +155,7 @@ func (c *client) BlockByHash(ctx context.Context, hash string, full bool) (*eth.
 		Params: jsonrpc.MustParams(h, full),
 	}
 
+	applyOptions(&request, options)
 	response, err := c.Request(ctx, &request)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not make request")
@@ -182,13 +184,14 @@ func (c *client) parseBlockResponse(response *jsonrpc.RawResponse) (*eth.Block, 
 	return &block, nil
 }
 
-func (c *client) TransactionReceipt(ctx context.Context, hash string) (*eth.TransactionReceipt, error) {
+func (c *client) TransactionReceipt(ctx context.Context, hash string, options ...RequestOption) (*eth.TransactionReceipt, error) {
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
 		Method: "eth_getTransactionReceipt",
 		Params: jsonrpc.MustParams(hash),
 	}
 
+	applyOptions(&request, options)
 	response, err := c.Request(ctx, &request)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not make request")
@@ -212,13 +215,14 @@ func (c *client) TransactionReceipt(ctx context.Context, hash string) (*eth.Tran
 	return &receipt, nil
 }
 
-func (c *client) Logs(ctx context.Context, filter eth.LogFilter) ([]eth.Log, error) {
+func (c *client) Logs(ctx context.Context, filter eth.LogFilter, options ...RequestOption) ([]eth.Log, error) {
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
 		Method: "eth_getLogs",
 		Params: jsonrpc.MustParams(filter),
 	}
 
+	applyOptions(&request, options)
 	response, err := c.Request(ctx, &request)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not make request")
@@ -237,7 +241,7 @@ func (c *client) Logs(ctx context.Context, filter eth.LogFilter) ([]eth.Log, err
 	return _logs, nil
 }
 
-func (c *client) TransactionByHash(ctx context.Context, hash string) (*eth.Transaction, error) {
+func (c *client) TransactionByHash(ctx context.Context, hash string, options ...RequestOption) (*eth.Transaction, error) {
 	h, err := eth.NewHash(hash)
 	if err != nil {
 		return nil, errors.Wrap(err, "invalid hash")
@@ -249,6 +253,7 @@ func (c *client) TransactionByHash(ctx context.Context, hash string) (*eth.Trans
 		Params: jsonrpc.MustParams(h),
 	}
 
+	applyOptions(&request, options)
 	response, err := c.Request(ctx, &request)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not make transaction by hash request")
@@ -264,24 +269,32 @@ func (c *client) TransactionByHash(ctx context.Context, hash string) (*eth.Trans
 	return &tx, err
 }
 
-func (c *client) SubscribeNewHeads(ctx context.Context) (Subscription, error) {
-	r := jsonrpc.Request{
+func (c *client) SubscribeNewHeads(ctx context.Context, options ...RequestOption) (Subscription, error) {
+	request := jsonrpc.Request{
 		JSONRPC: "2.0",
 		ID:      jsonrpc.ID{Str: "test", IsString: true},
 		Method:  "eth_subscribe",
 		Params:  jsonrpc.MustParams("newHeads"),
 	}
 
-	return c.Subscribe(ctx, &r)
+	applyOptions(&request, options)
+	return c.Subscribe(ctx, &request)
 }
 
-func (c *client) SubscribeNewPendingTransactions(ctx context.Context) (Subscription, error) {
-	r := jsonrpc.Request{
+func (c *client) SubscribeNewPendingTransactions(ctx context.Context, options ...RequestOption) (Subscription, error) {
+	request := jsonrpc.Request{
 		JSONRPC: "2.0",
 		ID:      jsonrpc.ID{Str: "pending", IsString: true},
 		Method:  "eth_subscribe",
 		Params:  jsonrpc.MustParams("newPendingTransactions"),
 	}
 
-	return c.Subscribe(ctx, &r)
+	applyOptions(&request, options)
+	return c.Subscribe(ctx, &request)
+}
+
+func applyOptions(request *jsonrpc.Request, options []RequestOption) {
+	for _, f := range options {
+		f(request)
+	}
 }
