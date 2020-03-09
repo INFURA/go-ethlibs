@@ -56,9 +56,8 @@ func main() {
 
 			// get the full block details, using a custom jsonrpc ID as a test
 			block, err := client.BlockByHash(
-				ctx, newHead.Result.Hash.String(),
+				node.ContextWithRequestID(ctx, jsonrpc.StringID("test")), newHead.Result.Hash.String(),
 				true,
-				node.WithRequestID(jsonrpc.StringID("foo")),
 			)
 			if err != nil {
 				log.Fatalf("[FATAL] Block for newHead notification not found: %v", err)
