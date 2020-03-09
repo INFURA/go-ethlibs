@@ -58,7 +58,7 @@ func main() {
 			block, err := client.BlockByHash(
 				ctx, newHead.Result.Hash.String(),
 				true,
-				node.WithRequestID(jsonrpc.ID{Str: "foo"}),
+				node.WithRequestID(jsonrpc.StringID("foo")),
 			)
 			if err != nil {
 				log.Fatalf("[FATAL] Block for newHead notification not found: %v", err)
