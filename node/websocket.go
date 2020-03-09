@@ -44,7 +44,7 @@ func newWebsocketTransport(ctx context.Context, addr *url.URL) (transport, error
 		return err
 	}
 
-	t := ipcTransport{
+	t := websocketTransport{
 		loopingTransport: newLoopingTransport(ctx, wsConn, readMessage, writeMessage),
 	}
 
