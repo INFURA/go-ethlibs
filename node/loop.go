@@ -3,12 +3,14 @@ package node
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/rand"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
@@ -63,10 +65,11 @@ type subscriptionRequest struct {
 }
 
 type outboundRequest struct {
-	request  *jsonrpc.Request
-	response *jsonrpc.RawResponse
-	chResult chan *jsonrpc.RawResponse
-	chError  chan error
+	request     *jsonrpc.Request
+	response    *jsonrpc.RawResponse
+	chResult    chan *jsonrpc.RawResponse
+	chError     chan error
+	chAbandoned chan struct{}
 }
 
 type loopingTransport struct {
@@ -85,7 +88,10 @@ type loopingTransport struct {
 	subscriptions   map[string]*subscription
 	subscriptionsMu sync.RWMutex
 
-	readMessage  readMessageFunc
+	readMu      sync.Mutex
+	readMessage readMessageFunc
+
+	writeMu      sync.Mutex
 	writeMessage writeMessageFunc
 }
 
@@ -95,7 +101,9 @@ func (t *loopingTransport) loop() {
 	// Reader
 	g.Go(func() error {
 		for {
+			t.readMu.Lock()
 			payload, err := t.readMessage()
+			t.readMu.Unlock()
 			if err != nil {
 				if ctx.Err() == context.Canceled {
 					log.Printf("[DEBUG] Context cancelled during read")
@@ -118,7 +126,7 @@ func (t *loopingTransport) loop() {
 
 			switch msg := msg.(type) {
 			case *jsonrpc.RawResponse:
-				// log.Printf("[SPAM] response: %v", msg)
+				// log.Printf("[SPAM] response: %p", msg)
 
 				// subscriptions
 				t.requestMu.Lock()
@@ -177,17 +185,21 @@ func (t *loopingTransport) loop() {
 					delete(t.outboundRequests, msg.ID)
 					t.requestMu.Unlock()
 
-					go func(r *jsonrpc.RawResponse) {
+					go func(o *outboundRequest, r *jsonrpc.RawResponse) {
 						patchedResponse := *r
-						patchedResponse.ID = outbound.request.ID
+						patchedResponse.ID = o.request.ID
 						select {
 						case <-ctx.Done():
 							return
-						case outbound.chResult <- &patchedResponse:
+						case <-o.chAbandoned:
+							// request was abandoned (e.g. client disconnected)
+							log.Printf("[WARN] request abandoned %v %v", r.ID, o.request.ID)
+							return
+						case o.chResult <- &patchedResponse:
 							return
 						}
 
-					}(msg)
+					}(outbound, msg)
 					continue
 				}
 				t.requestMu.Unlock()
@@ -245,7 +257,9 @@ func (t *loopingTransport) loop() {
 				}
 
 				// log.Printf("[SPAM] Writing %s", string(b))
+				t.writeMu.Lock()
 				err = t.writeMessage(b)
+				t.writeMu.Unlock()
 				if err != nil {
 					if ctx.Err() == context.Canceled {
 						log.Printf("[DEBUG] Context cancelled during write")
@@ -268,7 +282,7 @@ func (t *loopingTransport) loop() {
 			// subscriptions
 			case s := <-t.chSubscriptionRequests:
 				// log.Printf("[SPAM] Sub request %v", s)
-				id := t.nextID()
+				id := t.nextID(s.request.ID)
 				proxy := *s.request
 				proxy.ID = id
 
@@ -286,10 +300,10 @@ func (t *loopingTransport) loop() {
 			// outbound requests
 			case o := <-t.chOutboundRequests:
 				// log.Printf("[SPAM] outbound request %v", *o)
-				id := t.nextID()
+				id := t.nextID(o.request.ID)
 				proxy := *o.request
 				proxy.ID = id
-				// log.Printf("[SPAM] outbound proxied request %v", proxy)
+				// log.Printf("[DEBUG] outbound proxied request method %s ID %v was %v", proxy.Method, proxy.ID, o.request.ID)
 
 				t.requestMu.Lock()
 				t.outboundRequests[id] = o
@@ -313,8 +327,13 @@ func (t *loopingTransport) loop() {
 		select {
 		case <-ctx.Done():
 			log.Printf("[DEBUG] Context done, setting deadlines to now")
+			t.readMu.Lock()
 			_ = t.conn.SetReadDeadline(time.Now())
+			t.readMu.Unlock()
+
+			t.writeMu.Lock()
 			_ = t.conn.SetWriteDeadline(time.Now())
+			t.writeMu.Unlock()
 		}
 
 		return nil
@@ -337,27 +356,40 @@ func (t *loopingTransport) loop() {
 	_ = t.conn.Close()
 }
 
-func (t *loopingTransport) nextID() jsonrpc.ID {
+func (t *loopingTransport) nextID(seed jsonrpc.ID) jsonrpc.ID {
+	n := atomic.AddUint64(&t.counter, 1)
+	if seed.IsString {
+		return jsonrpc.ID{
+			Num:      0,
+			Str:      fmt.Sprintf("%s-%d", seed.Str, n),
+			IsString: true,
+		}
+	}
 	return jsonrpc.ID{
-		Num: atomic.AddUint64(&t.counter, 1),
+		Num: n,
 	}
 }
 
 func (t *loopingTransport) Request(ctx context.Context, r *jsonrpc.Request) (*jsonrpc.RawResponse, error) {
 
-	outbound := outboundRequest{
-		request:  r,
-		chResult: make(chan *jsonrpc.RawResponse),
-		chError:  make(chan error),
+	owned := &jsonrpc.Request{}
+	if err := copier.Copy(owned, r); err != nil {
+		return nil, errors.Wrap(err, "could not allocate copy of request")
+	}
+
+	outbound := &outboundRequest{
+		request:     owned,
+		chResult:    make(chan *jsonrpc.RawResponse),
+		chError:     make(chan error),
+		chAbandoned: make(chan struct{}),
 	}
 
 	defer func() {
-		close(outbound.chResult)
-		close(outbound.chError)
+		close(outbound.chAbandoned)
 	}()
 
 	select {
-	case t.chOutboundRequests <- &outbound:
+	case t.chOutboundRequests <- outbound:
 		// log.Printf("[SPAM] outbound request sent")
 	case <-ctx.Done():
 		return nil, errors.Wrap(ctx.Err(), "context finished waiting for response")
@@ -378,8 +410,13 @@ func (t *loopingTransport) Subscribe(ctx context.Context, r *jsonrpc.Request) (S
 		return nil, errors.New("request is not a subscription request")
 	}
 
+	owned := &jsonrpc.Request{}
+	if err := copier.Copy(owned, r); err != nil {
+		return nil, errors.Wrap(err, "could not allocate copy of request")
+	}
+
 	start := subscriptionRequest{
-		request:  r,
+		request:  owned,
 		chResult: make(chan *subscription),
 		chError:  make(chan error),
 	}
