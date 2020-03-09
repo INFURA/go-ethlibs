@@ -20,6 +20,20 @@ type ID struct {
 	IsString bool
 }
 
+func StringID(s string) ID {
+	return ID{
+		Str:      s,
+		IsString: true,
+	}
+}
+
+func IntID(i uint64) ID {
+	return ID{
+		Num:      i,
+		IsString: false,
+	}
+}
+
 func (id ID) String() string {
 	if id.IsString {
 		return strconv.Quote(id.Str)
