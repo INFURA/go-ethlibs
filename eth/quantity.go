@@ -39,10 +39,9 @@ func NewQuantity(value string) (*Quantity, error) {
 	}
 
 	if strings.HasPrefix(value, "0x0") && value != "0x0" {
-		// TODO: Decide if leading 0 is invalid or acceptable
-		// If acceptable, remove the leading 0
-		// q.s = strings.Replace(value, "0x0", "0x", 1)
-		return nil, errors.New("quantity values should not have leading zeroes")
+		// NOTE: Technically, a leading 0 isn't valid, but it should be considered acceptable
+		// for example, RLP-encoded quantities don't follow this rule, but should be accepted
+		q.s = strings.Replace(value, "0x0", "0x", 1)
 	}
 
 	// If the hex string is odd assume it's because a leading zero was removed
