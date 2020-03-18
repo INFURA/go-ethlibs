@@ -26,7 +26,7 @@ func From(input string) (*Value, error) {
 // from parses the input string and returns an rlp.Value and any remaining unparsed text
 func from(input string) (*Value, string, error) {
 
-	// This code was heavily assited by this series of articles:
+	// This code was heavily assisted by this series of articles:
 	//   https://medium.com/coinmonks/ethereum-under-the-hood-part-3-rlp-decoding-c0c07f5c0714
 	// And of course the RLP wiki spec:
 	//   https://github.com/ethereum/wiki/wiki/RLP

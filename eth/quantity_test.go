@@ -46,6 +46,13 @@ func TestQuantityFromUInt64(t *testing.T) {
 	require.Equal(t, int64(1), eth.MustQuantity("0x1").Int64())
 
 	{
+		// leading zeroes are acceptable on input
+		zeroes, err := eth.NewQuantity("0x01230")
+		require.NoError(t, err)
+		require.Equal(t, uint64(0x1230), zeroes.UInt64())
+	}
+
+	{
 		invalid, err := eth.NewQuantity("bad")
 		require.Error(t, err)
 		require.Nil(t, invalid)
@@ -53,12 +60,6 @@ func TestQuantityFromUInt64(t *testing.T) {
 
 	{
 		invalid, err := eth.NewQuantity("0xinvalid")
-		require.Error(t, err)
-		require.Nil(t, invalid)
-	}
-
-	{
-		invalid, err := eth.NewQuantity("0x00")
 		require.Error(t, err)
 		require.Nil(t, invalid)
 	}
