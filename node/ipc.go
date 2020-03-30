@@ -10,7 +10,8 @@ import (
 )
 
 func newIPCTransport(ctx context.Context, parsedURL *url.URL) (*ipcTransport, error) {
-	conn, err := net.Dial("unix", parsedURL.String())
+	var d net.Dialer
+	conn, err := d.DialContext(ctx, "unix", parsedURL.String())
 	if err != nil {
 		return nil, errors.Wrap(err, "could not connect over IPC")
 	}

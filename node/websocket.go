@@ -16,7 +16,7 @@ type websocketTransport struct {
 // newWebsocketTransport creates a Connection to the passed in URL.  Use the supplied Context to shutdown the connection by
 // cancelling or otherwise aborting the context.
 func newWebsocketTransport(ctx context.Context, addr *url.URL) (transport, error) {
-	wsConn, _, err := websocket.DefaultDialer.Dial(addr.String(), nil)
+	wsConn, _, err := websocket.DefaultDialer.DialContext(ctx, addr.String(), nil)
 	if err != nil {
 		return nil, err
 	}

@@ -106,7 +106,6 @@ func (t *loopingTransport) loop() {
 			t.readMu.Unlock()
 			if err != nil {
 				if ctx.Err() == context.Canceled {
-					log.Printf("[DEBUG] Context cancelled during read")
 					return nil
 				}
 
@@ -262,7 +261,6 @@ func (t *loopingTransport) loop() {
 				t.writeMu.Unlock()
 				if err != nil {
 					if ctx.Err() == context.Canceled {
-						log.Printf("[DEBUG] Context cancelled during write")
 						return nil
 					}
 
@@ -322,18 +320,11 @@ func (t *loopingTransport) loop() {
 		}
 	})
 
-	// Aborter
+	// Closer
 	g.Go(func() error {
 		select {
 		case <-ctx.Done():
-			log.Printf("[DEBUG] Context done, setting deadlines to now")
-			t.readMu.Lock()
-			_ = t.conn.SetReadDeadline(time.Now())
-			t.readMu.Unlock()
-
-			t.writeMu.Lock()
-			_ = t.conn.SetWriteDeadline(time.Now())
-			t.writeMu.Unlock()
+			_ = t.conn.Close()
 		}
 
 		return nil
