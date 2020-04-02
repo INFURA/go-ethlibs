@@ -92,4 +92,12 @@ func TestFrom(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, decoded.List, 3)
 	}
+
+	{
+		// "empty" RLP
+		input := "0x"
+		decoded, err := rlp.From(input)
+		require.NoError(t, err)
+		require.Equal(t, "0x", decoded.String)
+	}
 }
