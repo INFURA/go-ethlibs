@@ -36,7 +36,7 @@ func from(input string) (*Value, string, error) {
 	}
 
 	for _, r := range input {
-		if ('a' > r || r > 'f') && ('A' > r || r > 'F') && ('0' > r || r > '9') {
+		if (r < 'a' || 'f' < r) && (r < 'A' || 'F' < r) && (r < '0' || '9' < r) {
 			return nil, "", errors.New("invalid rune in input")
 		}
 	}
