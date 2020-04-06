@@ -31,13 +31,24 @@ func from(input string) (*Value, string, error) {
 	// And of course the RLP wiki spec:
 	//   https://github.com/ethereum/wiki/wiki/RLP
 
+	if input == "" {
+		return &Value{String: "0x"}, "", nil
+	}
+
+	for _, r := range input {
+		if (r < 'a' || 'f' < r) && (r < 'A' || 'F' < r) && (r < '0' || '9' < r) {
+			return nil, "", errors.New("invalid rune in input")
+		}
+	}
+
 	remainder := input
 	b := remainder[0:2]
 	p, err := strconv.ParseUint(b, 16, 8)
-	prefix := byte(p)
 	if err != nil {
 		return nil, "", errors.Wrap(err, "could not decode prefix")
 	}
+
+	prefix := byte(p)
 
 	switch {
 	// 0x00 - 0x7f - For a single byte whose value is in the [0x00, 0x7f] range, that byte is its own RLP encoding.
@@ -53,7 +64,7 @@ func from(input string) (*Value, string, error) {
 	case 0x80 <= prefix && prefix <= 0xb7:
 		// short string
 		size := uint64((prefix - 0x80) * 2)
-		if size > uint64(len(remainder)) {
+		if size > uint64(len(remainder)-2) {
 			return nil, "", errors.New("insufficient remaining input for short string")
 		}
 		remainder = remainder[2:]
@@ -68,7 +79,7 @@ func from(input string) (*Value, string, error) {
 	case 0xb8 <= prefix && prefix <= 0xbf:
 		// long string
 		sizeSize := int((prefix - 0xb7) * 2)
-		if sizeSize > len(remainder) {
+		if sizeSize > len(remainder)-2 {
 			return nil, "", errors.New("insufficient remaining input for size of long string")
 		}
 		remainder = remainder[2:]
@@ -96,7 +107,7 @@ func from(input string) (*Value, string, error) {
 		// short list
 		size := uint64((prefix - 0xc0) * 2)
 		// copy the list as is
-		if size > uint64(len(remainder)) {
+		if size > uint64(len(remainder)-2) {
 			return nil, "", errors.New("insufficient remaining input for short list")
 		}
 		remainder = remainder[2:]
@@ -114,13 +125,18 @@ func from(input string) (*Value, string, error) {
 	case 0xf8 <= prefix /*&& prefix <= 0xff*/ :
 		// long list
 		sizeSize := int((prefix - 0xf7) * 2)
-		if sizeSize > len(remainder) {
+		if sizeSize > len(remainder)-2 {
 			return nil, "", errors.New("insufficient remaining input for size of long list")
 		}
 		remainder = remainder[2:]
 		size, err := strconv.ParseInt(remainder[0:sizeSize], 16, 64)
 		if err != nil {
 			return nil, "", errors.Wrap(err, "could not decode long list size")
+		}
+
+		maxsize := int64(^uint64(0) >> 2)
+		if size > maxsize || size < 0 {
+			return nil, "", errors.New("invalid list size")
 		}
 		size *= 2
 		remainder = remainder[sizeSize:]
