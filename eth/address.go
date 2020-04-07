@@ -8,6 +8,8 @@ import (
 
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/sha3"
+
+	"github.com/INFURA/go-ethlibs/rlp"
 )
 
 type Address Data20
@@ -50,6 +52,12 @@ func (a *Address) MarshalJSON() ([]byte, error) {
 	// Seems like geth and parity both return the lower-cased string rather than the checksummed one
 	s := strings.ToLower(string(*a))
 	return json.Marshal(&s)
+}
+
+func (a *Address) RLP() rlp.Value {
+	return rlp.Value{
+		String: a.String(),
+	}
 }
 
 /*
@@ -104,3 +112,4 @@ func ToChecksumAddress(address string) string {
 
 	return b.String()
 }
+

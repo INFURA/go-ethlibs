@@ -2,9 +2,26 @@ package eth
 
 import (
 	"encoding/json"
+	"errors"
 )
 
 type Condition json.RawMessage
+
+
+// require values for valid tx
+func NewTransaction(nonce int64, gasPrice int64, gasLimit int64, toAddr string, value int64,  data []byte/*, chainId int64*/) (*Transaction, error) {
+	//chainID := QuantityFromInt64(chainId)
+	t := Transaction{
+		Nonce: QuantityFromInt64(nonce),
+		GasPrice: QuantityFromInt64(gasPrice),
+		Gas: QuantityFromInt64(gasLimit),
+		To: MustAddress(toAddr),
+		Value: QuantityFromInt64(value),
+		Input: *MustData(string(data)),
+		//ChainId: &chainID,
+	}
+	return &t, nil
+}
 
 type Transaction struct {
 	BlockHash   *Hash     `json:"blockHash"`
@@ -43,6 +60,8 @@ type NewPendingTxNotificationParams struct {
 	Subscription string `json:"subscription"`
 	Result       Hash   `json:"result"`
 }
+
+var ErrInsufficientParams = errors.New("transaction is missing values")
 
 func (t *Transaction) UnmarshalJSON(data []byte) error {
 	type tx Transaction
