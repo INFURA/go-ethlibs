@@ -23,6 +23,7 @@ func TestSignTransaction(t *testing.T) {
 
     signed, err := tx.Sign("fad9c8855b740a0b7ed4c221dbad0f33a83a49cad6b3fe8d5817ac83d38b6a19", 1)
     require.NoError(t, err)
+    log.Println("rawTx: ", signed)
 
     tx2 := eth.Transaction{}
     err = tx2.FromRaw(signed)
@@ -47,23 +48,16 @@ func TestSignTransaction2(t *testing.T) {
 
     signed, err := tx.Sign("678174D637194A1ACC1A8C2FB494F62DAC9EB3CBCDFD9B9EF182417F73BA21C8", 1)
     require.NoError(t, err)
-    log.Println(signed)
+    log.Println("rawTx: ", signed)
 
     tx2 := eth.Transaction{}
     err = tx2.FromRaw(signed)
     require.NoError(t, err)
-    log.Println(tx.Nonce.UInt64())
-    log.Println(tx2.GasPrice.UInt64())
-    log.Println(tx2.Gas.UInt64())
-    log.Println(tx2.Value.UInt64())
     require.Equal(t, tx2.Nonce, eth.QuantityFromInt64(146))
     require.Equal(t, tx2.GasPrice, eth.QuantityFromInt64(3000000000))
     require.Equal(t, tx2.Gas, eth.QuantityFromInt64(22000))
     require.Equal(t, tx2.To.String(), "0x43700db832E9Ac990D36d6279A846608643c904E")
     require.Equal(t, tx2.Value, eth.QuantityFromInt64(1000000000))
-    if err != nil {
-        log.Println("ERRROR")
-    }
 }
 
 func TestSignTransaction3(t *testing.T) {
@@ -76,6 +70,8 @@ func TestSignTransaction3(t *testing.T) {
     require.Equal(t, tx.To.String(), "0x43700db832E9Ac990D36d6279A846608643c904E")
     require.Equal(t, tx.Value, eth.QuantityFromInt64(1000000000))
 
-    _, err = tx.Sign("678174D637194A1ACC1A8C2FB494F62DAC9EB3CBCDFD9B9EF182417F73BA21C8", 1)
+    signed, err := tx.Sign("678174D637194A1ACC1A8C2FB494F62DAC9EB3CBCDFD9B9EF182417F73BA21C8", 1)
+    require.NoError(t, err)
+    log.Println("rawTx: ", signed)
 
 }

@@ -1,6 +1,7 @@
 package eth
 
 import (
+	"encoding/hex"
 	"errors"
 	"log"
 
@@ -26,12 +27,17 @@ func (t *Transaction) Sign(privateKey string, chainId uint64) (string, error) {
 		return "", ErrInsufficientParams
 	}
 
+	pKey, err := hex.DecodeString(privateKey)
+	if err != nil {
+		return "", err
+	}
+
 	rawTx, err := t.serialize(chainId,false)
 	if err != nil {
 		return "", err
 	}
 
-	privKey, pubKey := secp256k1.PrivKeyFromBytes(secp256k1.S256(), []byte(privateKey))
+	privKey, pubKey := secp256k1.PrivKeyFromBytes(secp256k1.S256(), pKey)
 	signature, err := privKey.Sign([]byte(rawTx))
 	if err != nil {
 		return "", err
@@ -109,7 +115,4 @@ func (t* Transaction) signatureValues(sig *secp256k1.Signature) {
 	t.R = QuantityFromBigInt(sig.R)
 	t.S = QuantityFromBigInt(sig.S)
 	t.V = QuantityFromUInt64(27)
-	log.Println("V: ", t.V.UInt64())
-	log.Println("R: ", sig.R.Uint64())
-	log.Println("S: ", sig.S.Uint64())
 }
