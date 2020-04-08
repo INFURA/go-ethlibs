@@ -1,13 +1,16 @@
 package eth
 
 import (
-	"fmt"
-	secp256k1 "github.com/btcsuite/btcd/btcec"
-	"github.com/INFURA/go-ethlibs/rlp"
+	"errors"
 	"log"
-	"math/big"
+
+	secp256k1 "github.com/btcsuite/btcd/btcec"
+
+	"github.com/INFURA/go-ethlibs/rlp"
 )
 
+var ErrInsufficientParams = errors.New("transaction is missing values")
+var ErrFatalCrytpo = errors.New("unable to sign Tx with private key")
 
 // Looks like there have been multiple attempts to get the Koblitz curve (secp256k1) supported in golang
 //
@@ -19,14 +22,11 @@ import (
 
 func (t *Transaction) Sign(privateKey string, chainId uint64) (string, error) {
 
-	// add ChainID for easy signing..  not sure this is best but makes the serializing/signing easier
-	c := QuantityFromUInt64(chainId)
-	t.ChainId = &c
 	if !t.check() {
 		return "", ErrInsufficientParams
 	}
 
-	rawTx, err := t.serialize(false)
+	rawTx, err := t.serialize(chainId,false)
 	if err != nil {
 		return "", err
 	}
@@ -36,24 +36,18 @@ func (t *Transaction) Sign(privateKey string, chainId uint64) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	//return t.serializeWithSignature(signature)
+
 	verified := signature.Verify([]byte(rawTx), pubKey)
-	log.Println(verified)
+	if !verified {
+		panic(ErrFatalCrytpo)
+	}
 
 	// extract signature (r,s,v)
-	r,s,v,err := signatureValues(signature.Serialize())
-	if err != nil {
-		return "", err
-	}
-	t.R = QuantityFromBigInt(r)
-	t.S = QuantityFromBigInt(s)
-	t.V = QuantityFromBigInt(v)
-
-	return t.serialize(true)
-	//return signature, nil
+	t.signatureValues(signature)
+	return t.serialize(chainId,true)
 }
 
-func (t *Transaction) serialize(signature bool) (string, error) {
+func (t *Transaction) serialize(chainId uint64, signature bool) (string, error) {
 
 	// my brain has turned to mush, pretty sure this not the most efficient way
 	// but trying to follow ether.js logic
@@ -61,15 +55,14 @@ func (t *Transaction) serialize(signature bool) (string, error) {
 	list = append(list, t.Nonce.RLP())
 	list = append(list, t.GasPrice.RLP())
 	list = append(list, t.Gas.RLP())
-	list = append(list, t.To.RLP())
+	list = append(list, rlp.Value{String: t.To.String()})
 	list = append(list, t.Value.RLP())
 	//list = append(list, t.Input.Data.String())
 	list = append(list, rlp.Value{String: t.Input.String()})
 
 	if !signature {
-		/*
-		if t.ChainId != nil && t.ChainId.UInt64() != 0 {
-			list = append(list, t.ChainId.RLP())
+		if chainId != 0 {
+			list = append(list, QuantityFromUInt64(chainId).RLP())
 			r, err := rlp.From("0x")
 			if err != nil {
 				return "", err
@@ -81,30 +74,29 @@ func (t *Transaction) serialize(signature bool) (string, error) {
 			}
 			list = append(list, *s)
 		}
-
-		 */
 	} else {
-		if t.ChainId != nil && t.ChainId.UInt64() != 0 {
-			v := t.ChainId.UInt64()*2 + 8
+		if chainId != 0 {
+			v := chainId*2 + 8
 			newV := t.V.UInt64() + v
 			t.V = QuantityFromUInt64(newV)
 		}
+		log.Println("V: ", t.V.UInt64())
+		log.Println("R: ", t.R.UInt64())
+		log.Println("S: ", t.S.UInt64())
 		list = append(list, t.V.RLP())
 		list = append(list, t.R.RLP())
 		list = append(list, t.S.RLP())
 	}
 
 	rawTx := rlp.Value{ List: list,}
-	for _, val := range list {
-		log.Println(val.String)
-	}
+
 	return rawTx.Encode()
 }
 
 
 func (t* Transaction) check() bool {
 	// unsure if/how best to check other values
-	if t.To == nil || t.ChainId == nil {
+	if t.To == nil {
 		return false
 	}
 	return true
@@ -112,13 +104,12 @@ func (t* Transaction) check() bool {
 
 // SignatureValues returns signature values. This signature
 // needs to be in the [R || S || V] format where V is 0 or 1.
-func signatureValues(sig []byte) (r, s, v *big.Int, err error) {
-	if len(sig) != 65 {
-		panic(fmt.Sprintf("wrong size for signature: got %d, want 65", len(sig)))
-	}
-	r = new(big.Int).SetBytes(sig[:32])
-	s = new(big.Int).SetBytes(sig[32:64])
-	v = new(big.Int).SetBytes([]byte{sig[64] + 27})
+func (t* Transaction) signatureValues(sig *secp256k1.Signature) {
 
-	return r, s, v, nil
+	t.R = QuantityFromBigInt(sig.R)
+	t.S = QuantityFromBigInt(sig.S)
+	t.V = QuantityFromUInt64(27)
+	log.Println("V: ", t.V.UInt64())
+	log.Println("R: ", sig.R.Uint64())
+	log.Println("S: ", sig.S.Uint64())
 }

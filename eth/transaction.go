@@ -2,7 +2,6 @@ package eth
 
 import (
 	"encoding/json"
-	"errors"
 )
 
 type Condition json.RawMessage
@@ -60,8 +59,6 @@ type NewPendingTxNotificationParams struct {
 	Subscription string `json:"subscription"`
 	Result       Hash   `json:"result"`
 }
-
-var ErrInsufficientParams = errors.New("transaction is missing values")
 
 func (t *Transaction) UnmarshalJSON(data []byte) error {
 	type tx Transaction
