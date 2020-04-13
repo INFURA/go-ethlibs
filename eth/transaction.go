@@ -6,22 +6,6 @@ import (
 
 type Condition json.RawMessage
 
-
-// require values for valid tx
-func NewTransaction(nonce int64, gasPrice int64, gasLimit int64, toAddr string, value int64,  data []byte/*, chainId int64*/) (*Transaction, error) {
-	//chainID := QuantityFromInt64(chainId)
-	t := Transaction{
-		Nonce: QuantityFromInt64(nonce),
-		GasPrice: QuantityFromInt64(gasPrice),
-		Gas: QuantityFromInt64(gasLimit),
-		To: MustAddress(toAddr),
-		Value: QuantityFromInt64(value),
-		Input: *MustData(string(data)),
-		//ChainId: &chainID,
-	}
-	return &t, nil
-}
-
 type Transaction struct {
 	BlockHash   *Hash     `json:"blockHash"`
 	BlockNumber *Quantity `json:"blockNumber"`
@@ -142,4 +126,17 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 	type unknown Transaction
 	u := unknown(*t)
 	return json.Marshal(&u)
+}
+
+// require values for valid tx
+func NewTransaction(nonce int64, gasPrice int64, gasLimit int64, toAddr string, value int64,  data []byte) (*Transaction, error) {
+	t := Transaction{
+		Nonce: QuantityFromInt64(nonce),
+		GasPrice: QuantityFromInt64(gasPrice),
+		Gas: QuantityFromInt64(gasLimit),
+		To: MustAddress(toAddr),
+		Value: QuantityFromInt64(value),
+		Input: *MustData(string(data)),
+	}
+	return &t, nil
 }
