@@ -129,14 +129,14 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 }
 
 // require values for valid tx
-func NewTransaction(nonce int64, gasPrice int64, gasLimit int64, toAddr string, value int64,  data []byte) (*Transaction, error) {
+func NewTransaction(nonce int64, gasPrice int64, gasLimit int64, toAddr string, value int64, data []byte) (*Transaction, error) {
 	t := Transaction{
-		Nonce: QuantityFromInt64(nonce),
+		Nonce:    QuantityFromInt64(nonce),
 		GasPrice: QuantityFromInt64(gasPrice),
-		Gas: QuantityFromInt64(gasLimit),
-		To: MustAddress(toAddr),
-		Value: QuantityFromInt64(value),
-		Input: *MustData(string(data)),
+		Gas:      QuantityFromInt64(gasLimit),
+		To:       MustAddress(toAddr),
+		Value:    QuantityFromInt64(value),
+		Input:    *MustData(string(data)),
 	}
 	return &t, nil
 }

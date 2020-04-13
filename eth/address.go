@@ -112,4 +112,3 @@ func ToChecksumAddress(address string) string {
 
 	return b.String()
 }
-

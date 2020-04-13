@@ -19,7 +19,6 @@ var ErrFatalCrytpo = errors.New("unable to sign Tx with private key")
 // using "github.com/btcsuite/btcd/btcec"
 // other alternative is to import the C library but want to avoid that if possible
 
-
 func (t *Transaction) Sign(privateKey string, chainId uint64) (string, error) {
 
 	if !t.check() {
@@ -31,7 +30,7 @@ func (t *Transaction) Sign(privateKey string, chainId uint64) (string, error) {
 		return "", err
 	}
 
-	rawTx, err := t.serialize(chainId,false)
+	rawTx, err := t.serialize(chainId, false)
 	if err != nil {
 		return "", err
 	}
@@ -49,7 +48,7 @@ func (t *Transaction) Sign(privateKey string, chainId uint64) (string, error) {
 
 	// extract signature (r,s,v)
 	t.signatureValues(signature)
-	signed, err := t.serialize(chainId,true)
+	signed, err := t.serialize(chainId, true)
 	return string(signed), err
 }
 
@@ -80,7 +79,7 @@ func (t *Transaction) serialize(chainId uint64, signature bool) ([]byte, error) 
 			}
 			list = append(list, *s)
 		}
-		rawTx := rlp.Value{ List: list,}
+		rawTx := rlp.Value{List: list}
 		h, err := rawTx.HashToBytes()
 		return h, err
 	} else {
@@ -92,15 +91,14 @@ func (t *Transaction) serialize(chainId uint64, signature bool) ([]byte, error) 
 		list = append(list, t.V.RLP())
 		list = append(list, t.R.RLP())
 		list = append(list, t.S.RLP())
-		rawTx := rlp.Value{ List: list,}
+		rawTx := rlp.Value{List: list}
 
 		signed, err := rawTx.Encode()
 		return []byte(signed), err
 	}
 }
 
-
-func (t* Transaction) check() bool {
+func (t *Transaction) check() bool {
 	// unsure if/how best to check other values
 	if t.To == nil {
 		return false
@@ -116,7 +114,7 @@ func (t* Transaction) check() bool {
 // is using the 28 value as some kind of recoveryParam but unsure as the extra v seems to be filled out by the signer
 // https://github.com/ethereumjs/ethereumjs-tx/blob/b564c15e3eb709d1a677cac25c88d670b5ff0e01/src/transaction.ts#L262
 // using 27 as our signer doesn't have any V value it can return
-func (t* Transaction) signatureValues(sig *secp256k1.Signature) {
+func (t *Transaction) signatureValues(sig *secp256k1.Signature) {
 	t.R = QuantityFromBigInt(sig.R)
 	t.S = QuantityFromBigInt(sig.S)
 	t.V = QuantityFromUInt64(28)
