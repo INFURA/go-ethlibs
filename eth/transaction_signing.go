@@ -35,13 +35,18 @@ func (t *Transaction) Sign(privateKey string, chainId uint64) (string, error) {
 		return "", err
 	}
 
-	privKey, pubKey := secp256k1.PrivKeyFromBytes(secp256k1.S256(), pKey)
-	signature, err := privKey.Sign(rawTx)
+	h, err := rawTx.HashToBytes()
 	if err != nil {
 		return "", err
 	}
 
-	verified := signature.Verify(rawTx, pubKey)
+	privKey, pubKey := secp256k1.PrivKeyFromBytes(secp256k1.S256(), pKey)
+	signature, err := privKey.Sign(h)
+	if err != nil {
+		return "", err
+	}
+
+	verified := signature.Verify(h, pubKey)
 	if !verified {
 		panic(ErrFatalCrytpo)
 	}
@@ -49,10 +54,12 @@ func (t *Transaction) Sign(privateKey string, chainId uint64) (string, error) {
 	// extract signature (r,s,v)
 	t.signatureValues(signature)
 	signed, err := t.serialize(chainId, true)
-	return string(signed), err
+	encoded, err := signed.Encode()
+
+	return encoded, err
 }
 
-func (t *Transaction) serialize(chainId uint64, signature bool) ([]byte, error) {
+func (t *Transaction) serialize(chainId uint64, signature bool) (rlp.Value, error) {
 
 	var list []rlp.Value
 	list = append(list, t.Nonce.RLP())
@@ -62,24 +69,25 @@ func (t *Transaction) serialize(chainId uint64, signature bool) ([]byte, error) 
 	list = append(list, t.Value.RLP())
 	list = append(list, rlp.Value{String: t.Input.String()})
 
-	var temp []byte
 	if !signature {
+		empty := rlp.Value{String: ""}
 		if chainId != 0 {
 			list = append(list, QuantityFromUInt64(chainId).RLP())
 			r, err := rlp.From("0x")
 			if err != nil {
-				return temp, err
+				return empty, err
 			}
 			list = append(list, *r)
 			s, err := rlp.From("0x")
 			if err != nil {
-				return temp, err
+				return empty, err
 			}
 			list = append(list, *s)
 		}
 		rawTx := rlp.Value{List: list}
-		h, err := rawTx.HashToBytes()
-		return h, err
+		return rawTx, nil
+		//h, err := rawTx.HashToBytes()
+		//return h, err
 	} else {
 		if chainId != 0 {
 			v := chainId*2 + 8
@@ -90,9 +98,10 @@ func (t *Transaction) serialize(chainId uint64, signature bool) ([]byte, error) 
 		list = append(list, t.R.RLP())
 		list = append(list, t.S.RLP())
 		rawTx := rlp.Value{List: list}
+		return rawTx, nil
 
-		signed, err := rawTx.Encode()
-		return []byte(signed), err
+		//signed, err := rawTx.Encode()
+		//return []byte(signed), err
 	}
 }
 
