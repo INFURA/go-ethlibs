@@ -1,7 +1,7 @@
 package eth_test
 
 import (
-	//    "strings"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -68,12 +68,9 @@ func TestSignTransaction2(t *testing.T) {
 // Need to figure out to get this test working
 // The signature.V value for python signer is 28 while we are using 27 for our signer so the hash values are off by 1 for V
 // Been manually changing the 'V' value to 28 and running to the test to make sure we are getting correct rawtx
-/*
 func TestSignTransaction3(t *testing.T) {
-
     pythonRawTx := "0xf868819284b2d05e008255f09443700db832e9ac990d36d6279a846608643c904e843b9aca008026a0444f6cd588830bc975643241e6df545dccf5815c00ee8bde4e686722761b8954a06abec148bf44975c6ed6336cba57a9f5101d1cb5c199a12567d65de2ea8d7d43"
-
-    data := []byte("0x")
+    data := "0x"
     tx, err := eth.NewTransaction(146, 3000000000, 22000, "0x43700db832E9Ac990D36d6279A846608643c904E", 1000000000, data)
     require.NoError(t, err)
     require.Equal(t, tx.Nonce, eth.QuantityFromInt64(146))
@@ -89,4 +86,4 @@ func TestSignTransaction3(t *testing.T) {
     signed = strings.ToLower(signed)
     require.Equal(t, signed, pythonRawTx)
 }
-*/
+
