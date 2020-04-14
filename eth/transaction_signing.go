@@ -4,8 +4,6 @@ import (
 	"encoding/hex"
 	"errors"
 
-	secp256k1 "github.com/btcsuite/btcd/btcec"
-
 	"github.com/INFURA/go-ethlibs/rlp"
 )
 
@@ -35,24 +33,27 @@ func (t *Transaction) Sign(privateKey string, chainId uint64) (string, error) {
 		return "", err
 	}
 
-	h, err := rawTx.HashToBytes()
+	h, err := rawTx.Hash()
 	if err != nil {
 		return "", err
 	}
 
-	privKey, pubKey := secp256k1.PrivKeyFromBytes(secp256k1.S256(), pKey)
-	signature, err := privKey.Sign(h)
+	hash, err := NewHash(h)
 	if err != nil {
 		return "", err
 	}
 
-	verified := signature.Verify(h, pubKey)
-	if !verified {
-		panic(ErrFatalCrytpo)
+	chainID := QuantityFromUInt64(chainId)
+	//privKey, pubKey := secp256k1.PrivKeyFromBytes(secp256k1.S256(), pKey)
+	signature, err := ECSign(hash, pKey, chainID)
+	if err != nil {
+		return "", err
 	}
 
-	// extract signature (r,s,v)
-	t.signatureValues(signature)
+	t.V = signature.V
+	t.R = signature.R
+	t.S = signature.S
+
 	signed, err := t.serialize(chainId, true)
 	encoded, err := signed.Encode()
 
@@ -86,22 +87,12 @@ func (t *Transaction) serialize(chainId uint64, signature bool) (rlp.Value, erro
 		}
 		rawTx := rlp.Value{List: list}
 		return rawTx, nil
-		//h, err := rawTx.HashToBytes()
-		//return h, err
 	} else {
-		if chainId != 0 {
-			v := chainId*2 + 8
-			newV := t.V.UInt64() + v
-			t.V = QuantityFromUInt64(newV)
-		}
 		list = append(list, t.V.RLP())
 		list = append(list, t.R.RLP())
 		list = append(list, t.S.RLP())
 		rawTx := rlp.Value{List: list}
 		return rawTx, nil
-
-		//signed, err := rawTx.Encode()
-		//return []byte(signed), err
 	}
 }
 
@@ -111,18 +102,4 @@ func (t *Transaction) check() bool {
 		return false
 	}
 	return true
-}
-
-// EIP 155 (https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md)
-// says using 27 or 28 (or 35 or 36 depending on how you look at it) for V value are correct
-// I am using 27 but the python library I've been using is using 28.
-// It looks like ether.js
-// https://github.com/ethers-io/ethers.js/blob/b1c6575a1b8cc666a9173eceedb7a367329819c7/dist/ethers.js#L14074
-// is using the 28 value as some kind of recoveryParam but unsure as the extra v seems to be filled out by the signer
-// https://github.com/ethereumjs/ethereumjs-tx/blob/b564c15e3eb709d1a677cac25c88d670b5ff0e01/src/transaction.ts#L262
-// using 27 as our signer doesn't have any V value it can return
-func (t *Transaction) signatureValues(sig *secp256k1.Signature) {
-	t.R = QuantityFromBigInt(sig.R)
-	t.S = QuantityFromBigInt(sig.S)
-	t.V = QuantityFromUInt64(28)
 }
