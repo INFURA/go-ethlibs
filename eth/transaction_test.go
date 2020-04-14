@@ -88,7 +88,7 @@ func TestNewPendingTxNotificationParams(t *testing.T) {
 }
 
 func TestNewTransaction(t *testing.T) {
-	data := []byte("0x")
+	data := "0x"
 	tx, err := eth.NewTransaction(5, 21488430592, 90000, "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", 1, data)
 	require.NoError(t, err)
 	require.Equal(t, tx.Nonce, *eth.MustQuantity("0x5"))

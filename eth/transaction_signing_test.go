@@ -10,7 +10,7 @@ import (
 )
 
 func TestSignTransaction(t *testing.T) {
-	data := []byte("0x")
+	data := "0x"
 	//tx, err := eth.NewTransaction(5, 21488430592, 90000, "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", 1, data)
 	tx, err := eth.NewTransaction(0, 21488430592, 90000, "0xc149Be1bcDFa69a94384b46A1F91350E5f81c1AB", 950000000000000000, data)
 	require.NoError(t, err)
@@ -39,7 +39,7 @@ func TestSignTransaction(t *testing.T) {
 }
 
 func TestSignTransaction2(t *testing.T) {
-	data := []byte("0x")
+	data := "0x"
 	tx, err := eth.NewTransaction(146, 3000000000, 22000, "0x43700db832E9Ac990D36d6279A846608643c904E", 1000000000, data)
 	require.NoError(t, err)
 	require.Equal(t, tx.Nonce, eth.QuantityFromInt64(146))
