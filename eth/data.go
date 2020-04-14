@@ -1,6 +1,7 @@
 package eth
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"strings"
 
@@ -146,6 +147,46 @@ func (d Data32) String() string {
 
 func (d Data256) String() string {
 	return string(d)
+}
+
+func (d Data) Bytes() []byte {
+	b, err := hex.DecodeString(d.String()[2:])
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (d Data8) Bytes() []byte {
+	b, err := hex.DecodeString(d.String()[2:])
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (d Data20) Bytes() []byte {
+	b, err := hex.DecodeString(d.String()[2:])
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (d Data32) Bytes() []byte {
+	b, err := hex.DecodeString(d.String()[2:])
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (d Data256) Bytes() []byte {
+	b, err := hex.DecodeString(d.String()[2:])
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
 
 func (d *Data) UnmarshalJSON(data []byte) error {
