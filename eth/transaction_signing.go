@@ -54,8 +54,6 @@ func (t *Transaction) Sign(privateKey string, chainId uint64) (string, error) {
 
 func (t *Transaction) serialize(chainId uint64, signature bool) ([]byte, error) {
 
-	// my brain has turned to mush, pretty sure this not the most efficient way
-	// but trying to follow ether.js logic
 	var list []rlp.Value
 	list = append(list, t.Nonce.RLP())
 	list = append(list, t.GasPrice.RLP())
