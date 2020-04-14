@@ -21,7 +21,7 @@ func (v Value) Hash() (string, error) {
 	return "0x" + digest, nil
 }
 
-// Hash returns the keccak256 hash of the encoded RLP in []byte
+// HashToBytes returns the keccak256 hash of the encoded RLP as a byte slice
 func (v Value) HashToBytes() ([]byte, error) {
 	// TODO: Consider operating on the already encoded string vs. encoding inside this function
 	// Encode the value back to a hex string
