@@ -8,7 +8,6 @@ import (
 )
 
 var ErrInsufficientParams = errors.New("transaction is missing values")
-var ErrFatalCrytpo = errors.New("unable to sign Tx with private key")
 
 // Looks like there have been multiple attempts to get the Koblitz curve (secp256k1) supported in golang
 //
@@ -28,7 +27,7 @@ func (t *Transaction) Sign(privateKey string, chainId uint64) (string, error) {
 		return "", err
 	}
 
-	rawTx, err := t.serialize(chainId, false)
+	rawTx, err := t.serialize(chainId)
 	if err != nil {
 		return "", err
 	}
@@ -44,7 +43,6 @@ func (t *Transaction) Sign(privateKey string, chainId uint64) (string, error) {
 	}
 
 	chainID := QuantityFromUInt64(chainId)
-	//privKey, pubKey := secp256k1.PrivKeyFromBytes(secp256k1.S256(), pKey)
 	signature, err := ECSign(hash, pKey, chainID)
 	if err != nil {
 		return "", err
@@ -54,14 +52,19 @@ func (t *Transaction) Sign(privateKey string, chainId uint64) (string, error) {
 	t.R = signature.R
 	t.S = signature.S
 
-	signed, err := t.serialize(chainId, true)
-	encoded, err := signed.Encode()
-
-	return encoded, err
+	return t.RLP().Encode()
 }
 
-func (t *Transaction) serialize(chainId uint64, signature bool) (rlp.Value, error) {
+func (t *Transaction) RLP() rlp.Value {
+	base := t.serializeCommon()
+	base = append(base, t.V.RLP())
+	base = append(base, t.R.RLP())
+	base = append(base, t.S.RLP())
+	rawTx := rlp.Value{List: base}
+	return rawTx
+}
 
+func (t *Transaction) serializeCommon() []rlp.Value {
 	var list []rlp.Value
 	list = append(list, t.Nonce.RLP())
 	list = append(list, t.GasPrice.RLP())
@@ -69,31 +72,27 @@ func (t *Transaction) serialize(chainId uint64, signature bool) (rlp.Value, erro
 	list = append(list, t.To.RLP())
 	list = append(list, t.Value.RLP())
 	list = append(list, rlp.Value{String: t.Input.String()})
+	return list
+}
 
-	if !signature {
-		empty := rlp.Value{String: ""}
-		if chainId != 0 {
-			list = append(list, QuantityFromUInt64(chainId).RLP())
-			r, err := rlp.From("0x")
-			if err != nil {
-				return empty, err
-			}
-			list = append(list, *r)
-			s, err := rlp.From("0x")
-			if err != nil {
-				return empty, err
-			}
-			list = append(list, *s)
+func (t *Transaction) serialize(chainID uint64) (rlp.Value, error) {
+	base := t.serializeCommon()
+	empty := rlp.Value{String: ""}
+	if chainID != 0 {
+		base = append(base, QuantityFromUInt64(chainID).RLP())
+		r, err := rlp.From("0x")
+		if err != nil {
+			return empty, err
 		}
-		rawTx := rlp.Value{List: list}
-		return rawTx, nil
-	} else {
-		list = append(list, t.V.RLP())
-		list = append(list, t.R.RLP())
-		list = append(list, t.S.RLP())
-		rawTx := rlp.Value{List: list}
-		return rawTx, nil
+		base = append(base, *r)
+		s, err := rlp.From("0x")
+		if err != nil {
+			return empty, err
+		}
+		base = append(base, *s)
 	}
+	rawTx := rlp.Value{List: base}
+	return rawTx, nil
 }
 
 func (t *Transaction) check() bool {
