@@ -127,16 +127,3 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 	u := unknown(*t)
 	return json.Marshal(&u)
 }
-
-// NewTransaction creates a new Transaction with the minimum values required for signing a transaction
-func NewTransaction(nonce uint64, gasPrice uint64, gasLimit uint64, toAddr string, value uint64, data string) (*Transaction, error) {
-	t := Transaction{
-		Nonce:    QuantityFromUInt64(nonce),
-		GasPrice: QuantityFromUInt64(gasPrice),
-		Gas:      QuantityFromUInt64(gasLimit),
-		To:       MustAddress(toAddr),
-		Value:    QuantityFromUInt64(value),
-		Input:    *MustData(data),
-	}
-	return &t, nil
-}
