@@ -27,7 +27,7 @@ func (t *Transaction) Sign(privateKey string, chainId uint64) (string, error) {
 		return "", err
 	}
 
-	rawTx, err := t.serialize(chainId)
+	rawTx, err := t.serializeRaw(chainId)
 	if err != nil {
 		return "", err
 	}
@@ -75,7 +75,7 @@ func (t *Transaction) serializeCommon() []rlp.Value {
 	return list
 }
 
-func (t *Transaction) serialize(chainID uint64) (rlp.Value, error) {
+func (t *Transaction) serializeRaw(chainID uint64) (rlp.Value, error) {
 	base := t.serializeCommon()
 	empty := rlp.Value{String: ""}
 	if chainID != 0 {
@@ -96,7 +96,6 @@ func (t *Transaction) serialize(chainID uint64) (rlp.Value, error) {
 }
 
 func (t *Transaction) check() bool {
-	// unsure if/how best to check other values
 	if t.To == nil {
 		return false
 	}
