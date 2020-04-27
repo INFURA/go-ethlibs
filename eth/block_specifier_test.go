@@ -7,6 +7,78 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestNewBlockSpecifier(t *testing.T) {
+	{
+		data := "0x0"
+		spec, err := eth.NewBlockSpecifier(data)
+		require.Nil(t, err)
+		require.Equal(t, "0x0", spec.Number.String())
+		require.Nil(t, spec.Hash)
+		require.Nil(t, spec.Tag)
+		require.Nil(t, spec.RequireCanonical)
+	}
+
+	{
+		data := "latest"
+		spec, err := eth.NewBlockSpecifier(data)
+		require.Nil(t, err)
+		require.Nil(t, spec.Number)
+		require.Nil(t, spec.Hash)
+		require.Equal(t, "latest", spec.Tag.String())
+		require.Nil(t, spec.RequireCanonical)
+	}
+
+	{
+		data := map[string]interface{}{
+			"blockNumber": "0x0",
+		}
+		spec, err := eth.NewBlockSpecifier(data)
+		require.Nil(t, err)
+		require.Equal(t, "0x0", spec.Number.String())
+		require.Nil(t, spec.Hash)
+		require.Nil(t, spec.Tag)
+		require.Nil(t, spec.RequireCanonical)
+	}
+
+	{
+		data := map[string]interface{}{
+			"blockHash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
+		}
+		spec, err := eth.NewBlockSpecifier(data)
+		require.Nil(t, err)
+		require.Nil(t, spec.Number)
+		require.Equal(t, "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3", spec.Hash.String())
+		require.Nil(t, spec.Tag)
+		require.Equal(t, false, *spec.RequireCanonical)
+	}
+
+	{
+		data := map[string]interface{}{
+			"blockHash":        "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
+			"requireCanonical": false,
+		}
+		spec, err := eth.NewBlockSpecifier(data)
+		require.Nil(t, err)
+		require.Nil(t, spec.Number)
+		require.Equal(t, "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3", spec.Hash.String())
+		require.Nil(t, spec.Tag)
+		require.Equal(t, false, *spec.RequireCanonical)
+	}
+
+	{
+		data := map[string]interface{}{
+			"blockHash":        "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
+			"requireCanonical": true,
+		}
+		spec, err := eth.NewBlockSpecifier(data)
+		require.Nil(t, err)
+		require.Nil(t, spec.Number)
+		require.Equal(t, "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3", spec.Hash.String())
+		require.Nil(t, spec.Tag)
+		require.Equal(t, true, *spec.RequireCanonical)
+	}
+}
+
 func TestBlockSpecifierMarshalUnmarshal(t *testing.T) {
 	{
 		var spec eth.BlockSpecifier
@@ -28,7 +100,29 @@ func TestBlockSpecifierMarshalUnmarshal(t *testing.T) {
 
 	{
 		var spec eth.BlockSpecifier
-		spec.UnmarshalJSON([]byte(`{ "blockNumber": "0x0" }`))
+		spec.UnmarshalJSON([]byte(`"latest"`))
+		require.Equal(t, "latest", spec.Tag.String())
+		require.Nil(t, spec.Number)
+		require.Nil(t, spec.Hash)
+		require.Nil(t, spec.RequireCanonical)
+
+		m, err := spec.MarshalJSON()
+		require.Nil(t, err)
+		require.Equal(t, []byte(`"latest"`), m)
+
+		spec.Raw = true
+		m, err = spec.MarshalJSON()
+		require.Nil(t, err)
+		require.Equal(t, []byte(`"latest"`), m)
+	}
+
+	{
+		var spec eth.BlockSpecifier
+		spec.UnmarshalJSON([]byte(`
+			{
+				"blockNumber": "0x0"
+			}
+		`))
 		require.Equal(t, "0x0", spec.Number.String())
 		require.Nil(t, spec.Hash)
 		require.Nil(t, spec.Tag)
