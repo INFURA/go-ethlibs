@@ -217,8 +217,8 @@ func TestLogFilterParsing(t *testing.T) {
 			Payload: `{"fromBlock":"pending", "toBlock": "pending"}`,
 			Expected: eth.LogFilter{
 				Address:   nil,
-				FromBlock: eth.MustBlockNumberOrTag(eth.TagPending),
-				ToBlock:   eth.MustBlockNumberOrTag(eth.TagPending),
+				FromBlock: eth.MustBlockNumberOrTag(eth.TagPending.String()),
+				ToBlock:   eth.MustBlockNumberOrTag(eth.TagPending.String()),
 				BlockHash: nil,
 				Topics:    nil,
 			},
