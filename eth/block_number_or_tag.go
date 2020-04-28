@@ -2,6 +2,8 @@ package eth
 
 import (
 	"encoding/json"
+
+	"github.com/pkg/errors"
 )
 
 type Tag string
@@ -19,6 +21,24 @@ type BlockNumberOrTag struct {
 
 func (t Tag) String() string {
 	return string(t)
+}
+
+func NewTag(s string) (*Tag, error) {
+	switch s {
+	case TagLatest.String(), TagEarliest.String(), TagPending.String():
+		t := Tag(s)
+		return &t, nil
+	default:
+		return nil, errors.Errorf("invalid tag name %s", s)
+	}
+}
+
+func MustTag(s string) *Tag {
+	t, err := NewTag(s)
+	if err != nil {
+		panic(err)
+	}
+	return t
 }
 
 func NewBlockNumberOrTag(value string) (*BlockNumberOrTag, error) {
