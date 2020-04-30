@@ -2,17 +2,43 @@ package eth
 
 import (
 	"encoding/json"
+
+	"github.com/pkg/errors"
 )
 
+type Tag string
+
 const (
-	TagLatest   = "latest"
-	TagEarliest = "earliest"
-	TagPending  = "pending"
+	TagLatest   Tag = "latest"
+	TagEarliest Tag = "earliest"
+	TagPending  Tag = "pending"
 )
 
 type BlockNumberOrTag struct {
 	number Quantity
-	tag    string
+	tag    Tag
+}
+
+func (t Tag) String() string {
+	return string(t)
+}
+
+func NewTag(s string) (*Tag, error) {
+	switch s {
+	case TagLatest.String(), TagEarliest.String(), TagPending.String():
+		t := Tag(s)
+		return &t, nil
+	default:
+		return nil, errors.Errorf("invalid tag name %s", s)
+	}
+}
+
+func MustTag(s string) *Tag {
+	t, err := NewTag(s)
+	if err != nil {
+		panic(err)
+	}
+	return t
 }
 
 func NewBlockNumberOrTag(value string) (*BlockNumberOrTag, error) {
@@ -28,8 +54,8 @@ func NewBlockNumberOrTag(value string) (*BlockNumberOrTag, error) {
 	b := BlockNumberOrTag{}
 
 	switch value {
-	case TagLatest, TagEarliest, TagPending:
-		b.tag = value
+	case TagLatest.String(), TagEarliest.String(), TagPending.String():
+		b.tag = Tag(value)
 		return &b, nil
 	default:
 		q, err := NewQuantity(value)
@@ -50,13 +76,13 @@ func MustBlockNumberOrTag(value string) *BlockNumberOrTag {
 	return b
 }
 
-func (b *BlockNumberOrTag) Tag() (string, bool) {
+func (b *BlockNumberOrTag) Tag() (Tag, bool) {
 	if b == nil {
-		return "", false
+		return Tag(""), false
 	}
 
 	if b.tag == "" {
-		return "", false
+		return Tag(""), false
 	}
 
 	return b.tag, true
