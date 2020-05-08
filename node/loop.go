@@ -1,6 +1,7 @@
 package node
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,7 +11,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
@@ -362,14 +362,12 @@ func (t *loopingTransport) nextID(seed jsonrpc.ID) jsonrpc.ID {
 }
 
 func (t *loopingTransport) Request(ctx context.Context, r *jsonrpc.Request) (*jsonrpc.RawResponse, error) {
-
-	owned := &jsonrpc.Request{}
-	if err := copier.Copy(owned, r); err != nil {
-		return nil, errors.Wrap(err, "could not allocate copy of request")
+	owned, err := copyRequest(r)
+	if err != nil {
+		return nil, err
 	}
-
 	outbound := &outboundRequest{
-		request:     owned,
+		request:     &owned,
 		chResult:    make(chan *jsonrpc.RawResponse),
 		chError:     make(chan error),
 		chAbandoned: make(chan struct{}),
@@ -396,18 +394,30 @@ func (t *loopingTransport) Request(ctx context.Context, r *jsonrpc.Request) (*js
 	}
 }
 
+func copyRequest(request *jsonrpc.Request) (jsonrpc.Request, error) {
+	copied := jsonrpc.Request{}
+	buf := &bytes.Buffer{}
+	if err := json.NewEncoder(buf).Encode(request); err != nil {
+		return copied, errors.Wrap(err, "could not copy request: encoding failed")
+	}
+	if err := json.NewDecoder(buf).Decode(&copied); err != nil {
+		return copied, errors.Wrap(err, "could not copy request: decoding failed")
+	}
+	return copied, nil
+}
+
 func (t *loopingTransport) Subscribe(ctx context.Context, r *jsonrpc.Request) (Subscription, error) {
 	if r.Method != "eth_subscribe" && r.Method != "parity_subscribe" {
 		return nil, errors.New("request is not a subscription request")
 	}
 
-	owned := &jsonrpc.Request{}
-	if err := copier.Copy(owned, r); err != nil {
-		return nil, errors.Wrap(err, "could not allocate copy of request")
+	owned, err := copyRequest(r)
+	if err != nil {
+		return nil, err
 	}
 
 	start := subscriptionRequest{
-		request:  owned,
+		request:  &owned,
 		chResult: make(chan *subscription),
 		chError:  make(chan error),
 	}
