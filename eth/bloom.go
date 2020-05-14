@@ -35,6 +35,36 @@ func (b *Bloom) AddBytes(_bytes []byte) {
 	}
 }
 
+func (b *Bloom) MatchesLog(log Log) bool {
+	if !b.MatchesAddress(log.Address) {
+		return false
+	}
+	for _, topic := range log.Topics {
+		if !b.MatchesData32(topic) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (b *Bloom) MatchesAddress(addr Address) bool {
+	return b.MatchesBytes(addr.Bytes())
+}
+
+func (b *Bloom) MatchesData32(data Data32) bool {
+	return b.MatchesBytes(data.Bytes())
+}
+
+func (b *Bloom) MatchesBytes(_bytes []byte) bool {
+	for _, bits := range b.bloomBits(_bytes) {
+		if !b.has(bits) {
+			return false
+		}
+	}
+	return true
+}
+
 func (b *Bloom) bloomBits(_bytes []byte) []int {
 	// Inspired by https://github.com/hyperdivision/eth-bloomfilter/blob/master/index.js#L3
 	hash := sha3.NewLegacyKeccak256()
@@ -49,6 +79,10 @@ func (b *Bloom) bloomBits(_bytes []byte) []int {
 
 func (b *Bloom) set(pos int) {
 	b.value[255-(pos>>3)] |= byte(1 << byte(pos&7))
+}
+
+func (b *Bloom) has(pos int) bool {
+	return (b.value[255-(pos>>3)] & byte(1<<byte(pos&7))) != 0
 }
 
 func toBit(high, low byte) int {
