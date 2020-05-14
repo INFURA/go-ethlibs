@@ -37,6 +37,10 @@ func (a Address) String() string {
 	return string(a)
 }
 
+func (a Address) Bytes() []byte {
+	return Data20(a).Bytes()
+}
+
 func (a *Address) UnmarshalJSON(data []byte) error {
 	// We'll keep the checksummed string in memory so we can use it for internal representations
 	str, err := unmarshalHex(data, 20, "data")
