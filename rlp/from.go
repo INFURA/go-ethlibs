@@ -42,6 +42,9 @@ func from(input string) (*Value, string, error) {
 	}
 
 	remainder := input
+	if len(remainder) < 2 {
+		return nil, "", errors.New("insufficient remaining input for prefix")
+	}
 	b := remainder[0:2]
 	p, err := strconv.ParseUint(b, 16, 8)
 	if err != nil {
