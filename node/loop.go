@@ -362,6 +362,13 @@ func (t *loopingTransport) nextID(seed jsonrpc.ID) jsonrpc.ID {
 }
 
 func (t *loopingTransport) Request(ctx context.Context, r *jsonrpc.Request) (*jsonrpc.RawResponse, error) {
+	select {
+	case <-t.ctx.Done():
+		return nil, errors.Wrap(ctx.Err(), "transport context finished")
+	default:
+		// transport context is still valid, we can process this request
+	}
+
 	owned, err := copyRequest(r)
 	if err != nil {
 		return nil, err
@@ -380,6 +387,8 @@ func (t *loopingTransport) Request(ctx context.Context, r *jsonrpc.Request) (*js
 	select {
 	case t.chOutboundRequests <- outbound:
 		// log.Printf("[SPAM] outbound request sent")
+	case <-t.ctx.Done():
+		return nil, errors.Wrap(ctx.Err(), "transport context finished waiting for response")
 	case <-ctx.Done():
 		return nil, errors.Wrap(ctx.Err(), "context finished waiting for response")
 	}
@@ -389,6 +398,8 @@ func (t *loopingTransport) Request(ctx context.Context, r *jsonrpc.Request) (*js
 		return response, nil
 	case err := <-outbound.chError:
 		return nil, err
+	case <-t.ctx.Done():
+		return nil, errors.Wrap(ctx.Err(), "transport context finished waiting for response")
 	case <-ctx.Done():
 		return nil, errors.Wrap(ctx.Err(), "context finished waiting for response")
 	}
@@ -411,6 +422,13 @@ func (t *loopingTransport) Subscribe(ctx context.Context, r *jsonrpc.Request) (S
 		return nil, errors.New("request is not a subscription request")
 	}
 
+	select {
+	case <-t.ctx.Done():
+		return nil, errors.Wrap(ctx.Err(), "transport context finished")
+	default:
+		// transport context is still valid, we can process this request
+	}
+
 	owned, err := copyRequest(r)
 	if err != nil {
 		return nil, err
@@ -428,6 +446,8 @@ func (t *loopingTransport) Subscribe(ctx context.Context, r *jsonrpc.Request) (S
 	select {
 	case t.chSubscriptionRequests <- &start:
 		// log.Printf("[SPAM] start request sent")
+	case <-t.ctx.Done():
+		return nil, errors.Wrap(ctx.Err(), "transport context finished waiting for subscription")
 	case <-ctx.Done():
 		return nil, errors.Wrap(ctx.Err(), "context finished waiting for subscription")
 	}
@@ -437,6 +457,8 @@ func (t *loopingTransport) Subscribe(ctx context.Context, r *jsonrpc.Request) (S
 		return s, nil
 	case err := <-start.chError:
 		return nil, err
+	case <-t.ctx.Done():
+		return nil, errors.Wrap(ctx.Err(), "transport context finished waiting for subscription")
 	case <-ctx.Done():
 		return nil, errors.Wrap(ctx.Err(), "context finished waiting for subscription")
 	}
