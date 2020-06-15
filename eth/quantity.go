@@ -124,6 +124,12 @@ func (q *Quantity) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&q.s)
 }
 
+// DeepCopyInto copies Quantity values into out
+func (q *Quantity) DeepCopyInto(out *Quantity) {
+	out.s = q.s
+	out.i.SetBytes(q.i.Bytes())
+}
+
 func (q Quantity) String() string {
 	return q.s
 }
