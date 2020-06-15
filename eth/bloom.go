@@ -6,6 +6,7 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
+// +k8s:deepcopy-gen=false
 type Bloom struct {
 	value [256]byte
 }
