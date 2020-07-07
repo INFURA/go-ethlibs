@@ -364,7 +364,7 @@ func (t *loopingTransport) nextID(seed jsonrpc.ID) jsonrpc.ID {
 func (t *loopingTransport) Request(ctx context.Context, r *jsonrpc.Request) (*jsonrpc.RawResponse, error) {
 	select {
 	case <-t.ctx.Done():
-		return nil, errors.Wrap(ctx.Err(), "transport context finished")
+		return nil, errors.Wrap(t.ctx.Err(), "transport context finished")
 	default:
 		// transport context is still valid, we can process this request
 	}
@@ -388,7 +388,7 @@ func (t *loopingTransport) Request(ctx context.Context, r *jsonrpc.Request) (*js
 	case t.chOutboundRequests <- outbound:
 		// log.Printf("[SPAM] outbound request sent")
 	case <-t.ctx.Done():
-		return nil, errors.Wrap(ctx.Err(), "transport context finished waiting for response")
+		return nil, errors.Wrap(t.ctx.Err(), "transport context finished waiting for response")
 	case <-ctx.Done():
 		return nil, errors.Wrap(ctx.Err(), "context finished waiting for response")
 	}
@@ -399,7 +399,7 @@ func (t *loopingTransport) Request(ctx context.Context, r *jsonrpc.Request) (*js
 	case err := <-outbound.chError:
 		return nil, err
 	case <-t.ctx.Done():
-		return nil, errors.Wrap(ctx.Err(), "transport context finished waiting for response")
+		return nil, errors.Wrap(t.ctx.Err(), "transport context finished waiting for response")
 	case <-ctx.Done():
 		return nil, errors.Wrap(ctx.Err(), "context finished waiting for response")
 	}
