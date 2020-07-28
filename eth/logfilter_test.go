@@ -10,7 +10,417 @@ import (
 )
 
 func TestLogFilter_Matches(t *testing.T) {
+	makeLog := func(address eth.Address, topics []eth.Topic, number uint64, hashes ...*eth.Hash) eth.Log {
+		bn := eth.QuantityFromUInt64(number)
+		var hash, txHash *eth.Hash
+		if len(hashes) > 0 {
+			hash = hashes[0]
+		} else {
+			// Compute a hash from the block number
+			h, _ := bn.RLP().Hash()
+			hash = eth.MustHash(h)
+		}
+		if len(hashes) > 1 {
+			txHash = hashes[1]
+		} else {
+			// Compute a hash from the block hash
+			t, _ := address.RLP().Hash()
+			txHash = eth.MustHash(t)
+		}
 
+		return eth.Log{
+			Removed:     false,
+			LogIndex:    eth.MustQuantity("0x1"),
+			TxIndex:     eth.MustQuantity("0x2"),
+			TxHash:      txHash,
+			BlockHash:   hash,
+			BlockNumber: &bn,
+			Address:     address,
+			Data:        *eth.MustData("0x0102"),
+			Topics:      topics,
+		}
+	}
+
+	t.Run("Addresses", func(t *testing.T) {
+		t.Run("EmptyFilterMatchesAddress", func(t *testing.T) {
+			f := eth.LogFilter{}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.True(t, f.Matches(makeLog(addr, []eth.Topic{}, 1234)))
+		})
+
+		t.Run("SingleMatch", func(t *testing.T) {
+			addr1 := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			addr2 := *eth.MustAddress("0x2222222222222222222222222222222222222222")
+			f := eth.LogFilter{
+				Address: []eth.Address{
+					addr1,
+				},
+			}
+			require.True(t, f.Matches(makeLog(addr1, []eth.Topic{}, 1234)))
+			require.False(t, f.Matches(makeLog(addr2, []eth.Topic{}, 1234)))
+		})
+
+		t.Run("MultiMatch", func(t *testing.T) {
+			addr1 := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			addr2 := *eth.MustAddress("0x2222222222222222222222222222222222222222")
+			addr3 := *eth.MustAddress("0x3333333333333333333333333333333333333333")
+			f := eth.LogFilter{
+				Address: []eth.Address{
+					addr1,
+					addr2,
+				},
+			}
+			require.True(t, f.Matches(makeLog(addr1, []eth.Topic{}, 1234)))
+			require.True(t, f.Matches(makeLog(addr2, []eth.Topic{}, 1234)))
+			require.False(t, f.Matches(makeLog(addr3, []eth.Topic{}, 1234)))
+		})
+	})
+
+	t.Run("Topics", func(t *testing.T) {
+		t.Run("MissingTopic", func(t *testing.T) {
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			f := eth.LogFilter{
+				Topics: [][]eth.Topic{
+					{
+						topic1,
+					},
+				},
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.False(t, f.Matches(makeLog(addr, []eth.Topic{}, 1234)))
+		})
+
+		t.Run("MissingSecondTopic", func(t *testing.T) {
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			f := eth.LogFilter{
+				Topics: [][]eth.Topic{
+					{},
+					{
+						topic1,
+					},
+				},
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.False(t, f.Matches(makeLog(addr, []eth.Topic{topic1}, 1234)))
+		})
+
+		t.Run("NoTopics", func(t *testing.T) {
+			f := eth.LogFilter{}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.True(t, f.Matches(makeLog(addr, []eth.Topic{}, 1234)))
+		})
+
+		t.Run("FilterWithoutTopicMatchesLogWithTopic", func(t *testing.T) {
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			f := eth.LogFilter{}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.True(t, f.Matches(makeLog(addr, []eth.Topic{topic1}, 1234)))
+		})
+
+		t.Run("Match", func(t *testing.T) {
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			f := eth.LogFilter{
+				Topics: [][]eth.Topic{
+					{
+						topic1,
+					},
+				},
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.True(t, f.Matches(makeLog(addr, []eth.Topic{topic1}, 1234)))
+		})
+
+		t.Run("MatchOne", func(t *testing.T) {
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			topic2 := *eth.MustTopic("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+			f := eth.LogFilter{
+				Topics: [][]eth.Topic{
+					{
+						topic1,
+						topic2,
+					},
+				},
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.True(t, f.Matches(makeLog(addr, []eth.Topic{topic2}, 1234)))
+		})
+
+		t.Run("MismatchOne", func(t *testing.T) {
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			topic2 := *eth.MustTopic("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+			f := eth.LogFilter{
+				Topics: [][]eth.Topic{
+					{
+						topic1,
+					},
+				},
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.False(t, f.Matches(makeLog(addr, []eth.Topic{topic2}, 1234)))
+		})
+
+		t.Run("MismatchAll", func(t *testing.T) {
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			topic2 := *eth.MustTopic("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+			topic3 := *eth.MustTopic("0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc")
+			f := eth.LogFilter{
+				Topics: [][]eth.Topic{
+					{
+						topic1,
+					},
+				},
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.False(t, f.Matches(makeLog(addr, []eth.Topic{topic2, topic3}, 1234)))
+		})
+
+		t.Run("AnyFirstAndMatchSecond", func(t *testing.T) {
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			topic2 := *eth.MustTopic("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+			topic3 := *eth.MustTopic("0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc")
+			f := eth.LogFilter{
+				Topics: [][]eth.Topic{
+					nil,
+					{
+						topic2,
+					},
+				},
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.True(t, f.Matches(makeLog(addr, []eth.Topic{topic1, topic2, topic3}, 1234)))
+		})
+
+		t.Run("AnyFirstAndMismatchSecond", func(t *testing.T) {
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			topic2 := *eth.MustTopic("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+			topic3 := *eth.MustTopic("0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc")
+			f := eth.LogFilter{
+				Topics: [][]eth.Topic{
+					nil,
+					{
+						topic2,
+					},
+				},
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.False(t, f.Matches(makeLog(addr, []eth.Topic{topic1, topic3, topic3}, 1234)))
+		})
+
+		t.Run("OneOfFirstMatches", func(t *testing.T) {
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			topic2 := *eth.MustTopic("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+			topic3 := *eth.MustTopic("0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc")
+			f := eth.LogFilter{
+				Topics: [][]eth.Topic{
+					{
+						topic1, topic3,
+					},
+				},
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.True(t, f.Matches(makeLog(addr, []eth.Topic{topic1, topic2}, 1234)))
+		})
+
+		t.Run("OneOfMatchesBoth", func(t *testing.T) {
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			topic2 := *eth.MustTopic("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+			f := eth.LogFilter{
+				Topics: [][]eth.Topic{
+					{
+						topic1, topic2,
+					},
+					{
+						topic1, topic2,
+					},
+				},
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.True(t, f.Matches(makeLog(addr, []eth.Topic{topic1, topic2}, 1234)))
+		})
+
+		t.Run("FirstMatchesSecondDoesNot", func(t *testing.T) {
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			topic2 := *eth.MustTopic("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+			topic3 := *eth.MustTopic("0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc")
+			f := eth.LogFilter{
+				Topics: [][]eth.Topic{
+					{
+						topic1, topic2,
+					},
+					{
+						topic1, topic2,
+					},
+				},
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.False(t, f.Matches(makeLog(addr, []eth.Topic{topic1, topic3}, 1234)))
+		})
+	})
+
+	t.Run("Blocks", func(t *testing.T) {
+		t.Run("BlockHash", func(t *testing.T) {
+			t.Run("Match", func(t *testing.T) {
+				bh := eth.MustHash("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+				f := eth.LogFilter{
+					BlockHash: bh,
+				}
+				addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+				require.True(t, f.Matches(makeLog(addr, []eth.Topic{}, 1234, bh)))
+			})
+
+			t.Run("Mismatch", func(t *testing.T) {
+				hash1 := eth.MustHash("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+				hash2 := eth.MustHash("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+
+				f := eth.LogFilter{
+					BlockHash: hash1,
+				}
+				addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+				require.False(t, f.Matches(makeLog(addr, []eth.Topic{}, 1234, hash2)))
+			})
+		})
+	})
+
+	t.Run("FromBlock", func(t *testing.T) {
+		t.Run("Equal", func(t *testing.T) {
+			bn := eth.MustQuantity("0x1234")
+			f := eth.LogFilter{
+				FromBlock: eth.MustBlockNumberOrTag(bn.String()),
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.True(t, f.Matches(makeLog(addr, []eth.Topic{}, bn.UInt64())))
+		})
+
+		t.Run("Greater", func(t *testing.T) {
+			bn := eth.MustQuantity("0x1234")
+			f := eth.LogFilter{
+				FromBlock: eth.MustBlockNumberOrTag(bn.String()),
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.True(t, f.Matches(makeLog(addr, []eth.Topic{}, bn.UInt64()+1)))
+		})
+
+		t.Run("Lesser", func(t *testing.T) {
+			bn := eth.MustQuantity("0x1234")
+			f := eth.LogFilter{
+				FromBlock: eth.MustBlockNumberOrTag(bn.String()),
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.False(t, f.Matches(makeLog(addr, []eth.Topic{}, bn.UInt64()-1)))
+		})
+	})
+
+	t.Run("ToBlock", func(t *testing.T) {
+		t.Run("Equal", func(t *testing.T) {
+			bn := eth.MustQuantity("0x1234")
+			f := eth.LogFilter{
+				ToBlock: eth.MustBlockNumberOrTag(bn.String()),
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.True(t, f.Matches(makeLog(addr, []eth.Topic{}, bn.UInt64())))
+		})
+
+		t.Run("Greater", func(t *testing.T) {
+			bn := eth.MustQuantity("0x1234")
+			f := eth.LogFilter{
+				ToBlock: eth.MustBlockNumberOrTag(bn.String()),
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.False(t, f.Matches(makeLog(addr, []eth.Topic{}, bn.UInt64()+1)))
+		})
+
+		t.Run("Lesser", func(t *testing.T) {
+			bn := eth.MustQuantity("0x1234")
+			f := eth.LogFilter{
+				ToBlock: eth.MustBlockNumberOrTag(bn.String()),
+			}
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			require.True(t, f.Matches(makeLog(addr, []eth.Topic{}, bn.UInt64()-1)))
+		})
+	})
+
+	t.Run("Composite", func(t *testing.T) {
+		t.Run("AllMatch", func(t *testing.T) {
+			bn := eth.MustQuantity("0x1234")
+			from := eth.MustQuantity("0x1000")
+			to := eth.MustQuantity("0x1fff")
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			topic2 := *eth.MustTopic("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+			topic3 := *eth.MustTopic("0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc")
+			f := eth.LogFilter{
+				FromBlock: eth.MustBlockNumberOrTag(from.String()),
+				ToBlock:   eth.MustBlockNumberOrTag(to.String()),
+				Address:   []eth.Address{addr},
+				Topics: [][]eth.Topic{
+					{topic1},
+					{topic2},
+					{topic3},
+				},
+			}
+			require.True(t, f.Matches(makeLog(addr, []eth.Topic{topic1, topic2, topic3}, bn.UInt64())))
+		})
+		t.Run("WrongBlock", func(t *testing.T) {
+			bn := eth.MustQuantity("0x9999")
+			from := eth.MustQuantity("0x1000")
+			to := eth.MustQuantity("0x1fff")
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			topic2 := *eth.MustTopic("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+			topic3 := *eth.MustTopic("0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc")
+			f := eth.LogFilter{
+				FromBlock: eth.MustBlockNumberOrTag(from.String()),
+				ToBlock:   eth.MustBlockNumberOrTag(to.String()),
+				Address:   []eth.Address{addr},
+				Topics: [][]eth.Topic{
+					{topic1},
+					{topic2},
+					{topic3},
+				},
+			}
+			require.False(t, f.Matches(makeLog(addr, []eth.Topic{topic1, topic2, topic3}, bn.UInt64())))
+		})
+		t.Run("WrongAddresss", func(t *testing.T) {
+			bn := eth.MustQuantity("0x1234")
+			from := eth.MustQuantity("0x1000")
+			to := eth.MustQuantity("0x1fff")
+			addr1 := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			addr2 := *eth.MustAddress("0x2222222222222222222222222222222222222222")
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			topic2 := *eth.MustTopic("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+			topic3 := *eth.MustTopic("0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc")
+			f := eth.LogFilter{
+				FromBlock: eth.MustBlockNumberOrTag(from.String()),
+				ToBlock:   eth.MustBlockNumberOrTag(to.String()),
+				Address:   []eth.Address{addr1},
+				Topics: [][]eth.Topic{
+					{topic1},
+					{topic2},
+					{topic3},
+				},
+			}
+			require.False(t, f.Matches(makeLog(addr2, []eth.Topic{topic1, topic2, topic3}, bn.UInt64())))
+		})
+		t.Run("WrongTopics", func(t *testing.T) {
+			bn := eth.MustQuantity("0x1234")
+			from := eth.MustQuantity("0x1000")
+			to := eth.MustQuantity("0x1fff")
+			addr := *eth.MustAddress("0x1111111111111111111111111111111111111111")
+			topic1 := *eth.MustTopic("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+			topic2 := *eth.MustTopic("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+			topic3 := *eth.MustTopic("0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc")
+			f := eth.LogFilter{
+				FromBlock: eth.MustBlockNumberOrTag(from.String()),
+				ToBlock:   eth.MustBlockNumberOrTag(to.String()),
+				Address:   []eth.Address{addr},
+				Topics: [][]eth.Topic{
+					{topic3},
+					{topic3},
+				},
+			}
+			require.False(t, f.Matches(makeLog(addr, []eth.Topic{topic1, topic2}, bn.UInt64())))
+		})
+	})
 }
 
 func TestLogFilterParsing(t *testing.T) {
