@@ -3,6 +3,7 @@ package eth_test
 import (
 	"encoding/json"
 	"math/big"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -74,5 +75,25 @@ func TestQuantityFromUInt64(t *testing.T) {
 		invalid, err := eth.NewQuantity("0")
 		require.Error(t, err)
 		require.Nil(t, invalid)
+	}
+}
+
+func TestQuantity_DeepCopyInto(t *testing.T) {
+	val := int64(0x123456)
+	src := eth.QuantityFromInt64(val)
+
+	wg := sync.WaitGroup{}
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			// This is basically the same pattern as the auto-generated eth.Block.DeepCopy
+			// code here: https://github.com/INFURA/go-ethlibs/blob/master/eth/zz_deepcopy_generated.go#L19
+			cpy := src
+			src.DeepCopyInto(&cpy)
+
+			if cpy.Int64() != val {
+				panic("not equal")
+			}
+		}()
 	}
 }
