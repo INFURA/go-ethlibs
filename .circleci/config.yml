@@ -11,7 +11,7 @@ jobs:
             - go-mod-v1-{{ checksum "go.sum" }}
 
       - run: diff -u <(echo -n) <(gofmt -d .)
-      - run: go test -vet "all" -v ./...
+      - run: go test -race -vet "all" -v ./...
 
       - save_cache:
           key: go-mod-v1-{{ checksum "go.sum" }}
