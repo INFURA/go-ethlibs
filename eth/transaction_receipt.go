@@ -1,6 +1,7 @@
 package eth
 
 type TransactionReceipt struct {
+	Type              *Quantity `json:"type,omitempty"`
 	TransactionHash   Hash      `json:"transactionHash"`
 	TransactionIndex  Quantity  `json:"transactionIndex"`
 	BlockHash         Hash      `json:"blockHash"`

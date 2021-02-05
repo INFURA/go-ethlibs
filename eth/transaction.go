@@ -6,7 +6,13 @@ import (
 
 type Condition json.RawMessage
 
+var (
+	TransactionTypeLegacy     = *MustQuantity("0x0")
+	TransactionTypeAccessList = *MustQuantity("0x1")
+)
+
 type Transaction struct {
+	Type        *Quantity `json:"type,omitempty"`
 	BlockHash   *Hash     `json:"blockHash"`
 	BlockNumber *Quantity `json:"blockNumber"`
 	From        Address   `json:"from"`
@@ -30,8 +36,16 @@ type Transaction struct {
 	Creates   *Address   `json:"creates,omitempty"` // Parity wiki claims this is a Hash
 	Condition *Condition `json:"condition,omitempty"`
 
+	// EIP-2930 accessList
+	AccessList *[]AccessList `json:"accessList,omitempty"`
+
 	// Keep the source so we can recreate its expected representation
 	source string
+}
+
+type AccessList struct {
+	Address     Address  `json:"address"`
+	StorageKeys []Data32 `json:"storageKeys"`
 }
 
 type NewPendingTxBodyNotificationParams struct {
@@ -60,12 +74,18 @@ func (t *Transaction) UnmarshalJSON(data []byte) error {
 		t.source = "geth"
 	}
 
+	// Force AccessList to nil for non-EIP-2930 txs
+	if t.Type == nil || t.Type.Int64() != TransactionTypeAccessList.Int64() {
+		t.AccessList = nil
+	}
+
 	return nil
 }
 
 func (t *Transaction) MarshalJSON() ([]byte, error) {
 	if t.source == "parity" {
 		type parity struct {
+			Type        *Quantity `json:"type,omitempty"` // TODO: current OE uses `int` instead of QUANTITY encoding
 			BlockHash   *Hash     `json:"blockHash"`
 			BlockNumber *Quantity `json:"blockNumber"`
 			From        Address   `json:"from"`
@@ -88,9 +108,12 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 			ChainId   *Quantity  `json:"chainId"`
 			Creates   *Address   `json:"creates"`
 			Condition *Condition `json:"condition"`
+
+			AccessList *[]AccessList `json:"accessList,omitempty"`
 		}
 
 		p := parity{
+			Type:        t.Type,
 			BlockHash:   t.BlockHash,
 			BlockNumber: t.BlockNumber,
 			From:        t.From,
@@ -113,6 +136,8 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 			ChainId:   t.ChainId,
 			Creates:   t.Creates,
 			Condition: t.Condition,
+
+			AccessList: t.AccessList,
 		}
 
 		return json.Marshal(&p)

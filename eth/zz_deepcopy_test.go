@@ -59,6 +59,7 @@ func TestBlock_DeepCopy(t *testing.T) {
         "value": "0x0"
       },
       {
+        "type": "0x0",
         "blockHash": "0x0c58244f5d538e1f5840c6751c3b3a2c9fdf9583245918b224c6aad088de6e5a",
         "blockNumber": "0x9de762",
         "chainId": null,
