@@ -5,6 +5,7 @@ import (
 )
 
 type Condition json.RawMessage
+type AccessList []AccessListEntry
 
 var (
 	TransactionTypeLegacy     = *MustQuantity("0x0")
@@ -37,13 +38,13 @@ type Transaction struct {
 	Condition *Condition `json:"condition,omitempty"`
 
 	// EIP-2930 accessList
-	AccessList *[]AccessList `json:"accessList,omitempty"`
+	AccessList *AccessList `json:"accessList,omitempty"`
 
 	// Keep the source so we can recreate its expected representation
 	source string
 }
 
-type AccessList struct {
+type AccessListEntry struct {
 	Address     Address  `json:"address"`
 	StorageKeys []Data32 `json:"storageKeys"`
 }
@@ -109,7 +110,7 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 			Creates   *Address   `json:"creates"`
 			Condition *Condition `json:"condition"`
 
-			AccessList *[]AccessList `json:"accessList,omitempty"`
+			AccessList *AccessList `json:"accessList,omitempty"`
 		}
 
 		p := parity{

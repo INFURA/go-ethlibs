@@ -6,6 +6,9 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"golang.org/x/crypto/sha3"
+
+	"github.com/INFURA/go-ethlibs/rlp"
 )
 
 type Data string
@@ -277,4 +280,22 @@ func validateHex(value string, size int, typ string) (string, error) {
 	}
 
 	return value, nil
+}
+
+func (d *Data32) RLP() rlp.Value {
+	return rlp.Value{
+		String: d.String(),
+	}
+}
+
+func (d Data) Hash() Hash {
+	b := d.Bytes()
+	// And feed the bytes into our hash
+	hash := sha3.NewLegacyKeccak256()
+	hash.Write(b)
+	sum := hash.Sum(nil)
+
+	// and finally return the hash as a 0x prefixed string
+	digest := hex.EncodeToString(sum)
+	return Hash("0x" + digest)
 }

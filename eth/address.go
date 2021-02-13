@@ -59,8 +59,13 @@ func (a *Address) MarshalJSON() ([]byte, error) {
 }
 
 func (a *Address) RLP() rlp.Value {
+	if a == nil {
+		return rlp.Value{
+			String: "0x",
+		}
+	}
 	return rlp.Value{
-		String: a.String(),
+		String: strings.ToLower(a.String()),
 	}
 }
 
