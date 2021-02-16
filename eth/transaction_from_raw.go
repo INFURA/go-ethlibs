@@ -49,7 +49,7 @@ func (t *Transaction) FromRaw(input string) error {
 		t.V = v
 		t.R = r
 		t.S = s
-		t.ChainId = &chainId // TODO: correct?
+		t.ChainId = &chainId
 
 		signingHash, err := t.SigningHash(chainId)
 		if err != nil {
@@ -165,29 +165,9 @@ func rlpDecodeList(input string, receivers ...interface{}) error {
 		case *rlp.Value:
 			*receiver = value
 		case *AccessList:
-			// TODO: move to helper function
-			accessList := make(AccessList, len(value.List))
-			for j, accessRLP := range value.List {
-				l := len(accessRLP.List)
-				if l == 0 || l > 2 {
-					return errors.Errorf("invalid access list entry %d", j)
-				}
-				address, err := NewAddress(accessRLP.List[0].String)
-				if err != nil {
-					return errors.Wrapf(err, "invalid access list entry address %d", j)
-				}
-				accessList[j].Address = *address
-				if l == 2 {
-					// 2nd item is the storage keys
-					accessList[j].StorageKeys = make([]Data32, len(accessRLP.List[1].List))
-					for k, key := range accessRLP.List[1].List {
-						d, err := NewData32(key.String)
-						if err != nil {
-							return errors.Wrapf(err, "invalid access list entry %d storage key %d", i, j)
-						}
-						accessList[j].StorageKeys[k] = *d
-					}
-				}
+			accessList, err := NewAccessListFromRLP(value)
+			if err != nil {
+				return errors.Wrapf(err, "could not decode list item %d to AccessList", i)
 			}
 			*receiver = accessList
 		default:

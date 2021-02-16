@@ -2,6 +2,10 @@ package eth
 
 import (
 	"encoding/json"
+
+	"github.com/pkg/errors"
+
+	"github.com/INFURA/go-ethlibs/rlp"
 )
 
 type Condition json.RawMessage
@@ -94,7 +98,8 @@ func (t *Transaction) transactionType() int64 {
 func (t *Transaction) MarshalJSON() ([]byte, error) {
 	if t.source == "parity" {
 		type parity struct {
-			Type        *Quantity `json:"type,omitempty"` // TODO: current OE uses `int` instead of QUANTITY encoding
+			// TODO: Revisit once open ethereuem w/ EIP-2930 is released
+			Type        *Quantity `json:"type,omitempty"` // FIXME: current OE uses `int` instead of QUANTITY encoding
 			BlockHash   *Hash     `json:"blockHash"`
 			BlockNumber *Quantity `json:"blockNumber"`
 			From        Address   `json:"from"`
@@ -160,4 +165,32 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 	type unknown Transaction
 	u := unknown(*t)
 	return json.Marshal(&u)
+}
+
+func NewAccessListFromRLP(v rlp.Value) (AccessList, error) {
+	accessList := make(AccessList, len(v.List))
+	for j, accessRLP := range v.List {
+		l := len(accessRLP.List)
+		if l == 0 || l > 2 {
+			return nil, errors.Errorf("invalid access list entry %d", j)
+		}
+		address, err := NewAddress(accessRLP.List[0].String)
+		if err != nil {
+			return nil, errors.Wrapf(err, "invalid access list entry address %d", j)
+		}
+		accessList[j].Address = *address
+		if l == 2 {
+			// 2nd item is the storage keys
+			accessList[j].StorageKeys = make([]Data32, len(accessRLP.List[1].List))
+			for k, key := range accessRLP.List[1].List {
+				d, err := NewData32(key.String)
+				if err != nil {
+					return nil, errors.Wrapf(err, "invalid access list entry %d storage key %d", j, k)
+				}
+				accessList[j].StorageKeys[k] = *d
+			}
+		}
+	}
+
+	return accessList, nil
 }
