@@ -135,7 +135,8 @@ func TestTransactionTypeAccessList_Populated(t *testing.T) {
 	require.Equal(t, eth.TransactionTypeAccessList, tx.Type.Int64())
 	require.NotNil(t, tx.AccessList)
 	require.Len(t, *tx.AccessList, 2)
-	require.Equal(t, *eth.MustAddress("0x2b371c0262ceab27face32fbb5270ddc6aa01ba4"), (*tx.AccessList)[0].Address) //TODO: not a fan of having to access like this...
+	//TODO: not a fan of having to access (*tx.AccessList)[:] like this...
+	require.Equal(t, *eth.MustAddress("0x2b371c0262ceab27face32fbb5270ddc6aa01ba4"), (*tx.AccessList)[0].Address)
 	require.Len(t, (*tx.AccessList)[0].StorageKeys, 2)
 	require.Equal(t, *eth.MustData32("0x1122334455667788990011223344556677889900112233445566778899001122"), (*tx.AccessList)[0].StorageKeys[0])
 	require.Equal(t, *eth.MustData32("0x0000000000000000000000000000000000000000000000000000000000000000"), (*tx.AccessList)[0].StorageKeys[1])

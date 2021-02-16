@@ -17,11 +17,6 @@ var ErrInsufficientParams = errors.New("transaction is missing values")
 // other alternative is to import the C library but want to avoid that if possible
 
 func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
-
-	if !t.check() {
-		return nil, ErrInsufficientParams
-	}
-
 	pKey, err := hex.DecodeString(privateKey)
 	if err != nil {
 		return nil, err
@@ -49,7 +44,13 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 
 	// And compute the raw representation of the tx
 	raw, err := t.RawRepresentation(chainId)
-	// TODO: update t.Raw ?
+	if err != nil {
+		return nil, err
+	}
+	if t.Raw != nil {
+		// Update .Raw to ensure it matches (currently only provided for Parity-flavored txs)
+		t.Raw = raw
+	}
 	return raw, err
 }
 
@@ -150,66 +151,4 @@ func (t *Transaction) RawRepresentation(chainId Quantity) (*Data, error) {
 	default:
 		return nil, errors.New("unsupported transaction type")
 	}
-}
-
-func (a AccessList) RLP() rlp.Value {
-	val := rlp.Value{List: make([]rlp.Value, len(a))}
-	for i := range a {
-		keys := rlp.Value{List: make([]rlp.Value, len(a[i].StorageKeys))}
-		for j, k := range a[i].StorageKeys {
-			keys.List[j] = k.RLP()
-		}
-		val.List[i] = rlp.Value{List: []rlp.Value{
-			a[i].Address.RLP(),
-			keys,
-		}}
-	}
-	return val
-}
-
-func (t *Transaction) RLP() rlp.Value {
-	base := t.serializeCommon()
-	base = append(base, t.V.RLP())
-	base = append(base, t.R.RLP())
-	base = append(base, t.S.RLP())
-	rawTx := rlp.Value{List: base}
-	return rawTx
-}
-
-func (t *Transaction) serializeCommon() []rlp.Value {
-	var list []rlp.Value
-	list = append(list, t.Nonce.RLP())
-	list = append(list, t.GasPrice.RLP())
-	list = append(list, t.Gas.RLP())
-	list = append(list, t.To.RLP())
-	list = append(list, t.Value.RLP())
-	list = append(list, rlp.Value{String: t.Input.String()})
-	return list
-}
-
-func (t *Transaction) serializeRaw(chainID uint64) (rlp.Value, error) {
-	base := t.serializeCommon()
-	empty := rlp.Value{String: ""}
-	if chainID != 0 {
-		base = append(base, QuantityFromUInt64(chainID).RLP())
-		r, err := rlp.From("0x")
-		if err != nil {
-			return empty, err
-		}
-		base = append(base, *r)
-		s, err := rlp.From("0x")
-		if err != nil {
-			return empty, err
-		}
-		base = append(base, *s)
-	}
-	rawTx := rlp.Value{List: base}
-	return rawTx, nil
-}
-
-func (t *Transaction) check() bool {
-	if t.To == nil {
-		return false
-	}
-	return true
 }
