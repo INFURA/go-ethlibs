@@ -167,6 +167,6 @@ func TestTransactionReceipts(t *testing.T) {
 		require.NoError(t, err, "unmarshal must succeed")
 
 		require.NotNil(t, receipt.Type)
-		require.Equal(t, eth.TransactionTypeLegacy, *receipt.Type)
+		require.Equal(t, eth.TransactionTypeLegacy, receipt.Type.Int64())
 	}
 }

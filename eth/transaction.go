@@ -8,8 +8,8 @@ type Condition json.RawMessage
 type AccessList []AccessListEntry
 
 var (
-	TransactionTypeLegacy     = *MustQuantity("0x0")
-	TransactionTypeAccessList = *MustQuantity("0x1")
+	TransactionTypeLegacy     = int64(0x0)
+	TransactionTypeAccessList = int64(0x1)
 )
 
 type Transaction struct {
@@ -75,12 +75,20 @@ func (t *Transaction) UnmarshalJSON(data []byte) error {
 		t.source = "geth"
 	}
 
-	// Force AccessList to nil for non-EIP-2930 txs
-	if t.Type == nil || t.Type.Int64() != TransactionTypeAccessList.Int64() {
+	// Force AccessList to nil for legacy txs
+	if t.transactionType() == TransactionTypeLegacy {
 		t.AccessList = nil
 	}
 
 	return nil
+}
+
+func (t *Transaction) transactionType() int64 {
+	if t.Type == nil {
+		return TransactionTypeLegacy
+	}
+
+	return t.Type.Int64()
 }
 
 func (t *Transaction) MarshalJSON() ([]byte, error) {

@@ -62,7 +62,7 @@ func TestTransactionTypeLegacy(t *testing.T) {
 	err := json.Unmarshal([]byte(payload), &tx)
 	require.NoError(t, err)
 	require.NotNil(t, tx.Type)
-	require.Equal(t, eth.TransactionTypeLegacy, *tx.Type)
+	require.Equal(t, eth.TransactionTypeLegacy, tx.Type.Int64())
 	require.Nil(t, tx.AccessList)
 
 	j, err := json.Marshal(&tx)
@@ -95,7 +95,7 @@ func TestTransactionTypeAccessList_Empty(t *testing.T) {
 	err := json.Unmarshal([]byte(payload), &tx)
 	require.NoError(t, err)
 	require.NotNil(t, tx.Type)
-	require.Equal(t, eth.TransactionTypeAccessList, *tx.Type)
+	require.Equal(t, eth.TransactionTypeAccessList, tx.Type.Int64())
 	require.NotNil(t, tx.AccessList)
 	require.Len(t, *tx.AccessList, 0)
 
@@ -132,7 +132,7 @@ func TestTransactionTypeAccessList_Populated(t *testing.T) {
 	err := json.Unmarshal([]byte(payload), &tx)
 	require.NoError(t, err)
 	require.NotNil(t, tx.Type)
-	require.Equal(t, eth.TransactionTypeAccessList, *tx.Type)
+	require.Equal(t, eth.TransactionTypeAccessList, tx.Type.Int64())
 	require.NotNil(t, tx.AccessList)
 	require.Len(t, *tx.AccessList, 2)
 	require.Equal(t, *eth.MustAddress("0x2b371c0262ceab27face32fbb5270ddc6aa01ba4"), (*tx.AccessList)[0].Address) //TODO: not a fan of having to access like this...

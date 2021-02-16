@@ -37,10 +37,10 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 	}
 
 	// Update signature values based on transaction type
-	switch {
-	case t.Type == nil:
+	switch t.transactionType() {
+	case TransactionTypeLegacy:
 		t.R, t.S, t.V = signature.EIP155Values()
-	case t.Type.Int64() == TransactionTypeAccessList.Int64():
+	case TransactionTypeAccessList:
 		// set RSV to EIP2718 values
 		t.R, t.S, t.V = signature.EIP2718Values()
 	default:
@@ -54,8 +54,8 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 }
 
 func (t *Transaction) SigningHash(chainId Quantity) (*Hash, error) {
-	switch {
-	case t.Type == nil:
+	switch t.transactionType() {
+	case TransactionTypeLegacy:
 		// Legacy Transaction
 		// Return Hash(RLP(Nonce, GasPrice, Gas, To, Value, Input, ChainId, 0, 0))
 		zero := QuantityFromInt64(0)
@@ -76,7 +76,7 @@ func (t *Transaction) SigningHash(chainId Quantity) (*Hash, error) {
 		} else {
 			return NewHash(s)
 		}
-	case t.Type.Int64() == TransactionTypeAccessList.Int64():
+	case TransactionTypeAccessList:
 		// Return Hash( 0x1 || RLP(chainId, ...)
 		payload := rlp.Value{List: []rlp.Value{
 			chainId.RLP(),
@@ -104,8 +104,8 @@ func (t *Transaction) SigningHash(chainId Quantity) (*Hash, error) {
 }
 
 func (t *Transaction) RawRepresentation(chainId Quantity) (*Data, error) {
-	switch {
-	case t.Type == nil:
+	switch t.transactionType() {
+	case TransactionTypeLegacy:
 		// Legacy Transactions are RLP(Nonce, GasPrice, Gas, To, Value, Input, V, R, S)
 		message := rlp.Value{List: []rlp.Value{
 			t.Nonce.RLP(),
@@ -123,7 +123,7 @@ func (t *Transaction) RawRepresentation(chainId Quantity) (*Data, error) {
 		} else {
 			return NewData(encoded)
 		}
-	case t.Type.Int64() == TransactionTypeAccessList.Int64():
+	case TransactionTypeAccessList:
 		// EIP-2930 Transactions are 0x1 || rlp([chainId, nonce, gasPrice, gasLimit, to, value, data, access_list, yParity, senderR, senderS])
 		typePrefix, err := t.Type.RLP().Encode()
 		if err != nil {
@@ -147,9 +147,9 @@ func (t *Transaction) RawRepresentation(chainId Quantity) (*Data, error) {
 		} else {
 			return NewData(typePrefix + encodedPayload[2:])
 		}
+	default:
+		return nil, errors.New("unsupported transaction type")
 	}
-
-	return nil, errors.New("unsupported transaction type")
 }
 
 func (a AccessList) RLP() rlp.Value {
