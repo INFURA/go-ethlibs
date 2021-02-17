@@ -55,6 +55,8 @@ func ECSign(h *Hash, privKeyBytes []byte, chainId Quantity) (*Signature, error) 
 	return &Signature{r, s, v, chainId}, nil
 }
 
+// EIP155Values returns the expected R,S, and V values for an EIP-155 Signature.  Namely, the V value includes the
+// EIP-155 encoded chain id.
 func (s *Signature) EIP155Values() (R Quantity, S Quantity, V Quantity) {
 	if s.chainId.Int64() == 0 {
 		return s.r, s.s, QuantityFromInt64(s.v.Int64() + 27)
@@ -63,6 +65,8 @@ func (s *Signature) EIP155Values() (R Quantity, S Quantity, V Quantity) {
 	}
 }
 
+// EIP2718Values returns the expected R, S, and V values for EIP-2718 signatures.  Namely, the V value is simply the 0x0
+// or 0x1 parity bit.
 func (s *Signature) EIP2718Values() (R Quantity, S Quantity, V Quantity) {
 	return s.r, s.s, s.v
 }

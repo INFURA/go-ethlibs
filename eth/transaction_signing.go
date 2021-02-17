@@ -3,6 +3,7 @@ package eth
 import (
 	"encoding/hex"
 	"errors"
+	"strings"
 
 	"github.com/INFURA/go-ethlibs/rlp"
 )
@@ -16,8 +17,20 @@ var ErrInsufficientParams = errors.New("transaction is missing values")
 // using "github.com/btcsuite/btcd/btcec"
 // other alternative is to import the C library but want to avoid that if possible
 
+// Sign uses the hex-encoded private key and chainId to update the R, S, and V values
+// for a Transaction, and returns the raw signed transaction or an error.
 func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
-	pKey, err := hex.DecodeString(privateKey)
+	var (
+		pKey []byte
+		err  error
+	)
+
+	if strings.HasPrefix(privateKey, "0x") && len(privateKey) > 2 {
+		pKey, err = hex.DecodeString(privateKey[2:])
+	} else {
+		pKey, err = hex.DecodeString(privateKey)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +67,7 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 	return raw, err
 }
 
+// SigningHash returns the Keccak-256 hash of the transaction fields required for transaction signing or an error.
 func (t *Transaction) SigningHash(chainId Quantity) (*Hash, error) {
 	switch t.transactionType() {
 	case TransactionTypeLegacy:
@@ -104,6 +118,7 @@ func (t *Transaction) SigningHash(chainId Quantity) (*Hash, error) {
 	return nil, errors.New("unsupported transaction type")
 }
 
+// RawRepresentation returns the transaction encoded as a raw hexadecimal data string, or an error
 func (t *Transaction) RawRepresentation(chainId Quantity) (*Data, error) {
 	switch t.transactionType() {
 	case TransactionTypeLegacy:

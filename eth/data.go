@@ -282,12 +282,14 @@ func validateHex(value string, size int, typ string) (string, error) {
 	return value, nil
 }
 
+// RLP returns the Data32 as an RLP-encoded string.
 func (d *Data32) RLP() rlp.Value {
 	return rlp.Value{
 		String: d.String(),
 	}
 }
 
+// Hash returns the keccak256 hash of the Data.
 func (d Data) Hash() Hash {
 	b := d.Bytes()
 	// And feed the bytes into our hash

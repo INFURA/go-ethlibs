@@ -22,7 +22,7 @@ func TestSignTransaction(t *testing.T) {
 	// This purposefully uses the already highly compromised keypair from the go-ethereum book:
 	// https://goethereumbook.org/transfer-eth/
 	// privateKey = fad9c8855b740a0b7ed4c221dbad0f33a83a49cad6b3fe8d5817ac83d38b6a19
-	signed, err := tx.Sign("fad9c8855b740a0b7ed4c221dbad0f33a83a49cad6b3fe8d5817ac83d38b6a19", chainId)
+	signed, err := tx.Sign("0xfad9c8855b740a0b7ed4c221dbad0f33a83a49cad6b3fe8d5817ac83d38b6a19", chainId)
 	require.NoError(t, err)
 
 	// check tx can be restored from rawtx

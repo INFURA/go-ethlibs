@@ -9,8 +9,10 @@ import (
 	"github.com/INFURA/go-ethlibs/rlp"
 )
 
-// FromRaw populates a Transaction fields from the raw transaction data.
-// Currently only supports signed Transactions,
+// FromRaw populates a Transaction fields from the raw transaction data supplied as a hexadecimal encoded string.
+// For pre-EIP-2718 legacy transactions the input string is an RLP-encoded list, for transaction types defined
+// after EIP-2718 the payload format depends on the transaction type included as the first byte.
+// Unsigned transactions where R, S, and V are zero are not currently supported.
 func (t *Transaction) FromRaw(input string) error {
 	// Code is heavily inspired by ethers.js utils.transaction.parse:
 	// https://github.com/ethers-io/ethers.js/blob/master/utils/transaction.js#L90

@@ -7,8 +7,8 @@ import (
 type Condition json.RawMessage
 
 var (
-	TransactionTypeLegacy     = int64(0x0)
-	TransactionTypeAccessList = int64(0x1)
+	TransactionTypeLegacy     = int64(0x0) // TransactionTypeLegacy refers to pre-EIP-2718 transactions.
+	TransactionTypeAccessList = int64(0x1) // TransactionTypeAccessList refers to EIP-2930 transactions.
 )
 
 type Transaction struct {
@@ -77,6 +77,7 @@ func (t *Transaction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// transactionType returns the transactions EIP-2718 type, or TransactionTypeLEgacy for pre-EIP-2718 transactions.
 func (t *Transaction) transactionType() int64 {
 	if t.Type == nil {
 		return TransactionTypeLegacy

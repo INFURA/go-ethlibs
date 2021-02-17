@@ -13,6 +13,7 @@ type AccessListEntry struct {
 	StorageKeys []Data32 `json:"storageKeys"`
 }
 
+// RLP returns the AccessList as an RLP-encoded list
 func (a AccessList) RLP() rlp.Value {
 	val := rlp.Value{List: make([]rlp.Value, len(a))}
 	for i := range a {
@@ -28,6 +29,8 @@ func (a AccessList) RLP() rlp.Value {
 	return val
 }
 
+// NewAccessListFromRLP decodes an RLP list into an AccessList, or returns an error.
+// The RLP format of AccessLists is defined in EIP-2930, each entry is a tuple of an address and a list of storage slots.
 func NewAccessListFromRLP(v rlp.Value) (AccessList, error) {
 	accessList := make(AccessList, len(v.List))
 	for j, accessRLP := range v.List {
