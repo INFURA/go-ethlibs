@@ -32,24 +32,28 @@ func TestData(t *testing.T) {
 		d, err := eth.NewData("0x")
 		require.NoError(t, err)
 		require.Equal(t, "0x", d.String())
+		require.Equal(t, "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470", d.Hash().String())
 	}
 
 	{
 		d, err := eth.NewData8("0x1122334455667788")
 		require.NoError(t, err)
 		require.NotNil(t, d)
+		require.Equal(t, "0x1360118a9c9fd897720cf4e26de80683f402dd7c28e000aa98ea51b85c60161c", d.Hash().String())
 	}
 
 	{
 		d, err := eth.NewData20("0x1122334455667788990011223344556677889900")
 		require.NoError(t, err)
 		require.NotNil(t, d)
+		require.Equal(t, "0x0a2fb1c97af2de8f8ac02909daafec285f8ebc8817cb7dc7c606ea892eece1be", d.Hash().String())
 	}
 
 	{
 		d, err := eth.NewData32("0x1122334455667788990011223344556677889900112233445566778899001122")
 		require.NoError(t, err)
 		require.NotNil(t, d)
+		require.Equal(t, "0xf88d9246fe5c20db67700433fa1048f8dcd2204cd4ab5c52f36f1d027e51505c", d.Hash().String())
 
 		h, err := eth.NewHash(d.String())
 		require.NoError(t, err)
@@ -64,5 +68,6 @@ func TestData(t *testing.T) {
 		d, err := eth.NewData256("0x" + strings.Repeat("00", 256))
 		require.NoError(t, err)
 		require.NotNil(t, d)
+		require.Equal(t, "0xd397b3b043d87fcd6fad1291ff0bfd16401c274896d8c63a923727f077b8e0b5", d.Hash().String(), d.String())
 	}
 }

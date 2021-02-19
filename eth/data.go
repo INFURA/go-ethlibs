@@ -192,6 +192,31 @@ func (d Data256) Bytes() []byte {
 	return b
 }
 
+// Hash returns the keccak256 hash of the Data.
+func (d Data) Hash() Hash {
+	return hash(d)
+}
+
+// Hash returns the keccak256 hash of the Data8.
+func (d Data8) Hash() Hash {
+	return hash(d)
+}
+
+// Hash returns the keccak256 hash of the Data20.
+func (d Data20) Hash() Hash {
+	return hash(d)
+}
+
+// Hash returns the keccak256 hash of the Data32.
+func (d Data32) Hash() Hash {
+	return hash(d)
+}
+
+// Hash returns the keccak256 hash of the Data256.
+func (d Data256) Hash() Hash {
+	return hash(d)
+}
+
 func (d *Data) UnmarshalJSON(data []byte) error {
 	str, err := unmarshalHex(data, -1, "data")
 	if err != nil {
@@ -289,9 +314,12 @@ func (d *Data32) RLP() rlp.Value {
 	}
 }
 
-// Hash returns the keccak256 hash of the Data.
-func (d Data) Hash() Hash {
-	b := d.Bytes()
+type hasBytes interface {
+	Bytes() []byte
+}
+
+func hash(from hasBytes) Hash {
+	b := from.Bytes()
 	// And feed the bytes into our hash
 	hash := sha3.NewLegacyKeccak256()
 	hash.Write(b)
