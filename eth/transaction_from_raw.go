@@ -129,6 +129,19 @@ func (t *Transaction) FromRaw(input string) error {
 	}
 }
 
+// rlpDecodeList decodes an RLP list into the passed in receivers.  Currently only the receiver types needed for
+// legacy and EIP-2930 transactions are implemented, new receivers can easily be added in the for loop.
+//
+// Note that when calling this function, the receivers MUST be pointers never values, and for "optional" receivers
+// such as Address a pointer to a pointer must be passed.  For example:
+//
+//    var (
+//      addr  *eth.Address
+//      nonce eth.Quantity
+//    )
+//    err := rlpDecodeList(payload, &addr, &nonce)
+//
+// TODO: Consider making this function public once all receiver types in the eth package are supported.
 func rlpDecodeList(input string, receivers ...interface{}) error {
 	decoded, err := rlp.From(input)
 	if err != nil {
