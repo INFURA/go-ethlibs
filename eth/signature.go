@@ -10,9 +10,10 @@ import (
 )
 
 type Signature struct {
-	R Quantity
-	S Quantity
-	V Quantity
+	r       Quantity
+	s       Quantity
+	v       Quantity
+	chainId Quantity
 }
 
 // ECSign returns the R,S, and V values for a given message hash for the given chainId using the bytes of given
@@ -36,12 +37,12 @@ func ECSign(h *Hash, privKeyBytes []byte, chainId Quantity) (*Signature, error) 
 	// Unfortunately the ECDSA package we are using doesn't return the recovery V value
 	// so the only recourse is to try both values 0 or 1 and see which one produces a valid
 	// value.
-	recovery := QuantityFromInt64(1)
-	sender, err := ECRecover(h, &r, &s, &recovery)
+	v := QuantityFromInt64(1)
+	sender, err := ECRecover(h, &r, &s, &v)
 	if err != nil || sender.String() != addr.String() {
 		// ok try the other recovery value
-		recovery = QuantityFromInt64(0)
-		sender, err = ECRecover(h, &r, &s, &recovery)
+		v = QuantityFromInt64(0)
+		sender, err = ECRecover(h, &r, &s, &v)
 		if err != nil {
 			return nil, errors.Wrap(err, "recovery failed")
 		}
@@ -51,14 +52,23 @@ func ECSign(h *Hash, privKeyBytes []byte, chainId Quantity) (*Signature, error) 
 		return nil, errors.New("signature mismatch")
 	}
 
-	var v Quantity
-	if chainId.Int64() == 0 {
-		v = QuantityFromInt64(recovery.Int64() + 27)
-	} else {
-		v = QuantityFromInt64(recovery.Int64() + (chainId.Int64()*2 + 35))
-	}
+	return &Signature{r, s, v, chainId}, nil
+}
 
-	return &Signature{r, s, v}, nil
+// EIP155Values returns the expected R,S, and V values for an EIP-155 Signature.  Namely, the V value includes the
+// EIP-155 encoded chain id.
+func (s *Signature) EIP155Values() (R Quantity, S Quantity, V Quantity) {
+	if s.chainId.Int64() == 0 {
+		return s.r, s.s, QuantityFromInt64(s.v.Int64() + 27)
+	} else {
+		return s.r, s.s, QuantityFromInt64(s.v.Int64() + (s.chainId.Int64()*2 + 35))
+	}
+}
+
+// EIP2718Values returns the expected R, S, and V values for EIP-2718 signatures.  Namely, the V value is simply the 0x0
+// or 0x1 parity bit.
+func (s *Signature) EIP2718Values() (R Quantity, S Quantity, V Quantity) {
+	return s.r, s.s, s.v
 }
 
 // ECRecover returns the sending address, given a message digest and R, S, V values.

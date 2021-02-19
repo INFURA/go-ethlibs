@@ -6,7 +6,13 @@ import (
 
 type Condition json.RawMessage
 
+var (
+	TransactionTypeLegacy     = int64(0x0) // TransactionTypeLegacy refers to pre-EIP-2718 transactions.
+	TransactionTypeAccessList = int64(0x1) // TransactionTypeAccessList refers to EIP-2930 transactions.
+)
+
 type Transaction struct {
+	Type        *Quantity `json:"type,omitempty"`
 	BlockHash   *Hash     `json:"blockHash"`
 	BlockNumber *Quantity `json:"blockNumber"`
 	From        Address   `json:"from"`
@@ -29,6 +35,9 @@ type Transaction struct {
 	ChainId   *Quantity  `json:"chainId,omitempty"`
 	Creates   *Address   `json:"creates,omitempty"` // Parity wiki claims this is a Hash
 	Condition *Condition `json:"condition,omitempty"`
+
+	// EIP-2930 accessList
+	AccessList *AccessList `json:"accessList,omitempty"`
 
 	// Keep the source so we can recreate its expected representation
 	source string
@@ -60,12 +69,28 @@ func (t *Transaction) UnmarshalJSON(data []byte) error {
 		t.source = "geth"
 	}
 
+	// Force AccessList to nil for legacy txs
+	if t.TransactionType() == TransactionTypeLegacy {
+		t.AccessList = nil
+	}
+
 	return nil
+}
+
+// TransactionType returns the transactions EIP-2718 type, or TransactionTypeLegacy for pre-EIP-2718 transactions.
+func (t *Transaction) TransactionType() int64 {
+	if t.Type == nil {
+		return TransactionTypeLegacy
+	}
+
+	return t.Type.Int64()
 }
 
 func (t *Transaction) MarshalJSON() ([]byte, error) {
 	if t.source == "parity" {
 		type parity struct {
+			// TODO: Revisit once open ethereuem w/ EIP-2930 is released
+			Type        *Quantity `json:"type,omitempty"` // FIXME: current OE uses `int` instead of QUANTITY encoding
 			BlockHash   *Hash     `json:"blockHash"`
 			BlockNumber *Quantity `json:"blockNumber"`
 			From        Address   `json:"from"`
@@ -88,9 +113,12 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 			ChainId   *Quantity  `json:"chainId"`
 			Creates   *Address   `json:"creates"`
 			Condition *Condition `json:"condition"`
+
+			AccessList *AccessList `json:"accessList,omitempty"`
 		}
 
 		p := parity{
+			Type:        t.Type,
 			BlockHash:   t.BlockHash,
 			BlockNumber: t.BlockNumber,
 			From:        t.From,
@@ -113,6 +141,8 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 			ChainId:   t.ChainId,
 			Creates:   t.Creates,
 			Condition: t.Condition,
+
+			AccessList: t.AccessList,
 		}
 
 		return json.Marshal(&p)

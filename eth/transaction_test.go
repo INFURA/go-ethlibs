@@ -17,6 +17,7 @@ func TestTransactionFailedContractCreation(t *testing.T) {
 	err := json.Unmarshal([]byte(payload), &tx)
 	require.NoError(t, err)
 	require.Nil(t, tx.To)
+	require.Equal(t, eth.TransactionTypeLegacy, tx.TransactionType())
 
 	j, err := json.Marshal(&tx)
 	require.NoError(t, err)
@@ -32,6 +33,118 @@ func TestTransactionSuccessfulContractCreation(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, tx.To)
 	require.Equal(t, eth.MustAddress("0xac2475e9325b586f0b7e1928b813c9098d9ba262"), tx.Creates)
+	require.Equal(t, eth.TransactionTypeLegacy, tx.TransactionType())
+
+	j, err := json.Marshal(&tx)
+	require.NoError(t, err)
+
+	RequireEqualJSON(t, []byte(payload), j)
+}
+
+func TestTransactionTypeLegacy(t *testing.T) {
+	payload := `{
+        "type": "0x0",
+        "blockHash": "0x2b27fe2bbc8ce01ac7ae8bf74f793a197cf7edbe82727588811fa9a2c4776f81",
+        "blockNumber": "0x12b1d",
+        "from": "0x2b371c0262ceab27face32fbb5270ddc6aa01ba4",
+        "gas": "0x6bdf",
+        "gasPrice": "0x3b9aca00",
+        "hash": "0xbddbb685774d8a3df036ed9fb920b48f876090a57e9e90ee60921e0510ef7090",
+        "input": "0x9c0e3f7a0000000000000000000000000000000000000000000000000000000000000078000000000000000000000000000000000000000000000000000000000000002a",
+        "nonce": "0x1c",
+        "to": "0x8e730df7c70d33118d9e5f79ab81aed0be6f6635",
+        "transactionIndex": "0x2",
+        "value": "0x0",
+        "v": "0x1b",
+        "r": "0x2a98c51c2782f664d3ce571fef0491b48f5ebbc5845fa513192e6e6b24ecdaa1",
+        "s": "0x29b8e0c67aa9c11327e16556c591dc84a7aac2f6fc57c7f93901be8ee867aebc"
+      }`
+
+	tx := eth.Transaction{}
+	err := json.Unmarshal([]byte(payload), &tx)
+	require.NoError(t, err)
+	require.NotNil(t, tx.Type)
+	require.Equal(t, eth.TransactionTypeLegacy, tx.Type.Int64())
+	require.Nil(t, tx.AccessList)
+
+	j, err := json.Marshal(&tx)
+	require.NoError(t, err)
+
+	RequireEqualJSON(t, []byte(payload), j)
+}
+
+func TestTransactionTypeAccessList_Empty(t *testing.T) {
+	payload := `{
+        "type": "0x1",
+        "blockHash": "0x2b27fe2bbc8ce01ac7ae8bf74f793a197cf7edbe82727588811fa9a2c4776f81",
+        "blockNumber": "0x12b1d",
+        "from": "0x2b371c0262ceab27face32fbb5270ddc6aa01ba4",
+        "gas": "0x6bdf",
+        "gasPrice": "0x3b9aca00",
+        "hash": "0xbddbb685774d8a3df036ed9fb920b48f876090a57e9e90ee60921e0510ef7090",
+        "input": "0x9c0e3f7a0000000000000000000000000000000000000000000000000000000000000078000000000000000000000000000000000000000000000000000000000000002a",
+        "nonce": "0x1c",
+        "to": "0x8e730df7c70d33118d9e5f79ab81aed0be6f6635",
+        "transactionIndex": "0x2",
+        "value": "0x0",
+        "v": "0x1b",
+        "r": "0x2a98c51c2782f664d3ce571fef0491b48f5ebbc5845fa513192e6e6b24ecdaa1",
+        "s": "0x29b8e0c67aa9c11327e16556c591dc84a7aac2f6fc57c7f93901be8ee867aebc",
+		"accessList": []
+      }`
+
+	tx := eth.Transaction{}
+	err := json.Unmarshal([]byte(payload), &tx)
+	require.NoError(t, err)
+	require.NotNil(t, tx.Type)
+	require.Equal(t, eth.TransactionTypeAccessList, tx.Type.Int64())
+	require.Equal(t, eth.TransactionTypeAccessList, tx.TransactionType())
+	require.NotNil(t, tx.AccessList)
+	require.Len(t, *tx.AccessList, 0)
+
+	j, err := json.Marshal(&tx)
+	require.NoError(t, err)
+
+	RequireEqualJSON(t, []byte(payload), j)
+}
+
+func TestTransactionTypeAccessList_Populated(t *testing.T) {
+	payload := `{
+        "type": "0x1",
+        "blockHash": "0x2b27fe2bbc8ce01ac7ae8bf74f793a197cf7edbe82727588811fa9a2c4776f81",
+        "blockNumber": "0x12b1d",
+        "from": "0x2b371c0262ceab27face32fbb5270ddc6aa01ba4",
+        "gas": "0x6bdf",
+        "gasPrice": "0x3b9aca00",
+        "hash": "0xbddbb685774d8a3df036ed9fb920b48f876090a57e9e90ee60921e0510ef7090",
+        "input": "0x9c0e3f7a0000000000000000000000000000000000000000000000000000000000000078000000000000000000000000000000000000000000000000000000000000002a",
+        "nonce": "0x1c",
+        "to": "0x8e730df7c70d33118d9e5f79ab81aed0be6f6635",
+        "transactionIndex": "0x2",
+        "value": "0x0",
+        "v": "0x1b",
+        "r": "0x2a98c51c2782f664d3ce571fef0491b48f5ebbc5845fa513192e6e6b24ecdaa1",
+        "s": "0x29b8e0c67aa9c11327e16556c591dc84a7aac2f6fc57c7f93901be8ee867aebc",
+		"accessList": [
+			{ "address": "0x2b371c0262ceab27face32fbb5270ddc6aa01ba4", "storageKeys": ["0x1122334455667788990011223344556677889900112233445566778899001122", "0x0000000000000000000000000000000000000000000000000000000000000000"] },
+			{ "address": "0x8e730df7c70d33118d9e5f79ab81aed0be6f6635", "storageKeys": [] }
+		]
+      }`
+
+	tx := eth.Transaction{}
+	err := json.Unmarshal([]byte(payload), &tx)
+	require.NoError(t, err)
+	require.NotNil(t, tx.Type)
+	require.Equal(t, eth.TransactionTypeAccessList, tx.Type.Int64())
+	require.Equal(t, eth.TransactionTypeAccessList, tx.TransactionType())
+	require.NotNil(t, tx.AccessList)
+	require.Len(t, *tx.AccessList, 2)
+	//TODO: not a fan of having to access (*tx.AccessList)[:] like this...
+	require.Equal(t, *eth.MustAddress("0x2b371c0262ceab27face32fbb5270ddc6aa01ba4"), (*tx.AccessList)[0].Address)
+	require.Len(t, (*tx.AccessList)[0].StorageKeys, 2)
+	require.Equal(t, *eth.MustData32("0x1122334455667788990011223344556677889900112233445566778899001122"), (*tx.AccessList)[0].StorageKeys[0])
+	require.Equal(t, *eth.MustData32("0x0000000000000000000000000000000000000000000000000000000000000000"), (*tx.AccessList)[0].StorageKeys[1])
+	require.Len(t, (*tx.AccessList)[1].StorageKeys, 0)
 
 	j, err := json.Marshal(&tx)
 	require.NoError(t, err)

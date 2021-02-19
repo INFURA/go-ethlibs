@@ -3,6 +3,7 @@ package eth
 import (
 	"encoding/hex"
 	"errors"
+	"strings"
 
 	"github.com/INFURA/go-ethlibs/rlp"
 )
@@ -16,88 +17,153 @@ var ErrInsufficientParams = errors.New("transaction is missing values")
 // using "github.com/btcsuite/btcd/btcec"
 // other alternative is to import the C library but want to avoid that if possible
 
-func (t *Transaction) Sign(privateKey string, chainId uint64) (string, error) {
+// Sign uses the hex-encoded private key and chainId to update the R, S, and V values
+// for a Transaction, and returns the raw signed transaction or an error.
+func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
+	var (
+		pKey []byte
+		err  error
+	)
 
-	if !t.check() {
-		return "", ErrInsufficientParams
+	if strings.HasPrefix(privateKey, "0x") && len(privateKey) > 2 {
+		pKey, err = hex.DecodeString(privateKey[2:])
+	} else {
+		pKey, err = hex.DecodeString(privateKey)
 	}
 
-	pKey, err := hex.DecodeString(privateKey)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	rawTx, err := t.serializeRaw(chainId)
+	// Get the data to sign, which is a hash of the type-dependent fields
+	hash, err := t.SigningHash(chainId)
+
+	// And sign the hash with the key
+	signature, err := ECSign(hash, pKey, chainId)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	h, err := rawTx.Hash()
+	// Update signature values based on transaction type
+	switch t.TransactionType() {
+	case TransactionTypeLegacy:
+		t.R, t.S, t.V = signature.EIP155Values()
+	case TransactionTypeAccessList:
+		// set RSV to EIP2718 values
+		t.R, t.S, t.V = signature.EIP2718Values()
+	default:
+		return nil, errors.New("unsupported transaction type")
+	}
+
+	// And compute the raw representation of the tx
+	raw, err := t.RawRepresentation(chainId)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	hash, err := NewHash(h)
-	if err != nil {
-		return "", err
+	if t.Raw != nil {
+		// Update .Raw to ensure it matches (currently only provided for Parity-flavored txs)
+		t.Raw = raw
 	}
-
-	chainID := QuantityFromUInt64(chainId)
-	signature, err := ECSign(hash, pKey, chainID)
-	if err != nil {
-		return "", err
-	}
-
-	t.V = signature.V
-	t.R = signature.R
-	t.S = signature.S
-
-	return t.RLP().Encode()
+	return raw, err
 }
 
-func (t *Transaction) RLP() rlp.Value {
-	base := t.serializeCommon()
-	base = append(base, t.V.RLP())
-	base = append(base, t.R.RLP())
-	base = append(base, t.S.RLP())
-	rawTx := rlp.Value{List: base}
-	return rawTx
-}
+// SigningHash returns the Keccak-256 hash of the transaction fields required for transaction signing or an error.
+func (t *Transaction) SigningHash(chainId Quantity) (*Hash, error) {
+	switch t.TransactionType() {
+	case TransactionTypeLegacy:
+		// Legacy Transaction
+		// Return Hash(RLP(Nonce, GasPrice, Gas, To, Value, Input, ChainId, 0, 0))
+		zero := QuantityFromInt64(0)
+		message := rlp.Value{List: []rlp.Value{
+			t.Nonce.RLP(),
+			t.GasPrice.RLP(),
+			t.Gas.RLP(),
+			t.To.RLP(),
+			t.Value.RLP(),
+			{String: t.Input.String()},
+			chainId.RLP(),
+			zero.RLP(),
+			zero.RLP(),
+		}}
 
-func (t *Transaction) serializeCommon() []rlp.Value {
-	var list []rlp.Value
-	list = append(list, t.Nonce.RLP())
-	list = append(list, t.GasPrice.RLP())
-	list = append(list, t.Gas.RLP())
-	list = append(list, t.To.RLP())
-	list = append(list, t.Value.RLP())
-	list = append(list, rlp.Value{String: t.Input.String()})
-	return list
-}
-
-func (t *Transaction) serializeRaw(chainID uint64) (rlp.Value, error) {
-	base := t.serializeCommon()
-	empty := rlp.Value{String: ""}
-	if chainID != 0 {
-		base = append(base, QuantityFromUInt64(chainID).RLP())
-		r, err := rlp.From("0x")
-		if err != nil {
-			return empty, err
+		if s, err := message.Hash(); err != nil {
+			return nil, err
+		} else {
+			return NewHash(s)
 		}
-		base = append(base, *r)
-		s, err := rlp.From("0x")
+	case TransactionTypeAccessList:
+		// Return Hash( 0x1 || RLP(chainId, ...)
+		payload := rlp.Value{List: []rlp.Value{
+			chainId.RLP(),
+			t.Nonce.RLP(),
+			t.GasPrice.RLP(),
+			t.Gas.RLP(),
+			t.To.RLP(),
+			t.Value.RLP(),
+			{String: t.Input.String()},
+			t.AccessList.RLP(),
+		}}
+		encoded, err := payload.Encode()
 		if err != nil {
-			return empty, err
+			return nil, err
 		}
-		base = append(base, *s)
+		data, err := NewData("0x01" + encoded[2:])
+		if err != nil {
+			return nil, err
+		}
+		h := data.Hash()
+		return &h, nil
 	}
-	rawTx := rlp.Value{List: base}
-	return rawTx, nil
+
+	return nil, errors.New("unsupported transaction type")
 }
 
-func (t *Transaction) check() bool {
-	if t.To == nil {
-		return false
+// RawRepresentation returns the transaction encoded as a raw hexadecimal data string, or an error
+func (t *Transaction) RawRepresentation(chainId Quantity) (*Data, error) {
+	switch t.TransactionType() {
+	case TransactionTypeLegacy:
+		// Legacy Transactions are RLP(Nonce, GasPrice, Gas, To, Value, Input, V, R, S)
+		message := rlp.Value{List: []rlp.Value{
+			t.Nonce.RLP(),
+			t.GasPrice.RLP(),
+			t.Gas.RLP(),
+			t.To.RLP(),
+			t.Value.RLP(),
+			{String: t.Input.String()},
+			t.V.RLP(),
+			t.R.RLP(),
+			t.S.RLP(),
+		}}
+		if encoded, err := message.Encode(); err != nil {
+			return nil, err
+		} else {
+			return NewData(encoded)
+		}
+	case TransactionTypeAccessList:
+		// EIP-2930 Transactions are 0x1 || rlp([chainId, nonce, gasPrice, gasLimit, to, value, data, access_list, yParity, senderR, senderS])
+		typePrefix, err := t.Type.RLP().Encode()
+		if err != nil {
+			return nil, err
+		}
+		payload := rlp.Value{List: []rlp.Value{
+			chainId.RLP(),
+			t.Nonce.RLP(),
+			t.GasPrice.RLP(),
+			t.Gas.RLP(),
+			t.To.RLP(),
+			t.Value.RLP(),
+			{String: t.Input.String()},
+			t.AccessList.RLP(),
+			t.V.RLP(),
+			t.R.RLP(),
+			t.S.RLP(),
+		}}
+		if encodedPayload, err := payload.Encode(); err != nil {
+			return nil, err
+		} else {
+			return NewData(typePrefix + encodedPayload[2:])
+		}
+	default:
+		return nil, errors.New("unsupported transaction type")
 	}
-	return true
 }

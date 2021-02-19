@@ -58,9 +58,15 @@ func (a *Address) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&s)
 }
 
+// RLP returns the Address as an RLP-encoded string, or an empty RLP string for the nil Address.
 func (a *Address) RLP() rlp.Value {
+	if a == nil {
+		return rlp.Value{
+			String: "0x",
+		}
+	}
 	return rlp.Value{
-		String: a.String(),
+		String: strings.ToLower(a.String()),
 	}
 }
 

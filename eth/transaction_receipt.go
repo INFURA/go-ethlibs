@@ -1,6 +1,7 @@
 package eth
 
 type TransactionReceipt struct {
+	Type              *Quantity `json:"type,omitempty"`
 	TransactionHash   Hash      `json:"transactionHash"`
 	TransactionIndex  Quantity  `json:"transactionIndex"`
 	BlockHash         Hash      `json:"blockHash"`
@@ -14,4 +15,13 @@ type TransactionReceipt struct {
 	LogsBloom         Data256   `json:"logsBloom"`
 	Root              *Data32   `json:"root,omitempty"`
 	Status            *Quantity `json:"status,omitempty"`
+}
+
+// TransactionType returns the transactions EIP-2718 type, or TransactionTypeLegacy for pre-EIP-2718 transactions.
+func (t *TransactionReceipt) TransactionType() int64 {
+	if t.Type == nil {
+		return TransactionTypeLegacy
+	}
+
+	return t.Type.Int64()
 }
