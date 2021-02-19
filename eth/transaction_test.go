@@ -17,6 +17,7 @@ func TestTransactionFailedContractCreation(t *testing.T) {
 	err := json.Unmarshal([]byte(payload), &tx)
 	require.NoError(t, err)
 	require.Nil(t, tx.To)
+	require.Equal(t, eth.TransactionTypeLegacy, tx.TransactionType())
 
 	j, err := json.Marshal(&tx)
 	require.NoError(t, err)
@@ -32,6 +33,7 @@ func TestTransactionSuccessfulContractCreation(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, tx.To)
 	require.Equal(t, eth.MustAddress("0xac2475e9325b586f0b7e1928b813c9098d9ba262"), tx.Creates)
+	require.Equal(t, eth.TransactionTypeLegacy, tx.TransactionType())
 
 	j, err := json.Marshal(&tx)
 	require.NoError(t, err)
@@ -96,6 +98,7 @@ func TestTransactionTypeAccessList_Empty(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, tx.Type)
 	require.Equal(t, eth.TransactionTypeAccessList, tx.Type.Int64())
+	require.Equal(t, eth.TransactionTypeAccessList, tx.TransactionType())
 	require.NotNil(t, tx.AccessList)
 	require.Len(t, *tx.AccessList, 0)
 
@@ -133,6 +136,7 @@ func TestTransactionTypeAccessList_Populated(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, tx.Type)
 	require.Equal(t, eth.TransactionTypeAccessList, tx.Type.Int64())
+	require.Equal(t, eth.TransactionTypeAccessList, tx.TransactionType())
 	require.NotNil(t, tx.AccessList)
 	require.Len(t, *tx.AccessList, 2)
 	//TODO: not a fan of having to access (*tx.AccessList)[:] like this...

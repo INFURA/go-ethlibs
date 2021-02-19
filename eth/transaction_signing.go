@@ -45,7 +45,7 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 	}
 
 	// Update signature values based on transaction type
-	switch t.transactionType() {
+	switch t.TransactionType() {
 	case TransactionTypeLegacy:
 		t.R, t.S, t.V = signature.EIP155Values()
 	case TransactionTypeAccessList:
@@ -69,7 +69,7 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 
 // SigningHash returns the Keccak-256 hash of the transaction fields required for transaction signing or an error.
 func (t *Transaction) SigningHash(chainId Quantity) (*Hash, error) {
-	switch t.transactionType() {
+	switch t.TransactionType() {
 	case TransactionTypeLegacy:
 		// Legacy Transaction
 		// Return Hash(RLP(Nonce, GasPrice, Gas, To, Value, Input, ChainId, 0, 0))
@@ -120,7 +120,7 @@ func (t *Transaction) SigningHash(chainId Quantity) (*Hash, error) {
 
 // RawRepresentation returns the transaction encoded as a raw hexadecimal data string, or an error
 func (t *Transaction) RawRepresentation(chainId Quantity) (*Data, error) {
-	switch t.transactionType() {
+	switch t.TransactionType() {
 	case TransactionTypeLegacy:
 		// Legacy Transactions are RLP(Nonce, GasPrice, Gas, To, Value, Input, V, R, S)
 		message := rlp.Value{List: []rlp.Value{

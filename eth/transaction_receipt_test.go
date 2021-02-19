@@ -58,6 +58,7 @@ func TestTransactionReceipts(t *testing.T) {
 	require.Equal(t, *eth.MustTopic("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"), receipt.Logs[0].Topics[0])
 	require.Equal(t, *eth.MustData256("0x00000001000000000000000000000000000000000000000000008000000000000000000000010000000000000000000000400000000000000000000000000008000000000000000000000008000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000002000000000000000000000000000000000000000000000000000000000000000008000000000000000000000010000000000000000000000000000000"), receipt.LogsBloom)
 	require.Nil(t, receipt.Type)
+	require.Equal(t, eth.TransactionTypeLegacy, receipt.TransactionType())
 
 	// double check that we can back back to JSON as well
 	b, err := json.Marshal(&receipt)
@@ -87,6 +88,8 @@ func TestTransactionReceipts(t *testing.T) {
 
 		require.Equal(t, eth.MustAddress("0x21ab6c9fac80c59d401b37cb43f81ea9dde7fe34"), receipt.ContractAddress)
 		require.Nil(t, receipt.To)
+		require.Nil(t, receipt.Type)
+		require.Equal(t, eth.TransactionTypeLegacy, receipt.TransactionType())
 	}
 
 	// And a pre-byzantine one while we're here
@@ -126,6 +129,8 @@ func TestTransactionReceipts(t *testing.T) {
 
 		require.Equal(t, eth.MustData32("0x57bd5108d8f0b8bad735ab77e2a47b80c166dcf5059b2960e0118b40562c7cf2"), receipt.Root)
 		require.Nil(t, receipt.Status)
+		require.Nil(t, receipt.Type)
+		require.Equal(t, eth.TransactionTypeLegacy, receipt.TransactionType())
 	}
 
 	// EIP-2718 receipts
@@ -168,6 +173,7 @@ func TestTransactionReceipts(t *testing.T) {
 
 		require.NotNil(t, receipt.Type)
 		require.Equal(t, eth.TransactionTypeLegacy, receipt.Type.Int64())
+		require.Equal(t, eth.TransactionTypeLegacy, receipt.TransactionType())
 	}
 
 	eip2930 := `{
@@ -193,6 +199,7 @@ func TestTransactionReceipts(t *testing.T) {
 
 		require.NotNil(t, receipt.Type)
 		require.Equal(t, eth.TransactionTypeAccessList, receipt.Type.Int64())
+		require.Equal(t, eth.TransactionTypeAccessList, receipt.TransactionType())
 	}
 
 }

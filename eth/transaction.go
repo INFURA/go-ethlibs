@@ -70,15 +70,15 @@ func (t *Transaction) UnmarshalJSON(data []byte) error {
 	}
 
 	// Force AccessList to nil for legacy txs
-	if t.transactionType() == TransactionTypeLegacy {
+	if t.TransactionType() == TransactionTypeLegacy {
 		t.AccessList = nil
 	}
 
 	return nil
 }
 
-// transactionType returns the transactions EIP-2718 type, or TransactionTypeLEgacy for pre-EIP-2718 transactions.
-func (t *Transaction) transactionType() int64 {
+// TransactionType returns the transactions EIP-2718 type, or TransactionTypeLegacy for pre-EIP-2718 transactions.
+func (t *Transaction) TransactionType() int64 {
 	if t.Type == nil {
 		return TransactionTypeLegacy
 	}

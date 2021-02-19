@@ -16,3 +16,12 @@ type TransactionReceipt struct {
 	Root              *Data32   `json:"root,omitempty"`
 	Status            *Quantity `json:"status,omitempty"`
 }
+
+// TransactionType returns the transactions EIP-2718 type, or TransactionTypeLegacy for pre-EIP-2718 transactions.
+func (t *TransactionReceipt) TransactionType() int64 {
+	if t.Type == nil {
+		return TransactionTypeLegacy
+	}
+
+	return t.Type.Int64()
+}
