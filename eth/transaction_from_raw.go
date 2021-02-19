@@ -9,7 +9,7 @@ import (
 	"github.com/INFURA/go-ethlibs/rlp"
 )
 
-// FromRaw populates a Transaction fields from the raw transaction data supplied as a hexadecimal encoded string.
+// FromRaw populates a Transaction's fields from the raw transaction data supplied as a hexadecimal encoded string.
 // For pre-EIP-2718 legacy transactions the input string is an RLP-encoded list, for transaction types defined
 // after EIP-2718 the payload format depends on the transaction type included as the first byte.
 // Unsigned transactions where R, S, and V are zero are not currently supported.
