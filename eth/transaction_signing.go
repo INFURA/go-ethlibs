@@ -64,6 +64,8 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 		// Update .Raw to ensure it matches (currently only provided for Parity-flavored txs)
 		t.Raw = raw
 	}
+
+	t.Hash = raw.Hash()
 	return raw, err
 }
 
