@@ -32,8 +32,23 @@ func (t *Transaction) FromRaw(input string) error {
 		accessList AccessList
 	)
 
+	if !strings.HasPrefix(input, "0x") {
+		return errors.New("input must start with 0x")
+	}
+
+	if len(input) < 4 {
+		return errors.New("not enough input to decode")
+	}
+
+	var firstByte byte
+	if prefix, err := NewData(input[:4]); err != nil {
+		return errors.Wrap(err, "could not inspect transaction prefix")
+	} else {
+		firstByte = prefix.Bytes()[0]
+	}
+
 	switch {
-	case strings.HasPrefix(input, "0x01"):
+	case firstByte == 0x01:
 		// EIP-2930 transaction
 		payload := "0x" + input[4:]
 		if err := rlpDecodeList(payload, &chainId, &nonce, &gasPrice, &gasLimit, &to, &value, &data, &accessList, &v, &r, &s); err != nil {
@@ -75,9 +90,10 @@ func (t *Transaction) FromRaw(input string) error {
 		t.Hash = raw.Hash()
 		t.From = *sender
 		return nil
-	default:
-		// Legacy Transaction
-		// Decode the input string as an rlp.Value
+	case firstByte > 0x7f:
+		// In EIP-2718 types larger than 0x7f are reserved since they potentially conflict with legacy RLP encoded
+		// transactions.  As such we can attempt to decode any such transactions as legacy format and attempt to
+		// decode the input string as an rlp.Value
 		if err := rlpDecodeList(input, &nonce, &gasPrice, &gasLimit, &to, &value, &data, &v, &r, &s); err != nil {
 			return errors.Wrap(err, "could not decode RLP components")
 		}
@@ -126,6 +142,8 @@ func (t *Transaction) FromRaw(input string) error {
 		t.Hash = raw.Hash()
 		t.From = *sender
 		return nil
+	default:
+		return errors.New("unsupported transaction type")
 	}
 }
 

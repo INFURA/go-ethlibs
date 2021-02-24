@@ -37,6 +37,9 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 
 	// Get the data to sign, which is a hash of the type-dependent fields
 	hash, err := t.SigningHash(chainId)
+	if err != nil {
+		return nil, err
+	}
 
 	// And sign the hash with the key
 	signature, err := ECSign(hash, pKey, chainId)
