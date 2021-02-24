@@ -92,7 +92,7 @@ func (t *Transaction) FromRaw(input string) error {
 		return nil
 	case firstByte > 0x7f:
 		// In EIP-2718 types larger than 0x7f are reserved since they potentially conflict with legacy RLP encoded
-		// transactions.  As such we can attempt to decoded any such transactions as legacy format and attempt to
+		// transactions.  As such we can attempt to decode any such transactions as legacy format and attempt to
 		// decode the input string as an rlp.Value
 		if err := rlpDecodeList(input, &nonce, &gasPrice, &gasLimit, &to, &value, &data, &v, &r, &s); err != nil {
 			return errors.Wrap(err, "could not decode RLP components")
