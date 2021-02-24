@@ -17,6 +17,72 @@ func TestTransaction_FromRaw(t *testing.T) {
 	require.Equal(t, eth.MustAddress("0x6bc84f6a0fabbd7102be338c048fe0ae54948c2e").String(), tx.From.String())
 }
 
+func TestTransaction_FromRaw_Invalid_Payloads(t *testing.T) {
+	{
+		input := `0x7f00000000`
+		tx := eth.Transaction{}
+		err := tx.FromRaw(input)
+		require.Error(t, err)
+		require.Equal(t, "unsupported transaction type", err.Error())
+	}
+
+	{
+		input := `8000`
+		tx := eth.Transaction{}
+		err := tx.FromRaw(input)
+		require.Error(t, err)
+		require.Equal(t, "input must start with 0x", err.Error())
+	}
+
+	{
+		input := `0x`
+		tx := eth.Transaction{}
+		err := tx.FromRaw(input)
+		require.Error(t, err)
+		require.Equal(t, "not enough input to decode", err.Error())
+	}
+
+	{
+		input := `0x1`
+		tx := eth.Transaction{}
+		err := tx.FromRaw(input)
+		require.Error(t, err)
+		require.Equal(t, "not enough input to decode", err.Error())
+	}
+
+	{
+		input := `0x01`
+		tx := eth.Transaction{}
+		err := tx.FromRaw(input)
+		require.Error(t, err)
+		require.Equal(t, "could not decode RLP components: expected 11 items but only received 0", err.Error())
+	}
+
+	{
+		input := `0x0180`
+		tx := eth.Transaction{}
+		err := tx.FromRaw(input)
+		require.Error(t, err)
+		require.Equal(t, "could not decode RLP components: expected 11 items but only received 0", err.Error())
+	}
+
+	{
+		input := `0x80`
+		tx := eth.Transaction{}
+		err := tx.FromRaw(input)
+		require.Error(t, err)
+		require.Equal(t, "could not decode RLP components: expected 9 items but only received 0", err.Error())
+	}
+
+	{
+		unsigned := "0x01f86587796f6c6f76337880843b9aca008262d494df0a88b2b68c673713a8ec826003676f272e35730180f838f7940000000000000000000000000000000000001337e1a00000000000000000000000000000000000000000000000000000000000000000808080"
+		tx := eth.Transaction{}
+		err := tx.FromRaw(unsigned)
+		require.Error(t, err)
+		require.Equal(t, "unsigned transactions not supported", err.Error())
+	}
+}
+
 func TestTransaction_FromRawEIP2930_Unsigned(t *testing.T) {
 	input := "0x01f85c82053901018262d4940993cb059574b88c78849139cb91f7d85f8f289a8080f838f7940000000000000000000000000000000000001337e1a00000000000000000000000000000000000000000000000000000000000000001808080"
 	tx := eth.Transaction{}

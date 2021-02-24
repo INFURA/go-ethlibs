@@ -168,3 +168,15 @@ func TestTransaction_Sign_EIP2930(t *testing.T) {
 	require.Equal(t, "0xbe950468ba1c25a5cb50e9f6d8aa13c8cd21f24ba909402775b262ac76d374d", tx.S.String())
 	require.Equal(t, "0x0", tx.V.String())
 }
+
+func TestTransaction_Sign_InvalidTxType(t *testing.T) {
+	tx := eth.Transaction{
+		Type: eth.MustQuantity("0x7f"),
+	}
+
+	chainId := eth.QuantityFromInt64(0x796f6c6f763378)
+	signed, err := tx.Sign("fad9c8855b740a0b7ed4c221dbad0f33a83a49cad6b3fe8d5817ac83d38b6a19", chainId)
+	require.Nil(t, signed)
+	require.Error(t, err)
+	require.Equal(t, "unsupported transaction type", err.Error())
+}
