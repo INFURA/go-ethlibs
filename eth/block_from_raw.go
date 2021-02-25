@@ -39,17 +39,23 @@ func (b *Block) FromRaw(input string) error {
 	}
 
 	transactions := make([]TxOrHash, len(txs))
-	for i, raw := range txs {
+	for i, txRlp := range txs {
 		index := QuantityFromInt64(int64(i))
 		tx := Transaction{
 			BlockHash: hash,
 			Index:     &index,
 		}
-		encoded, err := raw.Encode()
-		if err != nil {
-			return errors.Wrap(err, "could not re-encode transaction")
+		// Each transaction in the txs RLP list is either an opaque binary blob (an EIP-2718 tx) or itself an RLP list
+		// (a legacy pre-2718 transaction).  2718 transactions can be passed to Transaction.FromRaw as is, legacy
+		// transactions need to be converted to raw blobs via rlp.Value.Encode first.
+		rawTx := txRlp.String
+		if txRlp.IsList() {
+			rawTx, err = txRlp.Encode()
+			if err != nil {
+				return errors.Wrap(err, "could not re-encode transaction")
+			}
 		}
-		if err := tx.FromRaw(encoded); err != nil {
+		if err := tx.FromRaw(rawTx); err != nil {
 			return errors.Wrap(err, "could not decode transaction")
 		}
 

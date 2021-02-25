@@ -6,3 +6,11 @@ type Value struct {
 	String string
 	List   []Value
 }
+
+func (v *Value) IsList() bool {
+	return v.String == ""
+}
+
+func (v *Value) IsString() bool {
+	return v.String != ""
+}
