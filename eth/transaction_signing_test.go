@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/INFURA/go-ethlibs/eth"
+	"github.com/INFURA/go-ethlibs/rlp"
 )
 
 func TestTransaction_Sign(t *testing.T) {
@@ -158,11 +159,37 @@ func TestTransaction_Sign_EIP2930(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expectedUnsigned, unsigned.String())
 
+	// According to EIP-2930 the expected preimage for signing should be 0x01 | rlp([chainId, nonce, gasPrice, gasLimit, to, value, data, access_list])
+	rlpData, err := rlp.Value{List: []rlp.Value{
+		chainId.RLP(),
+		tx.Nonce.RLP(),
+		tx.GasPrice.RLP(),
+		tx.Gas.RLP(),
+		tx.To.RLP(),
+		tx.Value.RLP(),
+		tx.Input.RLP(),
+		tx.AccessList.RLP(),
+	}}.Encode()
+	require.NoError(t, err)
+	expectedPreimage := "0x01" + rlpData[2:]
+
+	// which should match exactly what SigningPreimage returns
+	preimage, err := tx.SigningPreimage(chainId)
+	require.NoError(t, err)
+	require.Equal(t, expectedPreimage, preimage.String())
+
+	// So now we can sign the transaction with the same key used in the geth console output above
 	signed, err := tx.Sign("fad9c8855b740a0b7ed4c221dbad0f33a83a49cad6b3fe8d5817ac83d38b6a19", chainId)
 	require.NoError(t, err)
 
+	// And get back the exact same signed transaction
 	expectedSigned := "0x01f8a587796f6c6f76337880843b9aca008262d494df0a88b2b68c673713a8ec826003676f272e35730180f838f7940000000000000000000000000000000000001337e1a0000000000000000000000000000000000000000000000000000000000000000080a0294ac94077b35057971e6b4b06dfdf55a6fbed819133a6c1d31e187f1bca938da00be950468ba1c25a5cb50e9f6d8aa13c8cd21f24ba909402775b262ac76d374d"
 	require.Equal(t, expectedSigned, signed.String())
+
+	// And verify that .From, .Hash, .R, .S., and .V are all set and match the geth console output
+	// TODO: Transaction.Sign doesn't actually call ECRecover on the key.  To do this we need to refactor out the
+	// EIP-155 V calculations a bit more, sine they are currently buried inside .FromRaw's Legacy case
+	require.Equal(t, *eth.MustAddress("0x96216849c49358b10257cb55b28ea603c874b05e"), tx.From)
 	require.Equal(t, "0xbbd570a3c6acc9bb7da0d5c0322fe4ea2a300db80226f7df4fef39b2d6649eec", tx.Hash.String())
 	require.Equal(t, "0x294ac94077b35057971e6b4b06dfdf55a6fbed819133a6c1d31e187f1bca938d", tx.R.String())
 	require.Equal(t, "0xbe950468ba1c25a5cb50e9f6d8aa13c8cd21f24ba909402775b262ac76d374d", tx.S.String())

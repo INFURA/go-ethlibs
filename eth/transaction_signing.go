@@ -72,12 +72,11 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 	return raw, err
 }
 
-// SigningHash returns the Keccak-256 hash of the transaction fields required for transaction signing or an error.
-func (t *Transaction) SigningHash(chainId Quantity) (*Hash, error) {
+// SigningPreimage returns the opaque data preimage that is required for signing a given transaction type
+func (t *Transaction) SigningPreimage(chainId Quantity) (*Data, error) {
 	switch t.TransactionType() {
 	case TransactionTypeLegacy:
-		// Legacy Transaction
-		// Return Hash(RLP(Nonce, GasPrice, Gas, To, Value, Input, ChainId, 0, 0))
+		// Return RLP(Nonce, GasPrice, Gas, To, Value, Input, ChainId, 0, 0)
 		zero := QuantityFromInt64(0)
 		message := rlp.Value{List: []rlp.Value{
 			t.Nonce.RLP(),
@@ -90,14 +89,15 @@ func (t *Transaction) SigningHash(chainId Quantity) (*Hash, error) {
 			zero.RLP(),
 			zero.RLP(),
 		}}
-
-		if s, err := message.Hash(); err != nil {
+		// encode the list as RLP
+		encoded, err := message.Encode()
+		if err != nil {
 			return nil, err
-		} else {
-			return NewHash(s)
 		}
+		// and return it
+		return NewData(encoded)
 	case TransactionTypeAccessList:
-		// Return Hash( 0x1 || RLP(chainId, ...)
+		// Return 0x1 || RLP(chainId, Nonce, GasPrice, Gas, To, Value, Input, AccessList)
 		payload := rlp.Value{List: []rlp.Value{
 			chainId.RLP(),
 			t.Nonce.RLP(),
@@ -108,19 +108,29 @@ func (t *Transaction) SigningHash(chainId Quantity) (*Hash, error) {
 			{String: t.Input.String()},
 			t.AccessList.RLP(),
 		}}
+		// encode the list as RLP
 		encoded, err := payload.Encode()
 		if err != nil {
 			return nil, err
 		}
-		data, err := NewData("0x01" + encoded[2:])
-		if err != nil {
-			return nil, err
-		}
-		h := data.Hash()
-		return &h, nil
+		// And return it with the 0x01 prefix
+		return NewData("0x01" + encoded[2:])
+	default:
+		return nil, errors.New("unsupported transaction type")
+	}
+}
+
+// SigningHash returns the Keccak-256 hash of the transaction fields required for transaction signing or an error.
+func (t *Transaction) SigningHash(chainId Quantity) (*Hash, error) {
+	// Get the opaque preimage
+	preimage, err := t.SigningPreimage(chainId)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, errors.New("unsupported transaction type")
+	// And return the preimage's hash
+	h := preimage.Hash()
+	return &h, nil
 }
 
 // RawRepresentation returns the transaction encoded as a raw hexadecimal data string, or an error
