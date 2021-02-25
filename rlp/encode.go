@@ -11,7 +11,7 @@ import (
 // Encode returns the 0x prefixed hex string of the RLP value
 func (v Value) Encode() (string, error) {
 	// If String is value encode that
-	if v.String != "" {
+	if v.IsString() {
 		if !strings.HasPrefix(v.String, "0x") {
 			return "", errors.New("invalid string value before encoding")
 		}
@@ -33,7 +33,7 @@ func (v Value) Encode() (string, error) {
 			return "0x" + asUnprefixedHex(0xb7+sizeSize) + size + v.String[2:], nil
 		}
 	} else {
-		// Otherwise encoded the list, even if empty
+		// Otherwise encode the list, even if empty
 		count := len(v.List)
 		if count == 0 {
 			// return the empty list

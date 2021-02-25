@@ -59,7 +59,7 @@ func NewQuantity(value string) (*Quantity, error) {
 }
 
 func NewQuantityFromRLP(v rlp.Value) (*Quantity, error) {
-	if v.String == "" {
+	if v.IsList() {
 		return nil, errors.New("cannot convert RLP list to Quantity")
 	}
 
