@@ -170,6 +170,21 @@ func TestTransaction_FromRaw_EIP155_Examples(t *testing.T) {
 	}
 }
 
+func TestTransaction_FromRaw_Unprotected(t *testing.T) {
+	// Verify that we can correctly parse a non-EIP-155 transaction, we use an example from a pre-EIP-155 version of Truffle
+	rawInput := `0xf9024f808504a817c800836691b78080b901fc608060405234801561001057600080fd5b50336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555061019c806100606000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c8063445df0ac146100465780638da5cb5b14610064578063fdacd576146100ae575b600080fd5b61004e6100dc565b6040518082815260200191505060405180910390f35b61006c6100e2565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6100da600480360360208110156100c457600080fd5b8101908080359060200190929190505050610107565b005b60015481565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff16141561016457806001819055505b5056fea265627a7a7231582029c98913dbb8a328d702e923ba85e26be47ea5e754908b3b671db0350327939a64736f6c634300051000321ca03cf2a8f67ed9ce210f3da5b95ef2121069c22e1370a2419967316adc4c36e3f1a06dd8fb33a6b7e8789d15877764622fe8af96ba1808c0f71634abccc37ad3e31c`
+	tx := eth.Transaction{}
+	err := tx.FromRaw(rawInput)
+	require.NoError(t, err)
+	// Unprotected transaction should have a non-EIP-155 V value, so 27 or 28 rather than `CHAIN_ID * 2 + 35` or `CHAIN_ID * 2 + 36`
+	require.Equal(t, int64(28), tx.V.Int64())
+	// convert back to raw, we can use any chainId since this is a legacy tx
+	chainId := eth.QuantityFromInt64(0xbadf00d)
+	rawOutput, err := tx.RawRepresentation(chainId)
+	require.NoError(t, err)
+	require.Equal(t, rawInput, rawOutput.String())
+}
+
 func TestTransaction_FromRaw_Samples(t *testing.T) {
 	for i, sample := range samples {
 		tx := eth.Transaction{}
