@@ -1,6 +1,7 @@
 package eth_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -30,12 +31,28 @@ func TestTransaction_Sign(t *testing.T) {
 	tx2 := eth.Transaction{}
 	err = tx2.FromRaw(signed.String())
 	require.NoError(t, err)
+
+	jtx, err := json.Marshal(tx)
+	require.NoError(t, err)
+	jtx2, err := json.Marshal(tx2)
+	require.NoError(t, err)
+	require.JSONEq(t, string(jtx), string(jtx2))
+
+	require.Equal(t, tx2.From.String(), "0x96216849c49358B10257cb55b28eA603c874b05E")
+	require.Equal(t, tx.From, tx2.From)
 	require.Equal(t, tx2.Nonce.UInt64(), uint64(0))
 	require.Equal(t, tx2.GasPrice, eth.QuantityFromInt64(21488430592))
 	require.Equal(t, tx2.Gas, eth.QuantityFromInt64(90000))
 	require.Equal(t, tx2.To.String(), "0xc149Be1bcDFa69a94384b46A1F91350E5f81c1AB")
 	require.Equal(t, tx2.Value, eth.QuantityFromInt64(950000000000000000))
 	require.Equal(t, tx.Hash.String(), tx2.Hash.String())
+
+	signature, err := tx2.Signature()
+	require.NoError(t, err)
+
+	_chainId, err := signature.ChainId()
+	require.NoError(t, err)
+	require.Equal(t, chainId, *_chainId)
 }
 
 func TestTransaction_Sign_2(t *testing.T) {
@@ -56,12 +73,28 @@ func TestTransaction_Sign_2(t *testing.T) {
 	tx2 := eth.Transaction{}
 	err = tx2.FromRaw(signed.String())
 	require.NoError(t, err)
+
+	jtx, err := json.Marshal(tx)
+	require.NoError(t, err)
+	jtx2, err := json.Marshal(tx2)
+	require.NoError(t, err)
+	require.JSONEq(t, string(jtx), string(jtx2))
+
+	require.Equal(t, tx2.From.String(), "0x96216849c49358B10257cb55b28eA603c874b05E")
+	require.Equal(t, tx.From, tx2.From)
 	require.Equal(t, tx2.Nonce, eth.QuantityFromInt64(146))
 	require.Equal(t, tx2.GasPrice, eth.QuantityFromInt64(3000000000))
 	require.Equal(t, tx2.Gas, eth.QuantityFromInt64(22000))
 	require.Equal(t, tx2.To.String(), "0x43700db832E9Ac990D36d6279A846608643c904E")
 	require.Equal(t, tx2.Value, eth.QuantityFromInt64(1000000000))
 	require.Equal(t, tx.Hash.String(), tx2.Hash.String())
+
+	signature, err := tx2.Signature()
+	require.NoError(t, err)
+
+	_chainId, err := signature.ChainId()
+	require.NoError(t, err)
+	require.Equal(t, chainId, *_chainId)
 }
 
 // compares signed output created in python script
@@ -83,6 +116,27 @@ func TestTransaction_Sign_3(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, raw.String(), signed.String())
+
+	// check tx can be restored from rawtx
+	tx2 := eth.Transaction{}
+	err = tx2.FromRaw(signed.String())
+	require.NoError(t, err)
+
+	jtx, err := json.Marshal(tx)
+	require.NoError(t, err)
+	jtx2, err := json.Marshal(tx2)
+	require.NoError(t, err)
+	require.JSONEq(t, string(jtx), string(jtx2))
+
+	require.Equal(t, tx2.From.String(), "0x96216849c49358B10257cb55b28eA603c874b05E")
+	require.Equal(t, tx.From, tx2.From)
+
+	signature, err := tx2.Signature()
+	require.NoError(t, err)
+
+	_chainId, err := signature.ChainId()
+	require.NoError(t, err)
+	require.Equal(t, chainId, *_chainId)
 }
 
 func TestTransaction_Sign_EIP2930(t *testing.T) {
@@ -138,6 +192,7 @@ func TestTransaction_Sign_EIP2930(t *testing.T) {
 	*/
 	tx := eth.Transaction{
 		Type:     eth.MustQuantity("0x1"),
+		ChainId:  &chainId,
 		Gas:      eth.QuantityFromInt64(0x62d4),
 		GasPrice: eth.QuantityFromInt64(0x3b9aca00),
 		Input:    eth.Data("0x"),
@@ -155,7 +210,7 @@ func TestTransaction_Sign_EIP2930(t *testing.T) {
 	}
 
 	expectedUnsigned := "0x01f86587796f6c6f76337880843b9aca008262d494df0a88b2b68c673713a8ec826003676f272e35730180f838f7940000000000000000000000000000000000001337e1a00000000000000000000000000000000000000000000000000000000000000000808080"
-	unsigned, err := tx.RawRepresentation(chainId)
+	unsigned, err := tx.RawRepresentation()
 	require.NoError(t, err)
 	require.Equal(t, expectedUnsigned, unsigned.String())
 
@@ -187,13 +242,23 @@ func TestTransaction_Sign_EIP2930(t *testing.T) {
 	require.Equal(t, expectedSigned, signed.String())
 
 	// And verify that .From, .Hash, .R, .S., and .V are all set and match the geth console output
-	// TODO: Transaction.Sign doesn't actually call ECRecover on the key.  To do this we need to refactor out the
-	// EIP-155 V calculations a bit more, sine they are currently buried inside .FromRaw's Legacy case
 	require.Equal(t, *eth.MustAddress("0x96216849c49358b10257cb55b28ea603c874b05e"), tx.From)
 	require.Equal(t, "0xbbd570a3c6acc9bb7da0d5c0322fe4ea2a300db80226f7df4fef39b2d6649eec", tx.Hash.String())
 	require.Equal(t, "0x294ac94077b35057971e6b4b06dfdf55a6fbed819133a6c1d31e187f1bca938d", tx.R.String())
 	require.Equal(t, "0xbe950468ba1c25a5cb50e9f6d8aa13c8cd21f24ba909402775b262ac76d374d", tx.S.String())
 	require.Equal(t, "0x0", tx.V.String())
+
+	// Double check signature is still valid
+	tx2 := eth.Transaction{}
+	err = tx2.FromRaw(signed.String())
+	require.NoError(t, err)
+
+	signature, err := tx2.Signature()
+	require.NoError(t, err)
+
+	_chainId, err := signature.ChainId()
+	require.NoError(t, err)
+	require.Equal(t, chainId, *_chainId)
 }
 
 func TestTransaction_Sign_InvalidTxType(t *testing.T) {

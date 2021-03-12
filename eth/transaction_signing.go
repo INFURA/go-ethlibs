@@ -53,13 +53,14 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 		t.R, t.S, t.V = signature.EIP155Values()
 	case TransactionTypeAccessList:
 		// set RSV to EIP2718 values
+		t.ChainId = &chainId
 		t.R, t.S, t.V = signature.EIP2718Values()
 	default:
 		return nil, errors.New("unsupported transaction type")
 	}
 
 	// And compute the raw representation of the tx
-	raw, err := t.RawRepresentation(chainId)
+	raw, err := t.RawRepresentation()
 	if err != nil {
 		return nil, err
 	}
@@ -68,6 +69,18 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 		t.Raw = raw
 	}
 
+	// recover the sender as well
+	signingHash, err := t.SigningHash(chainId)
+	if err != nil {
+		return nil, err
+	}
+
+	sender, err := signature.Recover(signingHash)
+	if err != nil {
+		return nil, err
+	}
+
+	t.From = *sender
 	t.Hash = raw.Hash()
 	return raw, err
 }
@@ -134,7 +147,7 @@ func (t *Transaction) SigningHash(chainId Quantity) (*Hash, error) {
 }
 
 // RawRepresentation returns the transaction encoded as a raw hexadecimal data string, or an error
-func (t *Transaction) RawRepresentation(chainId Quantity) (*Data, error) {
+func (t *Transaction) RawRepresentation() (*Data, error) {
 	switch t.TransactionType() {
 	case TransactionTypeLegacy:
 		// Legacy Transactions are RLP(Nonce, GasPrice, Gas, To, Value, Input, V, R, S)
@@ -160,8 +173,11 @@ func (t *Transaction) RawRepresentation(chainId Quantity) (*Data, error) {
 		if err != nil {
 			return nil, err
 		}
+		if t.ChainId == nil {
+			return nil, errors.New("chainID is required on EIP-2930 transactions")
+		}
 		payload := rlp.Value{List: []rlp.Value{
-			chainId.RLP(),
+			t.ChainId.RLP(),
 			t.Nonce.RLP(),
 			t.GasPrice.RLP(),
 			t.Gas.RLP(),
@@ -178,6 +194,20 @@ func (t *Transaction) RawRepresentation(chainId Quantity) (*Data, error) {
 		} else {
 			return NewData(typePrefix + encodedPayload[2:])
 		}
+	default:
+		return nil, errors.New("unsupported transaction type")
+	}
+}
+
+func (t *Transaction) Signature() (*Signature, error) {
+	switch t.TransactionType() {
+	case TransactionTypeLegacy:
+		return NewEIP155Signature(t.R, t.S, t.V)
+	case TransactionTypeAccessList:
+		if t.ChainId == nil {
+			return nil, errors.New("chainId is required")
+		}
+		return NewEIP2718Signature(*t.ChainId, t.R, t.S, t.V)
 	default:
 		return nil, errors.New("unsupported transaction type")
 	}

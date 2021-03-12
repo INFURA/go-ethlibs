@@ -15,6 +15,16 @@ func TestTransaction_FromRaw(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "0x58e5a0fc7fbc849eddc100d44e86276168a8c7baaa5604e44ba6f5eb8ba1b7eb", tx.Hash.String())
 	require.Equal(t, eth.MustAddress("0x6bc84f6a0fabbd7102be338c048fe0ae54948c2e").String(), tx.From.String())
+
+	signature, err := tx.Signature()
+	require.NoError(t, err)
+	r, s, v := signature.EIP155Values()
+	require.Equal(t, tx.R, r)
+	require.Equal(t, tx.S, s)
+	require.Equal(t, tx.V, v)
+	chainId, err := signature.ChainId()
+	require.NoError(t, err)
+	require.Equal(t, eth.QuantityFromInt64(42), *chainId)
 }
 
 func TestTransaction_FromRaw_Invalid_Payloads(t *testing.T) {
@@ -111,7 +121,7 @@ func TestTransaction_FromRawEIP2930(t *testing.T) {
 		require.Equal(t, "0x8A8eAFb1cf62BfBeb1741769DAE1a9dd47996192", tx.To.String())
 		require.Equal(t, "0x1", tx.Type.String())
 		require.Equal(t, int64(0), tx.Value.Int64())
-		rep, err := tx.RawRepresentation(*tx.ChainId)
+		rep, err := tx.RawRepresentation()
 		require.NoError(t, err)
 		require.Equal(t, raw, rep.String())
 	}
@@ -140,6 +150,12 @@ func TestTransaction_FromRawEIP2930_YoloV3_NetherMind(t *testing.T) {
 			require.Equal(t, chainId.String(), tx.ChainId.String())
 		}
 		require.NoError(t, err, test.raw)
+
+		signature, err := tx.Signature()
+		require.NoError(t, err)
+		_chainId, err := signature.ChainId()
+		require.NoError(t, err)
+		require.Equal(t, chainId, _chainId)
 	}
 }
 
@@ -167,6 +183,13 @@ func TestTransaction_FromRaw_EIP155_Examples(t *testing.T) {
 		err := tx.FromRaw(test.txRlp)
 		require.NoError(t, err)
 		require.Equal(t, eth.MustAddress(test.addr).String(), tx.From.String())
+
+		// These should all have a chainId of 0x1
+		signature, err := tx.Signature()
+		require.NoError(t, err)
+		chainId, err := signature.ChainId()
+		require.NoError(t, err)
+		require.Equal(t, eth.QuantityFromInt64(0x1), *chainId)
 	}
 }
 
@@ -176,13 +199,19 @@ func TestTransaction_FromRaw_Unprotected(t *testing.T) {
 	tx := eth.Transaction{}
 	err := tx.FromRaw(rawInput)
 	require.NoError(t, err)
+
 	// Unprotected transaction should have a non-EIP-155 V value, so 27 or 28 rather than `CHAIN_ID * 2 + 35` or `CHAIN_ID * 2 + 36`
 	require.Equal(t, int64(28), tx.V.Int64())
-	// convert back to raw, we can use any chainId since this is a legacy tx
-	chainId := eth.QuantityFromInt64(0xbadf00d)
-	rawOutput, err := tx.RawRepresentation(chainId)
+	rawOutput, err := tx.RawRepresentation()
 	require.NoError(t, err)
 	require.Equal(t, rawInput, rawOutput.String())
+
+	// Getting the chainId from the tx signature should fail
+	signature, err := tx.Signature()
+	require.NoError(t, err)
+	chainId, err := signature.ChainId()
+	require.Error(t, err)
+	require.Nil(t, chainId)
 }
 
 func TestTransaction_FromRaw_Samples(t *testing.T) {

@@ -55,6 +55,10 @@ func (t *Transaction) FromRaw(input string) error {
 			return errors.Wrap(err, "could not decode RLP components")
 		}
 
+		if r.Int64() == 0 && s.Int64() == 0 {
+			return errors.New("unsigned transactions not supported")
+		}
+
 		t.Type = MustQuantity("0x1")
 		t.Nonce = nonce
 		t.GasPrice = gasPrice
@@ -73,16 +77,17 @@ func (t *Transaction) FromRaw(input string) error {
 			return err
 		}
 
-		if r.Int64() == 0 && s.Int64() == 0 {
-			return errors.New("unsigned transactions not supported")
-		}
-
-		sender, err := ECRecover(signingHash, &r, &s, &v)
+		signature, err := NewEIP2718Signature(chainId, r, s, v)
 		if err != nil {
 			return err
 		}
 
-		raw, err := t.RawRepresentation(chainId)
+		sender, err := signature.Recover(signingHash)
+		if err != nil {
+			return err
+		}
+
+		raw, err := t.RawRepresentation()
 		if err != nil {
 			return err
 		}
@@ -98,6 +103,10 @@ func (t *Transaction) FromRaw(input string) error {
 			return errors.Wrap(err, "could not decode RLP components")
 		}
 
+		if r.Int64() == 0 && s.Int64() == 0 {
+			return errors.New("unsigned transactions not supported")
+		}
+
 		// ... and fill in all our fields with the decoded values
 		t.Nonce = nonce
 		t.GasPrice = gasPrice
@@ -109,32 +118,22 @@ func (t *Transaction) FromRaw(input string) error {
 		t.R = r
 		t.S = s
 
-		// Pull out chainId and recoveryV from EIP-155 packed V
-		_chain := (v.Int64() - 35) / 2
-		if _chain < 0 {
-			_chain = 0
-		}
-
-		_recovery := v.Int64() - 27
-		if _chain != 0 {
-			// And subtract out the chainId to get a proper recovery value
-			_recovery -= (_chain * 2) + 8
-		}
-
-		recoveryV := QuantityFromInt64(_recovery)
-		chainId = QuantityFromInt64(_chain)
-
-		signingHash, err := t.SigningHash(chainId)
+		signature, err := NewEIP155Signature(r, s, v)
 		if err != nil {
 			return err
 		}
 
-		sender, err := ECRecover(signingHash, &r, &s, &recoveryV)
+		signingHash, err := t.SigningHash(signature.chainId)
 		if err != nil {
 			return err
 		}
 
-		raw, err := t.RawRepresentation(chainId)
+		sender, err := signature.Recover(signingHash)
+		if err != nil {
+			return err
+		}
+
+		raw, err := t.RawRepresentation()
 		if err != nil {
 			return err
 		}
