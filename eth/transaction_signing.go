@@ -52,7 +52,7 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 	case TransactionTypeLegacy:
 		t.R, t.S, t.V = signature.EIP155Values()
 	case TransactionTypeAccessList:
-		// set RSV to EIP2718 values
+		// set chainId and RSV to EIP2718 values
 		t.ChainId = &chainId
 		t.R, t.S, t.V = signature.EIP2718Values()
 	default:

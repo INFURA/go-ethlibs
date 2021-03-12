@@ -14,9 +14,11 @@ import (
 // after EIP-2718 the payload format depends on the transaction type included as the first byte.
 // Unsigned transactions where R, S, and V are zero are not currently supported.
 func (t *Transaction) FromRaw(input string) error {
-	// Code is heavily inspired by ethers.js utils.transaction.parse:
-	// https://github.com/ethers-io/ethers.js/blob/master/utils/transaction.js#L90
+	// Code was originally heavily inspired by ethers.js v4 utils.transaction.parse:
+	// https://github.com/ethers-io/ethers.js/blob/v4-legacy/utils/transaction.js#L90
 	// Copyright (c) 2017 Richard Moore
+	//
+	// However it's since been somewhat extensively rewritten to support EIP-2718 and -2930
 
 	var (
 		chainId    Quantity

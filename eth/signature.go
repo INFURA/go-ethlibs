@@ -119,10 +119,14 @@ func (s *Signature) EIP2718Values() (R Quantity, S Quantity, V Quantity) {
 	return s.r, s.s, s.v
 }
 
+// Recover performs ECRecover on the supplied hash using the signatures R, S, and V values,
+// returning the sender Address or an error.
 func (s *Signature) Recover(hash *Hash) (*Address, error) {
 	return ECRecover(hash, &s.r, &s.s, &s.v)
 }
 
+// ChainId returns the chain id included in the signature, or an error if signature was created with unprotected
+// pre-EIP-155 R, S, and V values.
 func (s *Signature) ChainId() (*Quantity, error) {
 	if s.chainId.Int64() == 0 {
 		return nil, errors.New("chainId was not provided")
