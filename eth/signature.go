@@ -16,7 +16,55 @@ type Signature struct {
 	chainId Quantity
 }
 
-// ECSign returns the R,S, and V values for a given message hash for the given chainId using the bytes of given
+// NewEIP2718Signature creates a new Signature from discrete chainId, R, S, and V values.
+func NewEIP2718Signature(chainId Quantity, r Quantity, s Quantity, v Quantity) (*Signature, error) {
+	if chainId.Int64() == 0 {
+		return nil, errors.New("chainId is required for EIP-2718 style signatures")
+	}
+	if vi := v.Int64(); vi > 1 || vi < 0 {
+		return nil, errors.New("v must be 0x0 or 0x1 for EIP-2718 style signatures")
+	}
+
+	sig := Signature{
+		r:       r,
+		s:       s,
+		v:       v,
+		chainId: chainId,
+	}
+	return &sig, nil
+}
+
+// NewEIP155Signature creates a new Signature from EIP-155 packed R,S,V values
+func NewEIP155Signature(r Quantity, s Quantity, v Quantity) (*Signature, error) {
+	sig := Signature{
+		r: r,
+		s: s,
+		v: v,
+	}
+	// Unpack the passed in v into "standard" v and chainId
+	vi := v.Int64()
+	switch {
+	case vi == 27 || vi == 28:
+		sig.v = QuantityFromInt64(vi - 27)
+		sig.chainId = QuantityFromInt64(0)
+		return &sig, nil
+	case vi == 0 || vi == 1:
+		sig.v = QuantityFromInt64(vi)
+		sig.chainId = QuantityFromInt64(0)
+		return &sig, nil
+	case vi >= 35:
+		// Pull out chainId and recoveryV from EIP-155 packed V
+		_chainId := (vi - 35) / 2
+		_v := (vi - 27) - ((_chainId * 2) + 8)
+		sig.chainId = QuantityFromInt64(_chainId)
+		sig.v = QuantityFromInt64(_v)
+		return &sig, nil
+	default:
+		return nil, errors.New("unexpected EIP-155 V value")
+	}
+}
+
+// ECSign returns the signature values for a given message hash for the given chainId using the bytes of given
 // private key.  Primarily used to sign transactions before submitting them with eth_sendRawTransaction.
 func ECSign(h *Hash, privKeyBytes []byte, chainId Quantity) (*Signature, error) {
 	// code for this method inspired by https://github.com/ethereumjs/ethereumjs-util/blob/master/src/signature.ts#L15
@@ -69,6 +117,22 @@ func (s *Signature) EIP155Values() (R Quantity, S Quantity, V Quantity) {
 // or 0x1 parity bit.
 func (s *Signature) EIP2718Values() (R Quantity, S Quantity, V Quantity) {
 	return s.r, s.s, s.v
+}
+
+// Recover performs ECRecover on the supplied hash using the signatures R, S, and V values,
+// returning the sender Address or an error.
+func (s *Signature) Recover(hash *Hash) (*Address, error) {
+	return ECRecover(hash, &s.r, &s.s, &s.v)
+}
+
+// ChainId returns the chain id included in the signature, or an error if signature was created with unprotected
+// pre-EIP-155 R, S, and V values.
+func (s *Signature) ChainId() (*Quantity, error) {
+	if s.chainId.Int64() == 0 {
+		return nil, errors.New("chainId was not provided")
+	}
+	chainId := s.chainId
+	return &chainId, nil
 }
 
 // ECRecover returns the sending address, given a message digest and R, S, V values.

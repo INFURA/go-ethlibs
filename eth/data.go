@@ -307,6 +307,13 @@ func validateHex(value string, size int, typ string) (string, error) {
 	return value, nil
 }
 
+// RLP returns the Data as an RLP-encoded string.
+func (d *Data) RLP() rlp.Value {
+	return rlp.Value{
+		String: d.String(),
+	}
+}
+
 // RLP returns the Data32 as an RLP-encoded string.
 func (d *Data32) RLP() rlp.Value {
 	return rlp.Value{
