@@ -199,6 +199,7 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 	}
 }
 
+// Signature returns the R, S, V values for a transaction, and the ChainId if available
 func (t *Transaction) Signature() (*Signature, error) {
 	switch t.TransactionType() {
 	case TransactionTypeLegacy:
@@ -211,4 +212,14 @@ func (t *Transaction) Signature() (*Signature, error) {
 	default:
 		return nil, errors.New("unsupported transaction type")
 	}
+}
+
+// IsProtected returns true if a transaction is replay protected, either via EIP-155 or newer transaction formats.
+// This method returns false for transactions with invalid signatures.
+func (t *Transaction) IsProtected() bool {
+	signature, err := t.Signature()
+	if err != nil {
+		return false
+	}
+	return signature.chainId.Int64() != 0x0
 }
