@@ -53,6 +53,8 @@ func TestTransaction_Sign(t *testing.T) {
 	_chainId, err := signature.ChainId()
 	require.NoError(t, err)
 	require.Equal(t, chainId, *_chainId)
+
+	require.True(t, tx2.IsProtected())
 }
 
 func TestTransaction_Sign_2(t *testing.T) {
@@ -95,6 +97,8 @@ func TestTransaction_Sign_2(t *testing.T) {
 	_chainId, err := signature.ChainId()
 	require.NoError(t, err)
 	require.Equal(t, chainId, *_chainId)
+
+	require.True(t, tx2.IsProtected())
 }
 
 // compares signed output created in python script
@@ -137,6 +141,8 @@ func TestTransaction_Sign_3(t *testing.T) {
 	_chainId, err := signature.ChainId()
 	require.NoError(t, err)
 	require.Equal(t, chainId, *_chainId)
+
+	require.True(t, tx2.IsProtected())
 }
 
 func TestTransaction_Sign_EIP2930(t *testing.T) {
@@ -259,6 +265,8 @@ func TestTransaction_Sign_EIP2930(t *testing.T) {
 	_chainId, err := signature.ChainId()
 	require.NoError(t, err)
 	require.Equal(t, chainId, *_chainId)
+
+	require.True(t, tx2.IsProtected())
 }
 
 func TestTransaction_Sign_InvalidTxType(t *testing.T) {

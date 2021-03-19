@@ -25,6 +25,8 @@ func TestTransaction_FromRaw(t *testing.T) {
 	chainId, err := signature.ChainId()
 	require.NoError(t, err)
 	require.Equal(t, eth.QuantityFromInt64(42), *chainId)
+
+	require.True(t, tx.IsProtected())
 }
 
 func TestTransaction_FromRaw_Invalid_Payloads(t *testing.T) {
@@ -124,6 +126,8 @@ func TestTransaction_FromRawEIP2930(t *testing.T) {
 		rep, err := tx.RawRepresentation()
 		require.NoError(t, err)
 		require.Equal(t, raw, rep.String())
+
+		require.True(t, tx.IsProtected())
 	}
 }
 
@@ -156,6 +160,8 @@ func TestTransaction_FromRawEIP2930_YoloV3_NetherMind(t *testing.T) {
 		_chainId, err := signature.ChainId()
 		require.NoError(t, err)
 		require.Equal(t, chainId, _chainId)
+
+		require.True(t, tx.IsProtected())
 	}
 }
 
@@ -190,6 +196,8 @@ func TestTransaction_FromRaw_EIP155_Examples(t *testing.T) {
 		chainId, err := signature.ChainId()
 		require.NoError(t, err)
 		require.Equal(t, eth.QuantityFromInt64(0x1), *chainId)
+
+		require.True(t, tx.IsProtected())
 	}
 }
 
@@ -212,6 +220,8 @@ func TestTransaction_FromRaw_Unprotected(t *testing.T) {
 	chainId, err := signature.ChainId()
 	require.Error(t, err)
 	require.Nil(t, chainId)
+
+	require.False(t, tx.IsProtected())
 }
 
 func TestTransaction_FromRaw_Samples(t *testing.T) {
