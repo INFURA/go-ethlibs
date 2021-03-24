@@ -25,6 +25,9 @@ type Block struct {
 	Transactions     []TxOrHash `json:"transactions"`
 	Uncles           []Hash     `json:"uncles"`
 
+	// EIP-1559 BaseFee
+	BaseFee *Quantity `json:"baseFee,omitempty"`
+
 	// Ethhash POW Fields
 	Nonce   *Data8 `json:"nonce"`
 	MixHash *Data  `json:"mixHash"`

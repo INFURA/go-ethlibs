@@ -77,6 +77,10 @@ func (in *Block) DeepCopyInto(out *Block) {
 		*out = make([]Data32, len(*in))
 		copy(*out, *in)
 	}
+	if in.BaseFee != nil {
+		in, out := &in.BaseFee, &out.BaseFee
+		*out = (*in).DeepCopy()
+	}
 	if in.Nonce != nil {
 		in, out := &in.Nonce, &out.Nonce
 		*out = new(Data8)
@@ -454,12 +458,12 @@ func (in *Transaction) DeepCopyInto(out *Transaction) {
 		in, out := &in.GasPrice, &out.GasPrice
 		*out = (*in).DeepCopy()
 	}
-	if in.Tip != nil {
-		in, out := &in.Tip, &out.Tip
+	if in.MaxInclusionFee != nil {
+		in, out := &in.MaxInclusionFee, &out.MaxInclusionFee
 		*out = (*in).DeepCopy()
 	}
-	if in.FeeCap != nil {
-		in, out := &in.FeeCap, &out.FeeCap
+	if in.MaxFee != nil {
+		in, out := &in.MaxFee, &out.MaxFee
 		*out = (*in).DeepCopy()
 	}
 	if in.StandardV != nil {
@@ -553,6 +557,10 @@ func (in *TransactionReceipt) DeepCopyInto(out *TransactionReceipt) {
 	}
 	if in.Status != nil {
 		in, out := &in.Status, &out.Status
+		*out = (*in).DeepCopy()
+	}
+	if in.EffectiveGasPrice != nil {
+		in, out := &in.EffectiveGasPrice, &out.EffectiveGasPrice
 		*out = (*in).DeepCopy()
 	}
 	return

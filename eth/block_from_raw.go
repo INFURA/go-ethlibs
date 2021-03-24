@@ -186,6 +186,15 @@ func (b *Block) FromRaw(input string) error {
 		return errors.Wrap(err, "could not convert header field 14 to Nonce")
 	}
 
+	// BaseFee (EIP-1559 enabled blocks)
+	if len(header) >= 16 {
+		q, err := NewQuantityFromRLP(header[15])
+		if err != nil {
+			return errors.Wrap(err, "could not convert header field 15 to BaseFee")
+		}
+		b.BaseFee = q
+	}
+
 	b.Hash = hash
 	b.Uncles = uncleHashes
 	b.Transactions = transactions

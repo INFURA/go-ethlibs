@@ -9,6 +9,7 @@ type Condition json.RawMessage
 var (
 	TransactionTypeLegacy     = int64(0x0) // TransactionTypeLegacy refers to pre-EIP-2718 transactions.
 	TransactionTypeAccessList = int64(0x1) // TransactionTypeAccessList refers to EIP-2930 transactions.
+	TransactionTypeDynamicFee = int64(0x2) // TransactionTypeDynamicFee refers to EIP-1559 transactions.
 )
 
 type Transaction struct {
@@ -31,8 +32,8 @@ type Transaction struct {
 	GasPrice *Quantity `json:"gasPrice,omitempty"`
 
 	// EIP-1559 Tip/FeeCap (optional since only included in EIP-1559 transactions)
-	Tip    *Quantity `json:"tip,omitempty"`
-	FeeCap *Quantity `json:"feeCap,omitempty"`
+	MaxInclusionFee *Quantity `json:"maxInclusionFee,omitempty"`
+	MaxFee          *Quantity `json:"maxFee,omitempty"`
 
 	// Parity Fields
 	StandardV *Quantity  `json:"standardV,omitempty"`

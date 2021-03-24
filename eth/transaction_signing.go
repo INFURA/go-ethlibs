@@ -51,7 +51,7 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 	switch t.TransactionType() {
 	case TransactionTypeLegacy:
 		t.R, t.S, t.V = signature.EIP155Values()
-	case TransactionTypeAccessList:
+	case TransactionTypeAccessList, TransactionTypeDynamicFee:
 		// set chainId and RSV to EIP2718 values
 		t.ChainId = &chainId
 		t.R, t.S, t.V = signature.EIP2718Values()
@@ -146,6 +146,26 @@ func (t *Transaction) SigningPreimage(chainId Quantity) (*Data, error) {
 		}
 		// And return it with the 0x01 prefix
 		return NewData("0x01" + encoded[2:])
+	case TransactionTypeDynamicFee:
+		// The signatureYParity, signatureR, signatureS elements of this transaction represent a secp256k1 signature over keccak256(0x02 || rlp([chainId, nonce, maxInclusionFeePerGas, maxFeePerGas, gasLimit, to, value, data, access_list])).
+		payload := rlp.Value{List: []rlp.Value{
+			chainId.RLP(),
+			t.Nonce.RLP(),
+			t.MaxInclusionFee.RLP(),
+			t.MaxFee.RLP(),
+			t.Gas.RLP(),
+			t.To.RLP(),
+			t.Value.RLP(),
+			{String: t.Input.String()},
+			t.AccessList.RLP(),
+		}}
+		// encode the list as RLP
+		encoded, err := payload.Encode()
+		if err != nil {
+			return nil, err
+		}
+		// And return it with the 0x01 prefix
+		return NewData("0x02" + encoded[2:])
 	default:
 		return nil, errors.New("unsupported transaction type")
 	}
@@ -212,6 +232,40 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 		} else {
 			return NewData(typePrefix + encodedPayload[2:])
 		}
+	case TransactionTypeDynamicFee:
+		// We introduce a new EIP-2718 transaction type, with the format 0x02 || rlp([chainId, nonce, maxInclusionFeePerGas, maxFeePerGas, gasLimit, to, value, data, access_list, signatureYParity, signatureR, signatureS]).
+		typePrefix, err := t.Type.RLP().Encode()
+		if err != nil {
+			return nil, err
+		}
+		if t.ChainId == nil {
+			return nil, errors.New("chainID is required on EIP-1559 transactions")
+		}
+		if t.MaxInclusionFee == nil {
+			return nil, errors.New("maxInclusionFee is required on EIP-1559 transactions")
+		}
+		if t.MaxFee == nil {
+			return nil, errors.New("maxFee is required on EIP-1559 transactions")
+		}
+		payload := rlp.Value{List: []rlp.Value{
+			t.ChainId.RLP(),
+			t.Nonce.RLP(),
+			t.MaxInclusionFee.RLP(),
+			t.MaxFee.RLP(),
+			t.Gas.RLP(),
+			t.To.RLP(),
+			t.Value.RLP(),
+			{String: t.Input.String()},
+			t.AccessList.RLP(),
+			t.V.RLP(),
+			t.R.RLP(),
+			t.S.RLP(),
+		}}
+		if encodedPayload, err := payload.Encode(); err != nil {
+			return nil, err
+		} else {
+			return NewData(typePrefix + encodedPayload[2:])
+		}
 	default:
 		return nil, errors.New("unsupported transaction type")
 	}
@@ -225,6 +279,17 @@ func (t *Transaction) Signature() (*Signature, error) {
 	case TransactionTypeAccessList:
 		if t.ChainId == nil {
 			return nil, errors.New("chainId is required")
+		}
+		return NewEIP2718Signature(*t.ChainId, t.R, t.S, t.V)
+	case TransactionTypeDynamicFee:
+		if t.ChainId == nil {
+			return nil, errors.New("chainId is required")
+		}
+		if t.MaxInclusionFee == nil {
+			return nil, errors.New("maxInclusionFee is required")
+		}
+		if t.MaxFee == nil {
+			return nil, errors.New("maxFee is required")
 		}
 		return NewEIP2718Signature(*t.ChainId, t.R, t.S, t.V)
 	default:
