@@ -12,10 +12,9 @@ import (
 
 func TestTransaction_Sign(t *testing.T) {
 	chainId := eth.QuantityFromInt64(1)
-	gasPrice := eth.QuantityFromUInt64(21488430592)
 	tx := eth.Transaction{
 		Nonce:    eth.QuantityFromUInt64(0),
-		GasPrice: &gasPrice,
+		GasPrice: eth.OptionalQuantityFromInt(21488430592),
 		Gas:      eth.QuantityFromUInt64(90000),
 		To:       eth.MustAddress("0xc149Be1bcDFa69a94384b46A1F91350E5f81c1AB"),
 		Value:    eth.QuantityFromUInt64(950000000000000000),
@@ -60,10 +59,9 @@ func TestTransaction_Sign(t *testing.T) {
 
 func TestTransaction_Sign_2(t *testing.T) {
 	chainId := eth.QuantityFromInt64(1)
-	gasPrice := eth.QuantityFromUInt64(3000000000)
 	tx := eth.Transaction{
 		Nonce:    eth.QuantityFromUInt64(146),
-		GasPrice: &gasPrice,
+		GasPrice: eth.OptionalQuantityFromInt(3000000000),
 		Gas:      eth.QuantityFromUInt64(22000),
 		To:       eth.MustAddress("0x43700db832E9Ac990D36d6279A846608643c904E"),
 		Value:    eth.QuantityFromUInt64(1000000000),
@@ -108,11 +106,10 @@ func TestTransaction_Sign_2(t *testing.T) {
 // where pKey = `fad9c8855b740a0b7ed4c221dbad0f33a83a49cad6b3fe8d5817ac83d38b6a19`
 func TestTransaction_Sign_3(t *testing.T) {
 	chainId := eth.QuantityFromInt64(1)
-	gasPrice := eth.QuantityFromUInt64(3000000000)
 	raw := eth.MustData("0xf868819284b2d05e008255f09443700db832e9ac990d36d6279a846608643c904e843b9aca008026a0444f6cd588830bc975643241e6df545dccf5815c00ee8bde4e686722761b8954a06abec148bf44975c6ed6336cba57a9f5101d1cb5c199a12567d65de2ea8d7d43")
 	tx := eth.Transaction{
 		Nonce:    eth.QuantityFromUInt64(146),
-		GasPrice: &gasPrice,
+		GasPrice: eth.OptionalQuantityFromInt(3000000000),
 		Gas:      eth.QuantityFromUInt64(22000),
 		To:       eth.MustAddress("0x43700db832E9Ac990D36d6279A846608643c904E"),
 		Value:    eth.QuantityFromUInt64(1000000000),
@@ -199,12 +196,11 @@ func TestTransaction_Sign_EIP2930(t *testing.T) {
 			  }
 			}
 	*/
-	gasPrice := eth.QuantityFromInt64(0x3b9aca00)
 	tx := eth.Transaction{
 		Type:     eth.MustQuantity("0x1"),
 		ChainId:  &chainId,
 		Gas:      eth.QuantityFromInt64(0x62d4),
-		GasPrice: &gasPrice,
+		GasPrice: eth.OptionalQuantityFromInt(0x3b9aca00),
 		Input:    eth.Data("0x"),
 		Nonce:    eth.QuantityFromInt64(0),
 		To:       eth.MustAddress("0xdf0a88b2b68c673713a8ec826003676f272e3573"),
