@@ -17,7 +17,6 @@ type Transaction struct {
 	BlockNumber *Quantity `json:"blockNumber"`
 	From        Address   `json:"from"`
 	Gas         Quantity  `json:"gas"`
-	GasPrice    Quantity  `json:"gasPrice"`
 	Hash        Hash      `json:"hash"`
 	Input       Data      `json:"input"`
 	Nonce       Quantity  `json:"nonce"`
@@ -27,6 +26,13 @@ type Transaction struct {
 	V           Quantity  `json:"v"`
 	R           Quantity  `json:"r"`
 	S           Quantity  `json:"s"`
+
+	// Gas Price (optional since not included in EIP-1559)
+	GasPrice *Quantity `json:"gasPrice,omitempty"`
+
+	// EIP-1559 Tip/FeeCap (optional since only included in EIP-1559 transactions)
+	Tip    *Quantity `json:"tip,omitempty"`
+	FeeCap *Quantity `json:"feeCap,omitempty"`
 
 	// Parity Fields
 	StandardV *Quantity  `json:"standardV,omitempty"`
@@ -95,7 +101,7 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 			BlockNumber *Quantity `json:"blockNumber"`
 			From        Address   `json:"from"`
 			Gas         Quantity  `json:"gas"`
-			GasPrice    Quantity  `json:"gasPrice"`
+			GasPrice    *Quantity `json:"gasPrice"`
 			Hash        Hash      `json:"hash"`
 			Input       Data      `json:"input"`
 			Nonce       Quantity  `json:"nonce"`

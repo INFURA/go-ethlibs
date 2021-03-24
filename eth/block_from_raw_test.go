@@ -96,7 +96,7 @@ func TestBlock_FromRaw_EIP2930(t *testing.T) {
 		BlockNumber: block.Number,
 		From:        *eth.MustAddress("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
 		Gas:         *eth.MustQuantity("0x7a120"),
-		GasPrice:    *eth.MustQuantity("0x1"),
+		GasPrice:    eth.MustQuantity("0x1"),
 		Hash:        *eth.MustHash("0x0503e1a4ead116b0d1c942c47d54d54d10ed5eaf3a57d2e974bc5cb2e8ee0c47"),
 		Input:       *eth.MustData("0x1a8451e600000000000000000000000000000000000000000000000000000000000000050000000000000000000000000000000000000000000000000000000000001000"),
 		Nonce:       *eth.MustQuantity("0xd"),

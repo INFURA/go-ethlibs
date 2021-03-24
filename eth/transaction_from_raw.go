@@ -63,7 +63,7 @@ func (t *Transaction) FromRaw(input string) error {
 
 		t.Type = MustQuantity("0x1")
 		t.Nonce = nonce
-		t.GasPrice = gasPrice
+		t.GasPrice = &gasPrice
 		t.Gas = gasLimit
 		t.To = to
 		t.Value = value
@@ -111,7 +111,7 @@ func (t *Transaction) FromRaw(input string) error {
 
 		// ... and fill in all our fields with the decoded values
 		t.Nonce = nonce
-		t.GasPrice = gasPrice
+		t.GasPrice = &gasPrice
 		t.Gas = gasLimit
 		t.To = to
 		t.Value = value

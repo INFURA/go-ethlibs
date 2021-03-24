@@ -436,7 +436,6 @@ func (in *Transaction) DeepCopyInto(out *Transaction) {
 		*out = (*in).DeepCopy()
 	}
 	in.Gas.DeepCopyInto(&out.Gas)
-	in.GasPrice.DeepCopyInto(&out.GasPrice)
 	in.Nonce.DeepCopyInto(&out.Nonce)
 	if in.To != nil {
 		in, out := &in.To, &out.To
@@ -451,6 +450,18 @@ func (in *Transaction) DeepCopyInto(out *Transaction) {
 	in.V.DeepCopyInto(&out.V)
 	in.R.DeepCopyInto(&out.R)
 	in.S.DeepCopyInto(&out.S)
+	if in.GasPrice != nil {
+		in, out := &in.GasPrice, &out.GasPrice
+		*out = (*in).DeepCopy()
+	}
+	if in.Tip != nil {
+		in, out := &in.Tip, &out.Tip
+		*out = (*in).DeepCopy()
+	}
+	if in.FeeCap != nil {
+		in, out := &in.FeeCap, &out.FeeCap
+		*out = (*in).DeepCopy()
+	}
 	if in.StandardV != nil {
 		in, out := &in.StandardV, &out.StandardV
 		*out = (*in).DeepCopy()
