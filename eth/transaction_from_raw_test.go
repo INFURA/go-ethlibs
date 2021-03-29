@@ -209,10 +209,23 @@ func TestTransaction_FromRaw_Unprotected(t *testing.T) {
 	require.NoError(t, err)
 
 	// Unprotected transaction should have a non-EIP-155 V value, so 27 or 28 rather than `CHAIN_ID * 2 + 35` or `CHAIN_ID * 2 + 36`
-	require.Equal(t, int64(28), tx.V.Int64())
+	require.True(t, tx.V.Int64() == int64(27) || tx.V.Int64() == int64(28))
 	rawOutput, err := tx.RawRepresentation()
 	require.NoError(t, err)
 	require.Equal(t, rawInput, rawOutput.String())
+
+	// We should still be able to correctly recover all the fields of an unprotected tx
+	require.Equal(t, "0x8d9606F90B6CA5D856A9f0867a82a645e2DfFf37", tx.From.String())
+	require.Equal(t, "0x8a5ba6f5003fbd840f94834a11da88d701afa45b1bd6922bb28edd5acbbc7ef9", tx.Hash.String())
+	require.Zero(t, tx.Nonce.Int64())
+	require.Equal(t, int64(20000000000), tx.GasPrice.Int64())
+	require.Equal(t, int64(6721975), tx.Gas.Int64())
+	require.Nil(t, tx.To)
+	require.Zero(t, tx.Value.Int64())
+	require.Equal(t, "0x3cf2a8f67ed9ce210f3da5b95ef2121069c22e1370a2419967316adc4c36e3f1", tx.R.String())
+	require.Equal(t, "0x6dd8fb33a6b7e8789d15877764622fe8af96ba1808c0f71634abccc37ad3e31c", tx.S.String())
+	require.Equal(t, "0x1c", tx.V.String())
+	require.Equal(t, `0x608060405234801561001057600080fd5b50336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555061019c806100606000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c8063445df0ac146100465780638da5cb5b14610064578063fdacd576146100ae575b600080fd5b61004e6100dc565b6040518082815260200191505060405180910390f35b61006c6100e2565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6100da600480360360208110156100c457600080fd5b8101908080359060200190929190505050610107565b005b60015481565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff16141561016457806001819055505b5056fea265627a7a7231582029c98913dbb8a328d702e923ba85e26be47ea5e754908b3b671db0350327939a64736f6c63430005100032`, tx.Input.String())
 
 	// Getting the chainId from the tx signature should fail
 	signature, err := tx.Signature()
