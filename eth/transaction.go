@@ -2,6 +2,11 @@ package eth
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
+	"strings"
+
+	"github.com/INFURA/go-ethlibs/rlp"
 )
 
 type Condition json.RawMessage
@@ -91,6 +96,117 @@ func (t *Transaction) TransactionType() int64 {
 	}
 
 	return t.Type.Int64()
+}
+
+// RequiredFields inspects the Transaction Type and returns an error if any required fields are missing
+func (t *Transaction) RequiredFields() error {
+	var fields []string
+	switch t.TransactionType() {
+	case TransactionTypeLegacy:
+		if t.GasPrice == nil {
+			fields = append(fields, "gasPrice")
+		}
+		return nil
+	case TransactionTypeAccessList:
+		if t.ChainId == nil {
+			fields = append(fields, "chainId")
+		}
+	case TransactionTypeDynamicFee:
+		if t.ChainId == nil {
+			fields = append(fields, "chainId")
+		}
+		if t.MaxFee == nil {
+			fields = append(fields, "maxFee")
+		}
+		if t.MaxInclusionFee == nil {
+			fields = append(fields, "maxInclusionFee")
+		}
+	}
+
+	if len(fields) > 0 {
+		return fmt.Errorf("missing required field(s) %s for transaction type", strings.Join(fields, ","))
+	}
+
+	return nil
+}
+
+// RawRepresentation returns the transaction encoded as a raw hexadecimal data string, or an error
+func (t *Transaction) RawRepresentation() (*Data, error) {
+	if err := t.RequiredFields(); err != nil {
+		return nil, err
+	}
+
+	switch t.TransactionType() {
+	case TransactionTypeLegacy:
+		// Legacy Transactions are RLP(Nonce, GasPrice, Gas, To, Value, Input, V, R, S)
+		message := rlp.Value{List: []rlp.Value{
+			t.Nonce.RLP(),
+			t.GasPrice.RLP(),
+			t.Gas.RLP(),
+			t.To.RLP(),
+			t.Value.RLP(),
+			{String: t.Input.String()},
+			t.V.RLP(),
+			t.R.RLP(),
+			t.S.RLP(),
+		}}
+		if encoded, err := message.Encode(); err != nil {
+			return nil, err
+		} else {
+			return NewData(encoded)
+		}
+	case TransactionTypeAccessList:
+		// EIP-2930 Transactions are 0x1 || rlp([chainId, nonce, gasPrice, gasLimit, to, value, data, access_list, yParity, senderR, senderS])
+		typePrefix, err := t.Type.RLP().Encode()
+		if err != nil {
+			return nil, err
+		}
+		payload := rlp.Value{List: []rlp.Value{
+			t.ChainId.RLP(),
+			t.Nonce.RLP(),
+			t.GasPrice.RLP(),
+			t.Gas.RLP(),
+			t.To.RLP(),
+			t.Value.RLP(),
+			{String: t.Input.String()},
+			t.AccessList.RLP(),
+			t.V.RLP(),
+			t.R.RLP(),
+			t.S.RLP(),
+		}}
+		if encodedPayload, err := payload.Encode(); err != nil {
+			return nil, err
+		} else {
+			return NewData(typePrefix + encodedPayload[2:])
+		}
+	case TransactionTypeDynamicFee:
+		// We introduce a new EIP-2718 transaction type, with the format 0x02 || rlp([chainId, nonce, maxInclusionFeePerGas, maxFeePerGas, gasLimit, to, value, data, access_list, signatureYParity, signatureR, signatureS]).
+		typePrefix, err := t.Type.RLP().Encode()
+		if err != nil {
+			return nil, err
+		}
+		payload := rlp.Value{List: []rlp.Value{
+			t.ChainId.RLP(),
+			t.Nonce.RLP(),
+			t.MaxInclusionFee.RLP(),
+			t.MaxFee.RLP(),
+			t.Gas.RLP(),
+			t.To.RLP(),
+			t.Value.RLP(),
+			{String: t.Input.String()},
+			t.AccessList.RLP(),
+			t.V.RLP(),
+			t.R.RLP(),
+			t.S.RLP(),
+		}}
+		if encodedPayload, err := payload.Encode(); err != nil {
+			return nil, err
+		} else {
+			return NewData(typePrefix + encodedPayload[2:])
+		}
+	default:
+		return nil, errors.New("unsupported transaction type")
+	}
 }
 
 func (t *Transaction) MarshalJSON() ([]byte, error) {
