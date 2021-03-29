@@ -91,7 +91,7 @@ func (t *Transaction) SigningPreimage(chainId Quantity) (*Data, error) {
 	case TransactionTypeLegacy:
 		var message rlp.Value
 
-		// If chainId is zero then not this transaction is NOT EIP-155 protected
+		// If chainId is zero then this transaction is NOT EIP-155 protected
 		if chainId.Int64() == 0 {
 			// In that case we should sign
 			// RLP(Nonce, GasPrice, Gas, To, Value, Input)
