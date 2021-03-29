@@ -3,6 +3,7 @@ package eth
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/INFURA/go-ethlibs/rlp"
@@ -85,8 +86,43 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 	return raw, err
 }
 
+// RequiredFields inspects the Transaction Type and returns an error if any required fields are missing
+func (t *Transaction) RequiredFields() error {
+	var fields []string
+	switch t.TransactionType() {
+	case TransactionTypeLegacy:
+		if t.GasPrice == nil {
+			fields = append(fields, "gasPrice")
+		}
+		return nil
+	case TransactionTypeAccessList:
+		if t.ChainId == nil {
+			fields = append(fields, "chainId")
+		}
+	case TransactionTypeDynamicFee:
+		if t.ChainId == nil {
+			fields = append(fields, "chainId")
+		}
+		if t.MaxFee == nil {
+			fields = append(fields, "maxFee")
+		}
+		if t.MaxInclusionFee == nil {
+			fields = append(fields, "maxInclusionFee")
+		}
+	}
+
+	if len(fields) > 0 {
+		return fmt.Errorf("missing required field(s) %s for transaction type", strings.Join(fields, ","))
+	}
+
+	return nil
+}
+
 // SigningPreimage returns the opaque data preimage that is required for signing a given transaction type
 func (t *Transaction) SigningPreimage(chainId Quantity) (*Data, error) {
+	if err := t.RequiredFields(); err != nil {
+		return nil, err
+	}
 	switch t.TransactionType() {
 	case TransactionTypeLegacy:
 		var message rlp.Value
@@ -186,6 +222,10 @@ func (t *Transaction) SigningHash(chainId Quantity) (*Hash, error) {
 
 // RawRepresentation returns the transaction encoded as a raw hexadecimal data string, or an error
 func (t *Transaction) RawRepresentation() (*Data, error) {
+	if err := t.RequiredFields(); err != nil {
+		return nil, err
+	}
+
 	switch t.TransactionType() {
 	case TransactionTypeLegacy:
 		// Legacy Transactions are RLP(Nonce, GasPrice, Gas, To, Value, Input, V, R, S)
@@ -211,9 +251,6 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 		if err != nil {
 			return nil, err
 		}
-		if t.ChainId == nil {
-			return nil, errors.New("chainID is required on EIP-2930 transactions")
-		}
 		payload := rlp.Value{List: []rlp.Value{
 			t.ChainId.RLP(),
 			t.Nonce.RLP(),
@@ -237,15 +274,6 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 		typePrefix, err := t.Type.RLP().Encode()
 		if err != nil {
 			return nil, err
-		}
-		if t.ChainId == nil {
-			return nil, errors.New("chainID is required on EIP-1559 transactions")
-		}
-		if t.MaxInclusionFee == nil {
-			return nil, errors.New("maxInclusionFee is required on EIP-1559 transactions")
-		}
-		if t.MaxFee == nil {
-			return nil, errors.New("maxFee is required on EIP-1559 transactions")
 		}
 		payload := rlp.Value{List: []rlp.Value{
 			t.ChainId.RLP(),
@@ -273,6 +301,10 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 
 // Signature returns the R, S, V values for a transaction, and the ChainId if available
 func (t *Transaction) Signature() (*Signature, error) {
+	if err := t.RequiredFields(); err != nil {
+		return nil, err
+	}
+
 	switch t.TransactionType() {
 	case TransactionTypeLegacy:
 		return NewEIP155Signature(t.R, t.S, t.V)
@@ -282,15 +314,6 @@ func (t *Transaction) Signature() (*Signature, error) {
 		}
 		return NewEIP2718Signature(*t.ChainId, t.R, t.S, t.V)
 	case TransactionTypeDynamicFee:
-		if t.ChainId == nil {
-			return nil, errors.New("chainId is required")
-		}
-		if t.MaxInclusionFee == nil {
-			return nil, errors.New("maxInclusionFee is required")
-		}
-		if t.MaxFee == nil {
-			return nil, errors.New("maxFee is required")
-		}
 		return NewEIP2718Signature(*t.ChainId, t.R, t.S, t.V)
 	default:
 		return nil, errors.New("unsupported transaction type")
