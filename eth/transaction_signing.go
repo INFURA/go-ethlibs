@@ -89,19 +89,37 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 func (t *Transaction) SigningPreimage(chainId Quantity) (*Data, error) {
 	switch t.TransactionType() {
 	case TransactionTypeLegacy:
-		// Return RLP(Nonce, GasPrice, Gas, To, Value, Input, ChainId, 0, 0)
-		zero := QuantityFromInt64(0)
-		message := rlp.Value{List: []rlp.Value{
-			t.Nonce.RLP(),
-			t.GasPrice.RLP(),
-			t.Gas.RLP(),
-			t.To.RLP(),
-			t.Value.RLP(),
-			{String: t.Input.String()},
-			chainId.RLP(),
-			zero.RLP(),
-			zero.RLP(),
-		}}
+		var message rlp.Value
+
+		// If chainId is zero then not this transaction is NOT EIP-155 protected
+		if chainId.Int64() == 0 {
+			// In that case we should sign
+			// RLP(Nonce, GasPrice, Gas, To, Value, Input)
+			message = rlp.Value{List: []rlp.Value{
+				t.Nonce.RLP(),
+				t.GasPrice.RLP(),
+				t.Gas.RLP(),
+				t.To.RLP(),
+				t.Value.RLP(),
+				{String: t.Input.String()},
+			}}
+		} else {
+			// On the other hand, for EIP-155 txs we should sign
+			// RLP(Nonce, GasPrice, Gas, To, Value, Input, ChainId, 0, 0)
+			zero := QuantityFromInt64(0)
+			message = rlp.Value{List: []rlp.Value{
+				t.Nonce.RLP(),
+				t.GasPrice.RLP(),
+				t.Gas.RLP(),
+				t.To.RLP(),
+				t.Value.RLP(),
+				{String: t.Input.String()},
+				chainId.RLP(),
+				zero.RLP(),
+				zero.RLP(),
+			}}
+		}
+
 		// encode the list as RLP
 		encoded, err := message.Encode()
 		if err != nil {
