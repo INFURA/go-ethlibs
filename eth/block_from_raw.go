@@ -33,8 +33,10 @@ func (b *Block) FromRaw(input string) error {
 	hash, err := NewHash(h)
 
 	header, txs, uncles := decoded.List[0].List, decoded.List[1].List, decoded.List[2].List
-	// header should be 15 items
-	if len(header) != 15 {
+	// header should be 15 items for legacy blocks, 16 for EIP-1559 blocks
+	switch len(header) {
+	case 15, 16:
+	default:
 		return errors.Errorf("unexpected decoded header list size %d", len(header))
 	}
 

@@ -21,17 +21,19 @@ func (t *Transaction) FromRaw(input string) error {
 	// However it's since been somewhat extensively rewritten to support EIP-2718 and -2930
 
 	var (
-		chainId    Quantity
-		nonce      Quantity
-		gasPrice   Quantity
-		gasLimit   Quantity
-		to         *Address
-		value      Quantity
-		data       Data
-		v          Quantity
-		r          Quantity
-		s          Quantity
-		accessList AccessList
+		chainId               Quantity
+		nonce                 Quantity
+		gasPrice              Quantity
+		gasLimit              Quantity
+		maxInclusionFeePerGas Quantity
+		maxFeePerGas          Quantity
+		to                    *Address
+		value                 Quantity
+		data                  Data
+		v                     Quantity
+		r                     Quantity
+		s                     Quantity
+		accessList            AccessList
 	)
 
 	if !strings.HasPrefix(input, "0x") {
@@ -50,7 +52,7 @@ func (t *Transaction) FromRaw(input string) error {
 	}
 
 	switch {
-	case firstByte == 0x01:
+	case firstByte == byte(TransactionTypeAccessList):
 		// EIP-2930 transaction
 		payload := "0x" + input[4:]
 		if err := rlpDecodeList(payload, &chainId, &nonce, &gasPrice, &gasLimit, &to, &value, &data, &accessList, &v, &r, &s); err != nil {
@@ -61,9 +63,58 @@ func (t *Transaction) FromRaw(input string) error {
 			return errors.New("unsigned transactions not supported")
 		}
 
-		t.Type = MustQuantity("0x1")
+		t.Type = OptionalQuantityFromInt(int(firstByte))
 		t.Nonce = nonce
 		t.GasPrice = &gasPrice
+		t.Gas = gasLimit
+		t.To = to
+		t.Value = value
+		t.Input = data
+		t.AccessList = &accessList
+		t.V = v
+		t.R = r
+		t.S = s
+		t.ChainId = &chainId
+
+		signingHash, err := t.SigningHash(chainId)
+		if err != nil {
+			return err
+		}
+
+		signature, err := NewEIP2718Signature(chainId, r, s, v)
+		if err != nil {
+			return err
+		}
+
+		sender, err := signature.Recover(signingHash)
+		if err != nil {
+			return err
+		}
+
+		raw, err := t.RawRepresentation()
+		if err != nil {
+			return err
+		}
+
+		t.Hash = raw.Hash()
+		t.From = *sender
+		return nil
+	case firstByte == byte(TransactionTypeDynamicFee):
+		// EIP-1559 transaction
+		payload := "0x" + input[4:]
+		// 0x02 || rlp([chainId, nonce, maxInclusionFeePerGas, maxFeePerGas, gasLimit, to, value, data, access_list, signatureYParity, signatureR, signatureS])
+		if err := rlpDecodeList(payload, &chainId, &nonce, &maxInclusionFeePerGas, &maxFeePerGas, &gasLimit, &to, &value, &data, &accessList, &v, &r, &s); err != nil {
+			return errors.Wrap(err, "could not decode RLP components")
+		}
+
+		if r.Int64() == 0 && s.Int64() == 0 {
+			return errors.New("unsigned transactions not supported")
+		}
+
+		t.Type = OptionalQuantityFromInt(int(firstByte))
+		t.Nonce = nonce
+		t.MaxInclusionFee = &maxInclusionFeePerGas
+		t.MaxFee = &maxFeePerGas
 		t.Gas = gasLimit
 		t.To = to
 		t.Value = value
