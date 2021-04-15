@@ -37,8 +37,8 @@ type Transaction struct {
 	GasPrice *Quantity `json:"gasPrice,omitempty"`
 
 	// EIP-1559 Tip/FeeCap (optional since only included in EIP-1559 transactions)
-	MaxInclusionFee *Quantity `json:"maxInclusionFee,omitempty"`
-	MaxFee          *Quantity `json:"maxFee,omitempty"`
+	MaxInclusionFee *Quantity `json:"tip,omitempty"`
+	MaxFee          *Quantity `json:"feeCap,omitempty"`
 
 	// Parity Fields
 	StandardV *Quantity  `json:"standardV,omitempty"`
