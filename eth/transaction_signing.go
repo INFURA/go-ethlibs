@@ -141,12 +141,12 @@ func (t *Transaction) SigningPreimage(chainId Quantity) (*Data, error) {
 		// And return it with the 0x01 prefix
 		return NewData("0x01" + encoded[2:])
 	case TransactionTypeDynamicFee:
-		// The signatureYParity, signatureR, signatureS elements of this transaction represent a secp256k1 signature over keccak256(0x02 || rlp([chainId, nonce, maxInclusionFeePerGas, maxFeePerGas, gasLimit, to, value, data, access_list])).
+		// The signatureYParity, signatureR, signatureS elements of this transaction represent a secp256k1 signature over keccak256(0x02 || rlp([chainId, nonce, maxInclusionFeePerGas [tip], maxFeePerGas [feeCap], gasLimit, to, value, data, access_list])).
 		payload := rlp.Value{List: []rlp.Value{
 			chainId.RLP(),
 			t.Nonce.RLP(),
-			t.MaxInclusionFee.RLP(),
-			t.MaxFee.RLP(),
+			t.Tip.RLP(),
+			t.FeeCap.RLP(),
 			t.Gas.RLP(),
 			t.To.RLP(),
 			t.Value.RLP(),

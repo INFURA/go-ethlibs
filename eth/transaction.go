@@ -36,9 +36,9 @@ type Transaction struct {
 	// Gas Price (optional since not included in EIP-1559)
 	GasPrice *Quantity `json:"gasPrice,omitempty"`
 
-	// EIP-1559 Tip/FeeCap (optional since only included in EIP-1559 transactions)
-	MaxInclusionFee *Quantity `json:"tip,omitempty"`
-	MaxFee          *Quantity `json:"feeCap,omitempty"`
+	// EIP-1559 FeeCap/Tip (optional since only included in EIP-1559 transactions)
+	FeeCap *Quantity `json:"feeCap,omitempty"`
+	Tip    *Quantity `json:"tip,omitempty"`
 
 	// Parity Fields
 	StandardV *Quantity  `json:"standardV,omitempty"`
@@ -115,11 +115,11 @@ func (t *Transaction) RequiredFields() error {
 		if t.ChainId == nil {
 			fields = append(fields, "chainId")
 		}
-		if t.MaxFee == nil {
-			fields = append(fields, "maxFee")
+		if t.FeeCap == nil {
+			fields = append(fields, "feeCap")
 		}
-		if t.MaxInclusionFee == nil {
-			fields = append(fields, "maxInclusionFee")
+		if t.Tip == nil {
+			fields = append(fields, "tip")
 		}
 	}
 
@@ -180,7 +180,7 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 			return NewData(typePrefix + encodedPayload[2:])
 		}
 	case TransactionTypeDynamicFee:
-		// We introduce a new EIP-2718 transaction type, with the format 0x02 || rlp([chainId, nonce, maxInclusionFeePerGas, maxFeePerGas, gasLimit, to, value, data, access_list, signatureYParity, signatureR, signatureS]).
+		// We introduce a new EIP-2718 transaction type, with the format 0x02 || rlp([chainId, nonce, maxInclusionFeePerGas [tip], maxFeePerGas [feeCap], gasLimit, to, value, data, access_list, signatureYParity, signatureR, signatureS]).
 		typePrefix, err := t.Type.RLP().Encode()
 		if err != nil {
 			return nil, err
@@ -188,8 +188,8 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 		payload := rlp.Value{List: []rlp.Value{
 			t.ChainId.RLP(),
 			t.Nonce.RLP(),
-			t.MaxInclusionFee.RLP(),
-			t.MaxFee.RLP(),
+			t.Tip.RLP(),
+			t.FeeCap.RLP(),
 			t.Gas.RLP(),
 			t.To.RLP(),
 			t.Value.RLP(),
