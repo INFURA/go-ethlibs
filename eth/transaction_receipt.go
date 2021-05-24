@@ -15,7 +15,6 @@ type TransactionReceipt struct {
 	LogsBloom         Data256   `json:"logsBloom"`
 	Root              *Data32   `json:"root,omitempty"`
 	Status            *Quantity `json:"status,omitempty"`
-	EffectiveGasPrice *Quantity `json:"effectiveGasPrice,omitempty"`
 }
 
 // TransactionType returns the transactions EIP-2718 type, or TransactionTypeLegacy for pre-EIP-2718 transactions.

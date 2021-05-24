@@ -559,10 +559,6 @@ func (in *TransactionReceipt) DeepCopyInto(out *TransactionReceipt) {
 		in, out := &in.Status, &out.Status
 		*out = (*in).DeepCopy()
 	}
-	if in.EffectiveGasPrice != nil {
-		in, out := &in.EffectiveGasPrice, &out.EffectiveGasPrice
-		*out = (*in).DeepCopy()
-	}
 	return
 }
 
