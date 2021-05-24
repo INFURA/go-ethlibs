@@ -77,8 +77,8 @@ func (in *Block) DeepCopyInto(out *Block) {
 		*out = make([]Data32, len(*in))
 		copy(*out, *in)
 	}
-	if in.BaseFee != nil {
-		in, out := &in.BaseFee, &out.BaseFee
+	if in.BaseFeePerGas != nil {
+		in, out := &in.BaseFeePerGas, &out.BaseFeePerGas
 		*out = (*in).DeepCopy()
 	}
 	if in.Nonce != nil {

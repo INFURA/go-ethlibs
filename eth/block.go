@@ -25,10 +25,8 @@ type Block struct {
 	Transactions     []TxOrHash `json:"transactions"`
 	Uncles           []Hash     `json:"uncles"`
 
-	// EIP-1559 BaseFee
-	// TODO: This should be `baseFeePerGas` once geth is updated to match the spec:
-	// See: https://github.com/ethereum/eth1.0-specs/blob/master/json-rpc/spec.json#L1489
-	BaseFee *Quantity `json:"baseFee,omitempty"`
+	// EIP-1559 BaseFeePerGas
+	BaseFeePerGas *Quantity `json:"baseFeePerGas,omitempty"`
 
 	// Ethhash POW Fields
 	Nonce   *Data8 `json:"nonce"`
@@ -105,6 +103,9 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 			Transactions     []TxOrHash `json:"transactions"`
 			Uncles           []Hash     `json:"uncles"`
 
+			// EIP-1559 BaseFeePerGas
+			BaseFeePerGas *Quantity `json:"baseFeePerGas,omitempty"`
+
 			Nonce   *Data8 `json:"nonce"`
 			MixHash *Data  `json:"mixHash"`
 		}
@@ -128,6 +129,7 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 			Timestamp:        b.Timestamp,
 			Transactions:     b.Transactions,
 			Uncles:           b.Uncles,
+			BaseFeePerGas:    b.BaseFeePerGas,
 			Nonce:            b.Nonce,
 			MixHash:          b.MixHash,
 		}

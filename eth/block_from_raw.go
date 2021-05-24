@@ -204,7 +204,7 @@ func (b *Block) FromRaw(input string) error {
 		if err != nil {
 			return errors.Wrap(err, "could not convert header field 15 to BaseFee")
 		}
-		b.BaseFee = q
+		b.BaseFeePerGas = q
 	}
 
 	b.Hash = hash
