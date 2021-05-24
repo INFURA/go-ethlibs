@@ -458,12 +458,12 @@ func (in *Transaction) DeepCopyInto(out *Transaction) {
 		in, out := &in.GasPrice, &out.GasPrice
 		*out = (*in).DeepCopy()
 	}
-	if in.Tip != nil {
-		in, out := &in.Tip, &out.Tip
+	if in.MaxPriorityFeePerGas != nil {
+		in, out := &in.MaxPriorityFeePerGas, &out.MaxPriorityFeePerGas
 		*out = (*in).DeepCopy()
 	}
-	if in.FeeCap != nil {
-		in, out := &in.FeeCap, &out.FeeCap
+	if in.MaxFeePerGas != nil {
+		in, out := &in.MaxFeePerGas, &out.MaxFeePerGas
 		*out = (*in).DeepCopy()
 	}
 	if in.StandardV != nil {

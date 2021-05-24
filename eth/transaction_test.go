@@ -152,6 +152,49 @@ func TestTransactionTypeAccessList_Populated(t *testing.T) {
 	RequireEqualJSON(t, []byte(payload), j)
 }
 
+func TestTransactionTypeDynamicFee(t *testing.T) {
+	payload := `{
+        "type": "0x2",
+        "blockHash": "0x61abbe5e22738de0462046f5a5d6c4cd6bc1f3a6398e4457d5e293590e721125",
+        "blockNumber": "0x7647",
+        "from": "0xbaadf00d42264eeb3fafe6799d0b56cf55df0f00",
+        "gas": "0x186a0",
+        "hash": "0xa7231d4da0576fade5d3b9481f4cd52459ec59b9bbdbf4f60d6cd726b2a3a244",
+        "input": "0x48600055323160015500",
+        "nonce": "0x12c",
+        "to": null,
+        "transactionIndex": "0x41",
+        "value": "0x0",
+        "v": "0x1",
+        "r": "0x396864e5f9132327defdb1449504252e1fa6bce73feb8cd6f348a342b198af34",
+        "s": "0x44dbba72e6d3304104848277143252ee43627c82f02d1ef8e404e1bf97c70158",
+        "gasPrice": "0x4a817c800",
+        "maxFeePerGas": "0x4a817c800",
+        "maxPriorityFeePerGas": "0x4a817c800",
+        "chainId": "0x66a",
+        "accessList": [
+          {
+            "address": "0xc141a9a7463e6c4716d9fc0c056c054f46bb2993",
+            "storageKeys": [
+              "0x0000000000000000000000000000000000000000000000000000000000000000"
+            ]
+          }
+        ]
+      }`
+
+	tx := eth.Transaction{}
+	err := json.Unmarshal([]byte(payload), &tx)
+	require.NoError(t, err)
+	require.NotNil(t, tx.Type)
+	require.Equal(t, eth.TransactionTypeDynamicFee, tx.Type.Int64())
+	require.Equal(t, eth.TransactionTypeDynamicFee, tx.TransactionType())
+
+	j, err := json.Marshal(&tx)
+	require.NoError(t, err)
+
+	RequireEqualJSON(t, []byte(payload), j)
+}
+
 func TestNewPendingTxNotificationParams(t *testing.T) {
 
 	{

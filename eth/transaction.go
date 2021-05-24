@@ -36,9 +36,9 @@ type Transaction struct {
 	// Gas Price (optional since not included in EIP-1559)
 	GasPrice *Quantity `json:"gasPrice,omitempty"`
 
-	// EIP-1559 FeeCap/Tip (optional since only included in EIP-1559 transactions)
-	FeeCap *Quantity `json:"feeCap,omitempty"`
-	Tip    *Quantity `json:"tip,omitempty"`
+	// EIP-1559 MaxFeePerGas/MaxPriorityFeePerGas (optional since only included in EIP-1559 transactions)
+	MaxFeePerGas         *Quantity `json:"maxFeePerGas,omitempty"`
+	MaxPriorityFeePerGas *Quantity `json:"maxPriorityFeePerGas,omitempty"`
 
 	// Parity Fields
 	StandardV *Quantity  `json:"standardV,omitempty"`
@@ -115,11 +115,11 @@ func (t *Transaction) RequiredFields() error {
 		if t.ChainId == nil {
 			fields = append(fields, "chainId")
 		}
-		if t.FeeCap == nil {
-			fields = append(fields, "feeCap")
+		if t.MaxFeePerGas == nil {
+			fields = append(fields, "maxFeePerGas")
 		}
-		if t.Tip == nil {
-			fields = append(fields, "tip")
+		if t.MaxPriorityFeePerGas == nil {
+			fields = append(fields, "maxPriorityFeePerGas")
 		}
 	}
 
@@ -180,7 +180,7 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 			return NewData(typePrefix + encodedPayload[2:])
 		}
 	case TransactionTypeDynamicFee:
-		// We introduce a new EIP-2718 transaction type, with the format 0x02 || rlp([chainId, nonce, maxInclusionFeePerGas [tip], maxFeePerGas [feeCap], gasLimit, to, value, data, access_list, signatureYParity, signatureR, signatureS]).
+		// We introduce a new EIP-2718 transaction type, with the format 0x02 || rlp([chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gasLimit, to, value, data, access_list, signatureYParity, signatureR, signatureS]).
 		typePrefix, err := t.Type.RLP().Encode()
 		if err != nil {
 			return nil, err
@@ -188,8 +188,8 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 		payload := rlp.Value{List: []rlp.Value{
 			t.ChainId.RLP(),
 			t.Nonce.RLP(),
-			t.Tip.RLP(),
-			t.FeeCap.RLP(),
+			t.MaxPriorityFeePerGas.RLP(),
+			t.MaxFeePerGas.RLP(),
 			t.Gas.RLP(),
 			t.To.RLP(),
 			t.Value.RLP(),

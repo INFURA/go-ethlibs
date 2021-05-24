@@ -21,19 +21,19 @@ func (t *Transaction) FromRaw(input string) error {
 	// However it's since been somewhat extensively rewritten to support EIP-2718 and -2930
 
 	var (
-		chainId    Quantity
-		nonce      Quantity
-		gasPrice   Quantity
-		gasLimit   Quantity
-		tip        Quantity
-		feeCap     Quantity
-		to         *Address
-		value      Quantity
-		data       Data
-		v          Quantity
-		r          Quantity
-		s          Quantity
-		accessList AccessList
+		chainId              Quantity
+		nonce                Quantity
+		gasPrice             Quantity
+		gasLimit             Quantity
+		maxPriorityFeePerGas Quantity
+		maxFeePerGas         Quantity
+		to                   *Address
+		value                Quantity
+		data                 Data
+		v                    Quantity
+		r                    Quantity
+		s                    Quantity
+		accessList           AccessList
 	)
 
 	if !strings.HasPrefix(input, "0x") {
@@ -102,8 +102,8 @@ func (t *Transaction) FromRaw(input string) error {
 	case firstByte == byte(TransactionTypeDynamicFee):
 		// EIP-1559 transaction
 		payload := "0x" + input[4:]
-		// 0x02 || rlp([chainId, nonce, maxInclusionFeePerGas [tip], maxFeePerGas [feeCap], gasLimit, to, value, data, access_list, signatureYParity, signatureR, signatureS])
-		if err := rlpDecodeList(payload, &chainId, &nonce, &tip, &feeCap, &gasLimit, &to, &value, &data, &accessList, &v, &r, &s); err != nil {
+		// 0x02 || rlp([chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gasLimit, to, value, data, access_list, signatureYParity, signatureR, signatureS])
+		if err := rlpDecodeList(payload, &chainId, &nonce, &maxPriorityFeePerGas, &maxFeePerGas, &gasLimit, &to, &value, &data, &accessList, &v, &r, &s); err != nil {
 			return errors.Wrap(err, "could not decode RLP components")
 		}
 
@@ -113,8 +113,8 @@ func (t *Transaction) FromRaw(input string) error {
 
 		t.Type = OptionalQuantityFromInt(int(firstByte))
 		t.Nonce = nonce
-		t.Tip = &tip
-		t.FeeCap = &feeCap
+		t.MaxPriorityFeePerGas = &maxPriorityFeePerGas
+		t.MaxFeePerGas = &maxFeePerGas
 		t.Gas = gasLimit
 		t.To = to
 		t.Value = value
