@@ -26,6 +26,8 @@ type Block struct {
 	Uncles           []Hash     `json:"uncles"`
 
 	// EIP-1559 BaseFee
+	// TODO: This should be `baseFeePerGas` once geth is updated to match the spec:
+	// See: https://github.com/ethereum/eth1.0-specs/blob/master/json-rpc/spec.json#L1489
 	BaseFee *Quantity `json:"baseFee,omitempty"`
 
 	// Ethhash POW Fields
