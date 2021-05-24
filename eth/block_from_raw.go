@@ -202,7 +202,7 @@ func (b *Block) FromRaw(input string) error {
 	if len(header) >= 16 {
 		q, err := NewQuantityFromRLP(header[15])
 		if err != nil {
-			return errors.Wrap(err, "could not convert header field 15 to BaseFee")
+			return errors.Wrap(err, "could not convert header field 15 to BaseFeePerGas")
 		}
 		b.BaseFeePerGas = q
 	}
