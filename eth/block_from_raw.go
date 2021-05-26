@@ -33,8 +33,10 @@ func (b *Block) FromRaw(input string) error {
 	hash, err := NewHash(h)
 
 	header, txs, uncles := decoded.List[0].List, decoded.List[1].List, decoded.List[2].List
-	// header should be 15 items
-	if len(header) != 15 {
+	// header should be 15 items for legacy blocks, 16 for EIP-1559 blocks
+	switch len(header) {
+	case 15, 16:
+	default:
 		return errors.Errorf("unexpected decoded header list size %d", len(header))
 	}
 
@@ -134,14 +136,20 @@ func (b *Block) FromRaw(input string) error {
 		return errors.Wrap(err, "could not convert header field 7 to Difficulty")
 	}
 
-	// Number
-	if q, err := NewQuantity(header[8].String); err == nil {
-		b.Number = q
-		for i := range transactions {
-			transactions[i].Transaction.BlockNumber = q
-		}
+	// Number has a special case where genesis block number is null instead of 0
+	if header[8].String == "0x" {
+		q := QuantityFromUInt64(0)
+		b.Number = &q
 	} else {
-		return errors.Wrap(err, "could not convert header field 8 to Number")
+		if q, err := NewQuantity(header[8].String); err == nil {
+			b.Number = q
+		} else {
+
+			return errors.Wrap(err, "could not convert header field 8 to Number")
+		}
+	}
+	for i := range transactions {
+		transactions[i].Transaction.BlockNumber = b.Number
 	}
 
 	// GasLimit
@@ -151,11 +159,15 @@ func (b *Block) FromRaw(input string) error {
 		return errors.Wrap(err, "could not convert header field 9 to GasLimit")
 	}
 
-	// GasUsed
-	if q, err := NewQuantity(header[10].String); err == nil {
-		b.GasUsed = *q
+	// GasUsed, also has a sepcial case where genesis value can be null instead of 0
+	if header[10].String == "0x" {
+		b.GasUsed = QuantityFromUInt64(0)
 	} else {
-		return errors.Wrap(err, "could not convert header field 10 to GasUsed")
+		if q, err := NewQuantity(header[10].String); err == nil {
+			b.GasUsed = *q
+		} else {
+			return errors.Wrap(err, "could not convert header field 10 to GasUsed")
+		}
 	}
 
 	// Timestamp
@@ -184,6 +196,15 @@ func (b *Block) FromRaw(input string) error {
 		b.Nonce = n
 	} else {
 		return errors.Wrap(err, "could not convert header field 14 to Nonce")
+	}
+
+	// BaseFee (EIP-1559 enabled blocks)
+	if len(header) >= 16 {
+		q, err := NewQuantityFromRLP(header[15])
+		if err != nil {
+			return errors.Wrap(err, "could not convert header field 15 to BaseFeePerGas")
+		}
+		b.BaseFeePerGas = q
 	}
 
 	b.Hash = hash

@@ -78,6 +78,11 @@ func NewQuantityFromRLP(v rlp.Value) (*Quantity, error) {
 	return NewQuantity(v.String)
 }
 
+func OptionalQuantityFromInt(value int) *Quantity {
+	q := QuantityFromUInt64(uint64(value))
+	return &q
+}
+
 func QuantityFromInt64(value int64) Quantity {
 	i := big.NewInt(value)
 	return Quantity{

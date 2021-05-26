@@ -25,6 +25,9 @@ type Block struct {
 	Transactions     []TxOrHash `json:"transactions"`
 	Uncles           []Hash     `json:"uncles"`
 
+	// EIP-1559 BaseFeePerGas
+	BaseFeePerGas *Quantity `json:"baseFeePerGas,omitempty"`
+
 	// Ethhash POW Fields
 	Nonce   *Data8 `json:"nonce"`
 	MixHash *Data  `json:"mixHash"`
@@ -100,6 +103,9 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 			Transactions     []TxOrHash `json:"transactions"`
 			Uncles           []Hash     `json:"uncles"`
 
+			// EIP-1559 BaseFeePerGas
+			BaseFeePerGas *Quantity `json:"baseFeePerGas,omitempty"`
+
 			Nonce   *Data8 `json:"nonce"`
 			MixHash *Data  `json:"mixHash"`
 		}
@@ -123,6 +129,7 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 			Timestamp:        b.Timestamp,
 			Transactions:     b.Transactions,
 			Uncles:           b.Uncles,
+			BaseFeePerGas:    b.BaseFeePerGas,
 			Nonce:            b.Nonce,
 			MixHash:          b.MixHash,
 		}

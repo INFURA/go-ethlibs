@@ -66,6 +66,14 @@ func NewEIP155Signature(r Quantity, s Quantity, v Quantity) (*Signature, error) 
 
 // ECSign returns the signature values for a given message hash for the given chainId using the bytes of given
 // private key.  Primarily used to sign transactions before submitting them with eth_sendRawTransaction.
+//
+// TODO: Currently there's no clean way to do this in with the Go runtime
+// Looks like there have been multiple attempts to get the Koblitz curve (secp256k1) supported in golang
+//
+// https://github.com/golang/go/pull/26873 <-- rejected
+// https://github.com/golang/go/issues/26776 <-- rejected
+//
+// For the meantime, we will use btcd's eliptic curve implementation.
 func ECSign(h *Hash, privKeyBytes []byte, chainId Quantity) (*Signature, error) {
 	// code for this method inspired by https://github.com/ethereumjs/ethereumjs-util/blob/master/src/signature.ts#L15
 	priv, pub := secp256k1.PrivKeyFromBytes(secp256k1.S256(), privKeyBytes)
@@ -138,12 +146,6 @@ func (s *Signature) ChainId() (*Quantity, error) {
 // ECRecover returns the sending address, given a message digest and R, S, V values.
 // Primarily used to recover the sender of eth.Transaction objects.
 func ECRecover(h *Hash, r, s, v *Quantity) (*Address, error) {
-	// TODO: Currently there's no clean way to do this in with the Go runtime
-	// However, there is a PR to the go runtime to allow arbitrary A instead of A=-3 (secp256k1 uses A=0):
-	//   https://github.com/golang/go/pull/26873/files
-	// In theory, we could just inline this PR in our repo and use that until the PR is accepted (if ever)
-
-	// For the meantime, we will use btcd's eliptic curve implementation.
 	// The code below is based heavily on the secp256k1.recoverAddress implementation at:
 	//   https://github.com/ethers-io/ethers.js/blob/34397fa2aaa9187f307881ec10f07dc035dc0854/src.ts/utils/secp256k1.ts#L109
 	// with some trial and error to get working with btcd.

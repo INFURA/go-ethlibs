@@ -77,6 +77,10 @@ func (in *Block) DeepCopyInto(out *Block) {
 		*out = make([]Data32, len(*in))
 		copy(*out, *in)
 	}
+	if in.BaseFeePerGas != nil {
+		in, out := &in.BaseFeePerGas, &out.BaseFeePerGas
+		*out = (*in).DeepCopy()
+	}
 	if in.Nonce != nil {
 		in, out := &in.Nonce, &out.Nonce
 		*out = new(Data8)
@@ -436,7 +440,6 @@ func (in *Transaction) DeepCopyInto(out *Transaction) {
 		*out = (*in).DeepCopy()
 	}
 	in.Gas.DeepCopyInto(&out.Gas)
-	in.GasPrice.DeepCopyInto(&out.GasPrice)
 	in.Nonce.DeepCopyInto(&out.Nonce)
 	if in.To != nil {
 		in, out := &in.To, &out.To
@@ -451,6 +454,18 @@ func (in *Transaction) DeepCopyInto(out *Transaction) {
 	in.V.DeepCopyInto(&out.V)
 	in.R.DeepCopyInto(&out.R)
 	in.S.DeepCopyInto(&out.S)
+	if in.GasPrice != nil {
+		in, out := &in.GasPrice, &out.GasPrice
+		*out = (*in).DeepCopy()
+	}
+	if in.MaxPriorityFeePerGas != nil {
+		in, out := &in.MaxPriorityFeePerGas, &out.MaxPriorityFeePerGas
+		*out = (*in).DeepCopy()
+	}
+	if in.MaxFeePerGas != nil {
+		in, out := &in.MaxFeePerGas, &out.MaxFeePerGas
+		*out = (*in).DeepCopy()
+	}
 	if in.StandardV != nil {
 		in, out := &in.StandardV, &out.StandardV
 		*out = (*in).DeepCopy()

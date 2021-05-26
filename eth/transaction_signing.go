@@ -8,15 +8,6 @@ import (
 	"github.com/INFURA/go-ethlibs/rlp"
 )
 
-var ErrInsufficientParams = errors.New("transaction is missing values")
-
-// Looks like there have been multiple attempts to get the Koblitz curve (secp256k1) supported in golang
-//
-// https://github.com/golang/go/pull/26873 <-- rejected
-// https://github.com/golang/go/issues/26776 <-- rejected
-// using "github.com/btcsuite/btcd/btcec"
-// other alternative is to import the C library but want to avoid that if possible
-
 // Sign uses the hex-encoded private key and chainId to update the R, S, and V values
 // for a Transaction, and returns the raw signed transaction or an error.
 func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
@@ -51,7 +42,7 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 	switch t.TransactionType() {
 	case TransactionTypeLegacy:
 		t.R, t.S, t.V = signature.EIP155Values()
-	case TransactionTypeAccessList:
+	case TransactionTypeAccessList, TransactionTypeDynamicFee:
 		// set chainId and RSV to EIP2718 values
 		t.ChainId = &chainId
 		t.R, t.S, t.V = signature.EIP2718Values()
@@ -87,6 +78,9 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 
 // SigningPreimage returns the opaque data preimage that is required for signing a given transaction type
 func (t *Transaction) SigningPreimage(chainId Quantity) (*Data, error) {
+	if err := t.RequiredFields(); err != nil {
+		return nil, err
+	}
 	switch t.TransactionType() {
 	case TransactionTypeLegacy:
 		var message rlp.Value
@@ -146,6 +140,27 @@ func (t *Transaction) SigningPreimage(chainId Quantity) (*Data, error) {
 		}
 		// And return it with the 0x01 prefix
 		return NewData("0x01" + encoded[2:])
+	case TransactionTypeDynamicFee:
+		// The signatureYParity, signatureR, signatureS elements of this transaction represent a secp256k1 signature over:
+		//   keccak256(0x02 || rlp([chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gasLimit, to, value, data, access_list])).
+		payload := rlp.Value{List: []rlp.Value{
+			chainId.RLP(),
+			t.Nonce.RLP(),
+			t.MaxPriorityFeePerGas.RLP(),
+			t.MaxFeePerGas.RLP(),
+			t.Gas.RLP(),
+			t.To.RLP(),
+			t.Value.RLP(),
+			{String: t.Input.String()},
+			t.AccessList.RLP(),
+		}}
+		// encode the list as RLP
+		encoded, err := payload.Encode()
+		if err != nil {
+			return nil, err
+		}
+		// And return it with the 0x01 prefix
+		return NewData("0x02" + encoded[2:])
 	default:
 		return nil, errors.New("unsupported transaction type")
 	}
@@ -164,61 +179,12 @@ func (t *Transaction) SigningHash(chainId Quantity) (*Hash, error) {
 	return &h, nil
 }
 
-// RawRepresentation returns the transaction encoded as a raw hexadecimal data string, or an error
-func (t *Transaction) RawRepresentation() (*Data, error) {
-	switch t.TransactionType() {
-	case TransactionTypeLegacy:
-		// Legacy Transactions are RLP(Nonce, GasPrice, Gas, To, Value, Input, V, R, S)
-		message := rlp.Value{List: []rlp.Value{
-			t.Nonce.RLP(),
-			t.GasPrice.RLP(),
-			t.Gas.RLP(),
-			t.To.RLP(),
-			t.Value.RLP(),
-			{String: t.Input.String()},
-			t.V.RLP(),
-			t.R.RLP(),
-			t.S.RLP(),
-		}}
-		if encoded, err := message.Encode(); err != nil {
-			return nil, err
-		} else {
-			return NewData(encoded)
-		}
-	case TransactionTypeAccessList:
-		// EIP-2930 Transactions are 0x1 || rlp([chainId, nonce, gasPrice, gasLimit, to, value, data, access_list, yParity, senderR, senderS])
-		typePrefix, err := t.Type.RLP().Encode()
-		if err != nil {
-			return nil, err
-		}
-		if t.ChainId == nil {
-			return nil, errors.New("chainID is required on EIP-2930 transactions")
-		}
-		payload := rlp.Value{List: []rlp.Value{
-			t.ChainId.RLP(),
-			t.Nonce.RLP(),
-			t.GasPrice.RLP(),
-			t.Gas.RLP(),
-			t.To.RLP(),
-			t.Value.RLP(),
-			{String: t.Input.String()},
-			t.AccessList.RLP(),
-			t.V.RLP(),
-			t.R.RLP(),
-			t.S.RLP(),
-		}}
-		if encodedPayload, err := payload.Encode(); err != nil {
-			return nil, err
-		} else {
-			return NewData(typePrefix + encodedPayload[2:])
-		}
-	default:
-		return nil, errors.New("unsupported transaction type")
-	}
-}
-
 // Signature returns the R, S, V values for a transaction, and the ChainId if available
 func (t *Transaction) Signature() (*Signature, error) {
+	if err := t.RequiredFields(); err != nil {
+		return nil, err
+	}
+
 	switch t.TransactionType() {
 	case TransactionTypeLegacy:
 		return NewEIP155Signature(t.R, t.S, t.V)
@@ -226,6 +192,8 @@ func (t *Transaction) Signature() (*Signature, error) {
 		if t.ChainId == nil {
 			return nil, errors.New("chainId is required")
 		}
+		return NewEIP2718Signature(*t.ChainId, t.R, t.S, t.V)
+	case TransactionTypeDynamicFee:
 		return NewEIP2718Signature(*t.ChainId, t.R, t.S, t.V)
 	default:
 		return nil, errors.New("unsupported transaction type")

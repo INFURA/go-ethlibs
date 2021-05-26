@@ -34,6 +34,9 @@ type NewHeadsResult struct {
 	// Transactions     []TxOrHash `json:"transactions"`
 	// Uncles           []Hash     `json:"uncles"`
 
+	// EIP-1559 BaseFeePerGas
+	BaseFeePerGas *Quantity `json:"baseFeePerGas,omitempty"`
+
 	// Ethhash POW Fields
 	Nonce   *Data8 `json:"nonce"`
 	MixHash *Data  `json:"mixHash"`
@@ -76,6 +79,9 @@ func (nh *NewHeadsResult) FromBlock(block *Block) {
 		SealFields: block.SealFields,
 		Step:       block.Step,
 		Signature:  block.Signature,
+
+		// EIP-1559 BaseFeePerGas
+		BaseFeePerGas: block.BaseFeePerGas,
 
 		flavor: block.flavor,
 	}
@@ -141,6 +147,9 @@ func (nh *NewHeadsResult) MarshalJSON() ([]byte, error) {
 			// Transactions     []TxOrHash `json:"transactions"`
 			// Uncles           []Hash     `json:"uncles"`
 
+			// EIP-1559 BaseFeePerGas
+			BaseFeePerGas *Quantity `json:"baseFeePerGas,omitempty"`
+
 			Nonce   *Data8 `json:"nonce"`
 			MixHash *Data  `json:"mixHash"`
 		}
@@ -162,8 +171,9 @@ func (nh *NewHeadsResult) MarshalJSON() ([]byte, error) {
 			GasUsed:   nh.GasUsed,
 			Timestamp: nh.Timestamp,
 			// Transactions:     nh.Transactions,
-			Nonce:   nh.Nonce,
-			MixHash: nh.MixHash,
+			BaseFeePerGas: nh.BaseFeePerGas,
+			Nonce:         nh.Nonce,
+			MixHash:       nh.MixHash,
 		}
 
 		return json.Marshal(&g)
