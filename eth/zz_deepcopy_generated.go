@@ -318,6 +318,10 @@ func (in *NewHeadsResult) DeepCopyInto(out *NewHeadsResult) {
 	in.GasLimit.DeepCopyInto(&out.GasLimit)
 	in.GasUsed.DeepCopyInto(&out.GasUsed)
 	in.Timestamp.DeepCopyInto(&out.Timestamp)
+	if in.BaseFeePerGas != nil {
+		in, out := &in.BaseFeePerGas, &out.BaseFeePerGas
+		*out = (*in).DeepCopy()
+	}
 	if in.Nonce != nil {
 		in, out := &in.Nonce, &out.Nonce
 		*out = new(Data8)
@@ -458,12 +462,12 @@ func (in *Transaction) DeepCopyInto(out *Transaction) {
 		in, out := &in.GasPrice, &out.GasPrice
 		*out = (*in).DeepCopy()
 	}
-	if in.MaxPriorityFeePerGas != nil {
-		in, out := &in.MaxPriorityFeePerGas, &out.MaxPriorityFeePerGas
-		*out = (*in).DeepCopy()
-	}
 	if in.MaxFeePerGas != nil {
 		in, out := &in.MaxFeePerGas, &out.MaxFeePerGas
+		*out = (*in).DeepCopy()
+	}
+	if in.MaxPriorityFeePerGas != nil {
+		in, out := &in.MaxPriorityFeePerGas, &out.MaxPriorityFeePerGas
 		*out = (*in).DeepCopy()
 	}
 	if in.StandardV != nil {
