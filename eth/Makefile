@@ -6,5 +6,7 @@ SRC_FILES = $(filter-out zz_deepcopy_generated.go, $(wildcard *.go))
 # To install deepcopy-gen simply run:
 # GO111MODULE=off go install k8s.io/gengo/examples/deepcopy-gen
 zz_deepcopy_generated.go: ${SRC_FILES}
-	deepcopy-gen -o ../../../.. -O zz_deepcopy_generated -i . --go-header-file /dev/null
+	pushd .. && \
+		deepcopy-gen -o . -O zz_deepcopy_generated -i ./eth --go-header-file /dev/null ; \
+	popd
 
