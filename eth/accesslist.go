@@ -17,7 +17,7 @@ type AccessListEntry struct {
 func (a *AccessList) RLP() rlp.Value {
 	if a == nil {
 		// return empty list
-		return 	rlp.Value{}
+		return rlp.Value{}
 	}
 
 	al := *a
