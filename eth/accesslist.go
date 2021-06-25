@@ -15,6 +15,11 @@ type AccessListEntry struct {
 
 // RLP returns the AccessList as an RLP-encoded list
 func (a AccessList) RLP() rlp.Value {
+	if a == nil {
+		// return empty list
+		return 	rlp.Value{}
+	}
+
 	val := rlp.Value{List: make([]rlp.Value, len(a))}
 	for i := range a {
 		keys := rlp.Value{List: make([]rlp.Value, len(a[i].StorageKeys))}
