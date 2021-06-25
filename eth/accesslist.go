@@ -14,20 +14,21 @@ type AccessListEntry struct {
 }
 
 // RLP returns the AccessList as an RLP-encoded list
-func (a AccessList) RLP() rlp.Value {
+func (a *AccessList) RLP() rlp.Value {
 	if a == nil {
 		// return empty list
 		return 	rlp.Value{}
 	}
 
-	val := rlp.Value{List: make([]rlp.Value, len(a))}
-	for i := range a {
-		keys := rlp.Value{List: make([]rlp.Value, len(a[i].StorageKeys))}
-		for j, k := range a[i].StorageKeys {
+	al := *a
+	val := rlp.Value{List: make([]rlp.Value, len(al))}
+	for i := range al {
+		keys := rlp.Value{List: make([]rlp.Value, len(al[i].StorageKeys))}
+		for j, k := range al[i].StorageKeys {
 			keys.List[j] = k.RLP()
 		}
 		val.List[i] = rlp.Value{List: []rlp.Value{
-			a[i].Address.RLP(),
+			al[i].Address.RLP(),
 			keys,
 		}}
 	}
