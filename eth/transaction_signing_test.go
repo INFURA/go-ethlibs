@@ -269,6 +269,76 @@ func TestTransaction_Sign_EIP2930(t *testing.T) {
 	require.True(t, tx2.IsProtected())
 }
 
+func TestTransaction_Sign_EIP1559(t *testing.T) {
+	chainId := eth.QuantityFromInt64(0x03)
+	tx := eth.Transaction{
+		Type:                 eth.MustQuantity("0x2"),
+		ChainId:              &chainId,
+		MaxFeePerGas:         eth.OptionalQuantityFromInt(15488430592 * 2),
+		MaxPriorityFeePerGas: eth.OptionalQuantityFromInt(15488430592),
+		Input:                eth.Data("0x"),
+		Nonce:                eth.QuantityFromInt64(0),
+		To:                   eth.MustAddress("0xdf0a88b2b68c673713a8ec826003676f272e3573"),
+		Value:                eth.QuantityFromInt64(0x1),
+	}
+
+	rlpData, err := rlp.Value{List: []rlp.Value{
+		chainId.RLP(),
+		tx.Nonce.RLP(),
+		tx.MaxPriorityFeePerGas.RLP(),
+		tx.MaxFeePerGas.RLP(),
+		tx.Gas.RLP(),
+		tx.To.RLP(),
+		tx.Value.RLP(),
+		tx.Input.RLP(),
+		tx.AccessList.RLP(),
+	}}.Encode()
+	require.NoError(t, err)
+
+	// make sure raw tx is what we expect it to be
+	expectedUnsigned := "0x02ea038085039b2eb2008507365d64008094df0a88b2b68c673713a8ec826003676f272e35730180c0808080"
+	unsigned, err := tx.RawRepresentation()
+	require.NoError(t, err)
+	require.Equal(t, expectedUnsigned, unsigned.String())
+
+	expectedPreimage := "0x02" + rlpData[2:]
+
+	// which should match exactly what SigningPreimage returns
+	preimage, err := tx.SigningPreimage(chainId)
+	require.NoError(t, err)
+	require.Equal(t, expectedPreimage, preimage.String())
+
+	// So now we can sign the transaction with the same key used in the geth console output above
+	signed, err := tx.Sign("fad9c8855b740a0b7ed4c221dbad0f33a83a49cad6b3fe8d5817ac83d38b6a19", chainId)
+	require.NoError(t, err)
+
+	// And get back the exact same signed transaction
+	expectedSigned := "0x02f86a038085039b2eb2008507365d64008094df0a88b2b68c673713a8ec826003676f272e35730180c080a0f0019f2823699d9c29de7da61088f020dff2014bc542d25082715081cce4d64aa01ee67c1cc8c4063e5cf3d9fbab8abf42a1f653ee41725786365f74784c8e213b"
+	require.Equal(t, expectedSigned, signed.String())
+
+	// Double check signature is still valid
+	tx2 := eth.Transaction{}
+	err = tx2.FromRaw(signed.String())
+	require.NoError(t, err)
+
+	// And verify that .From, .Hash, .R, .S., and .V are all set and match the geth console output
+	require.Equal(t, *eth.MustAddress("0x96216849c49358b10257cb55b28ea603c874b05e"), tx2.From)
+	require.Equal(t, "0xd7c478283b7b89becd235f0ae877cb3b39f9e8634ca9466d4d6609b3ea4c82b1", tx2.Hash.String())
+	require.Equal(t, "0xf0019f2823699d9c29de7da61088f020dff2014bc542d25082715081cce4d64a", tx2.R.String())
+	require.Equal(t, "0x1ee67c1cc8c4063e5cf3d9fbab8abf42a1f653ee41725786365f74784c8e213b", tx2.S.String())
+	require.Equal(t, "0x0", tx.V.String())
+
+	signature, err := tx2.Signature()
+	require.NoError(t, err)
+
+	_chainId, err := signature.ChainId()
+	require.NoError(t, err)
+	require.Equal(t, chainId, *_chainId)
+
+	require.True(t, tx2.IsProtected())
+
+}
+
 func TestTransaction_Sign_InvalidTxType(t *testing.T) {
 	tx := eth.Transaction{
 		Type: eth.MustQuantity("0x7f"),
