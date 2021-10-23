@@ -28,6 +28,9 @@ type Client interface {
 	// BlockNumber returns the current block number at head
 	BlockNumber(ctx context.Context) (uint64, error)
 
+	// PendingNonceAt get the pending nonce for public address
+	PendingNonceAt(ctx context.Context, address string, block string) (uint64, error)
+
 	// BlockByNumber can be used to get a block by its number
 	BlockByNumber(ctx context.Context, number uint64, full bool) (*eth.Block, error)
 

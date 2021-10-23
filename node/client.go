@@ -111,6 +111,24 @@ func (c *client) BlockNumber(ctx context.Context) (uint64, error) {
 	return q.UInt64(), nil
 }
 
+func (c *client) PendingNonceAt(ctx context.Context, address string, block string) (uint64, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_getTransactionCount",
+		Params: jsonrpc.MustParams(address, block),
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not make request")
+	}
+	q := eth.Quantity{}
+	err = json.Unmarshal(response.Result, &q)
+
+	return q.UInt64(), err
+}
+
 func (c *client) BlockByNumber(ctx context.Context, number uint64, full bool) (*eth.Block, error) {
 	n := eth.QuantityFromUInt64(number)
 

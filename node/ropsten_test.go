@@ -22,6 +22,15 @@ func getRopstenClient(t *testing.T, ctx context.Context) node.Client {
 	return conn
 }
 
+func TestConnection_PendingNonceAt(t *testing.T) {
+	ctx := context.Background()
+	conn := getRopstenClient(t, ctx)
+
+	pendingNonce, err := conn.PendingNonceAt(ctx, "0xed28874e52A12f0D42118653B0FBCee0ACFadC00", "latest")
+	require.NoError(t, err)
+	require.NotEmpty(t, pendingNonce, "pending nonce must not be nil")
+}
+
 func TestConnection_FutureBlockByNumber(t *testing.T) {
 	ctx := context.Background()
 	conn := getRopstenClient(t, ctx)
