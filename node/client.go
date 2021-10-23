@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"math/big"
 	"net/url"
+	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -129,6 +132,26 @@ func (c *client) PendingNonceAt(ctx context.Context, address string, block strin
 	return q.UInt64(), err
 }
 
+func (c *client) NetworkID(ctx context.Context) (*big.Int, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "net_version",
+		Params: nil,
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not make request")
+	}
+
+	i, err := strconv.ParseInt(strings.Replace(string(response.Result), "\"", "", -1), 10, 64)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not parse int64")
+	}
+	return big.NewInt(i), nil
+}
+
 func (c *client) BlockByNumber(ctx context.Context, number uint64, full bool) (*eth.Block, error) {
 	n := eth.QuantityFromUInt64(number)
 
@@ -145,6 +168,55 @@ func (c *client) BlockByNumber(ctx context.Context, number uint64, full bool) (*
 	}
 
 	return c.parseBlockResponse(response)
+}
+
+func (c *client) EstimateGas(ctx context.Context, msg eth.Transaction) (uint64, error) {
+	// TODO: add estimate gas RPC call
+	return 0, nil
+}
+
+func (c *client) SuggestGasTipCap(ctx context.Context) (*big.Int, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_maxPriorityFeePerGas",
+		Params: nil,
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not make request")
+	}
+
+	input := string(strings.Replace(string(response.Result), "\"", "", -1))[2:]
+	value, err := strconv.ParseInt(input, 16, 64)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get value from parse int")
+	}
+
+	return big.NewInt(value), nil
+}
+
+func (c *client) SuggestGasPrice(ctx context.Context) (*big.Int, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_gasPrice",
+		Params: nil,
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not make request")
+	}
+
+	input := string(strings.Replace(string(response.Result), "\"", "", -1))[2:]
+	value, err := strconv.ParseInt(input, 16, 64)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get value from parse int")
+	}
+
+	return big.NewInt(value), nil
 }
 
 func (c *client) BlockByNumberOrTag(ctx context.Context, numberOrTag eth.BlockNumberOrTag, full bool) (*eth.Block, error) {

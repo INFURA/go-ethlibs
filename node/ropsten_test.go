@@ -31,6 +31,15 @@ func TestConnection_PendingNonceAt(t *testing.T) {
 	require.NotEmpty(t, pendingNonce, "pending nonce must not be nil")
 }
 
+func TestConnection_NetworkID(t *testing.T) {
+	ctx := context.Background()
+	conn := getRopstenClient(t, ctx)
+
+	chainID, err := conn.NetworkID(ctx)
+	require.NoError(t, err)
+	require.NotEmpty(t, chainID, "chain id must not be nil")
+}
+
 func TestConnection_FutureBlockByNumber(t *testing.T) {
 	ctx := context.Background()
 	conn := getRopstenClient(t, ctx)

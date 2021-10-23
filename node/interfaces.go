@@ -2,6 +2,7 @@ package node
 
 import (
 	"context"
+	"math/big"
 
 	"github.com/INFURA/go-ethlibs/eth"
 	"github.com/INFURA/go-ethlibs/jsonrpc"
@@ -27,6 +28,18 @@ type Client interface {
 
 	// BlockNumber returns the current block number at head
 	BlockNumber(ctx context.Context) (uint64, error)
+
+	// NetworkID returns the chain id
+	NetworkID(ctx context.Context) (*big.Int, error)
+
+	// EstimateGas returns the estimate gas
+	EstimateGas(ctx context.Context, msg eth.Transaction) (uint64, error)
+
+	// SuggestGasTipCap (EIP1559) returns the suggested tip for block
+	SuggestGasTipCap(ctx context.Context) (*big.Int, error)
+
+	// SuggestGasPrice (Legacy) returns the suggested gas price
+	SuggestGasPrice(ctx context.Context) (*big.Int, error)
 
 	// PendingNonceAt get the pending nonce for public address
 	PendingNonceAt(ctx context.Context, address string, block string) (uint64, error)
