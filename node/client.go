@@ -3,7 +3,9 @@ package node
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"net/url"
 	"strconv"
@@ -171,8 +173,38 @@ func (c *client) BlockByNumber(ctx context.Context, number uint64, full bool) (*
 }
 
 func (c *client) EstimateGas(ctx context.Context, msg eth.Transaction) (uint64, error) {
-	// TODO: add estimate gas RPC call
-	return 0, nil
+	arg := map[string]interface{}{
+		"from": msg.From,
+		"to":   msg.To,
+	}
+	if len(msg.Data) > 0 {
+		arg["data"] = "0x" + hex.EncodeToString(msg.Data)
+	}
+	if msg.Value.UInt64() != 0 {
+		arg["value"] = "0x" + fmt.Sprintf("%x", msg.Value)
+	} else {
+		arg["value"] = "0x0"
+	}
+
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_estimateGas",
+		Params: jsonrpc.MustParams(arg),
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not make request")
+	}
+
+	input := string(strings.Replace(string(response.Result), "\"", "", -1))[2:]
+	value, err := strconv.ParseInt(input, 16, 64)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not get value from parse int")
+	}
+
+	return uint64(value), nil
 }
 
 func (c *client) SuggestGasTipCap(ctx context.Context) (*big.Int, error) {

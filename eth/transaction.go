@@ -32,6 +32,7 @@ type Transaction struct {
 	V           Quantity  `json:"v"`
 	R           Quantity  `json:"r"`
 	S           Quantity  `json:"s"`
+	Data        []byte    `json:"data"`
 
 	// Gas Price (optional since not included in EIP-1559)
 	GasPrice *Quantity `json:"gasPrice,omitempty"`
