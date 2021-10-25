@@ -129,6 +129,9 @@ func (c *client) GetTransactionCount(ctx context.Context, address eth.Address, b
 
 	q := eth.Quantity{}
 	err = json.Unmarshal(response.Result, &q)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not decode result")
+	}
 
 	return q.UInt64(), err
 }
@@ -150,6 +153,7 @@ func (c *client) NetVersion(ctx context.Context) (uint64, error) {
 	if err != nil {
 		return 0, errors.Wrap(err, "could not parse int64")
 	}
+
 	return uint64(i), nil
 }
 
