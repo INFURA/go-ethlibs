@@ -2,7 +2,6 @@ package node
 
 import (
 	"context"
-	"math/big"
 
 	"github.com/INFURA/go-ethlibs/eth"
 	"github.com/INFURA/go-ethlibs/jsonrpc"
@@ -29,20 +28,23 @@ type Client interface {
 	// BlockNumber returns the current block number at head
 	BlockNumber(ctx context.Context) (uint64, error)
 
-	// NetworkID returns the chain id
-	NetworkID(ctx context.Context) (*big.Int, error)
+	// NetVersion returns the chain id
+	NetVersion(ctx context.Context) (uint64, error)
 
 	// EstimateGas returns the estimate gas
 	EstimateGas(ctx context.Context, msg eth.Transaction) (uint64, error)
 
-	// SuggestGasTipCap (EIP1559) returns the suggested tip for block
-	SuggestGasTipCap(ctx context.Context) (*big.Int, error)
+	// MaxPriorityFeePerGas (EIP1559) returns the suggested tip for block
+	MaxPriorityFeePerGas(ctx context.Context) (uint64, error)
 
-	// SuggestGasPrice (Legacy) returns the suggested gas price
-	SuggestGasPrice(ctx context.Context) (*big.Int, error)
+	// GasPrice (Legacy) returns the suggested gas price
+	GasPrice(ctx context.Context) (uint64, error)
 
-	// PendingNonceAt get the pending nonce for public address
-	PendingNonceAt(ctx context.Context, address string, block string) (uint64, error)
+	// GetTransactionCount get the pending nonce for public address
+	GetTransactionCount(ctx context.Context, address eth.Address, block eth.Block) (uint64, error)
+
+	// SendRawTransaction will send the raw signed transaction return tx hash or error
+	SendRawTransaction(ctx context.Context, msg string) (string, error)
 
 	// BlockByNumber can be used to get a block by its number
 	BlockByNumber(ctx context.Context, number uint64, full bool) (*eth.Block, error)
