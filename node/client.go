@@ -111,6 +111,58 @@ func (c *client) BlockNumber(ctx context.Context) (uint64, error) {
 	return q.UInt64(), nil
 }
 
+func (c *client) GetTransactionCount(ctx context.Context, address eth.Address, numberOrTag eth.BlockNumberOrTag) (uint64, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_getTransactionCount",
+		Params: jsonrpc.MustParams(address, &numberOrTag),
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not make request")
+	}
+
+	if response.Error != nil {
+		return 0, errors.New(string(*response.Error))
+	}
+
+	q := eth.Quantity{}
+	err = json.Unmarshal(response.Result, &q)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not decode result")
+	}
+
+	return q.UInt64(), err
+}
+
+func (c *client) NetVersion(ctx context.Context) (string, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "net_version",
+		Params: nil,
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return "", errors.Wrap(err, "could not make request")
+	}
+
+	if response.Error != nil {
+		return "", errors.New(string(*response.Error))
+	}
+
+	version := ""
+	err = json.Unmarshal(response.Result, &version)
+	if err != nil {
+		return "", errors.Wrap(err, "could not decode result")
+	}
+
+	return version, nil
+}
+
 func (c *client) BlockByNumber(ctx context.Context, number uint64, full bool) (*eth.Block, error) {
 	n := eth.QuantityFromUInt64(number)
 
@@ -127,6 +179,108 @@ func (c *client) BlockByNumber(ctx context.Context, number uint64, full bool) (*
 	}
 
 	return c.parseBlockResponse(response)
+}
+
+func (c *client) EstimateGas(ctx context.Context, msg eth.Transaction) (uint64, error) {
+	arg := map[string]interface{}{
+		"from":  msg.From,
+		"to":    msg.To,
+		"value": msg.Value.String(),
+	}
+	if len(msg.Input) > 0 {
+		arg["data"] = msg.Input
+	}
+
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_estimateGas",
+		Params: jsonrpc.MustParams(arg),
+	}
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not make request")
+	}
+
+	if response.Error != nil {
+		return 0, errors.New(string(*response.Error))
+	}
+
+	q := eth.Quantity{}
+	err = json.Unmarshal(response.Result, &q)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not decode result")
+	}
+	return q.UInt64(), err
+}
+
+func (c *client) SendRawTransaction(ctx context.Context, msg string) (string, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_sendRawTransaction",
+		Params: jsonrpc.MustParams(msg),
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return "", errors.Wrap(err, "could not make request")
+	}
+
+	if response.Error != nil {
+		return "", errors.New(string(*response.Error))
+	}
+
+	txHash := eth.Hash("")
+	err = json.Unmarshal(response.Result, &txHash)
+	if err != nil {
+		return "", errors.Wrap(err, "could not decode result")
+	}
+
+	return txHash.String(), nil
+}
+
+func (c *client) MaxPriorityFeePerGas(ctx context.Context) (uint64, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_maxPriorityFeePerGas",
+		Params: nil,
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not make request")
+	}
+
+	q := eth.Quantity{}
+	err = json.Unmarshal(response.Result, &q)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not decode result")
+	}
+	return q.UInt64(), err
+}
+
+func (c *client) GasPrice(ctx context.Context) (uint64, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_gasPrice",
+		Params: nil,
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not make request")
+	}
+
+	q := eth.Quantity{}
+	err = json.Unmarshal(response.Result, &q)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not decode result")
+	}
+
+	return q.UInt64(), err
 }
 
 func (c *client) BlockByNumberOrTag(ctx context.Context, numberOrTag eth.BlockNumberOrTag, full bool) (*eth.Block, error) {

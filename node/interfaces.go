@@ -28,6 +28,24 @@ type Client interface {
 	// BlockNumber returns the current block number at head
 	BlockNumber(ctx context.Context) (uint64, error)
 
+	// NetVersion returns the chain id
+	NetVersion(ctx context.Context) (string, error)
+
+	// EstimateGas returns the estimate gas
+	EstimateGas(ctx context.Context, msg eth.Transaction) (uint64, error)
+
+	// MaxPriorityFeePerGas (EIP1559) returns the suggested tip for block
+	MaxPriorityFeePerGas(ctx context.Context) (uint64, error)
+
+	// GasPrice (Legacy) returns the suggested gas price
+	GasPrice(ctx context.Context) (uint64, error)
+
+	// GetTransactionCount get the pending nonce for public address
+	GetTransactionCount(ctx context.Context, address eth.Address, numberOrTag eth.BlockNumberOrTag) (uint64, error)
+
+	// SendRawTransaction will send the raw signed transaction return tx hash or error
+	SendRawTransaction(ctx context.Context, msg string) (string, error)
+
 	// BlockByNumber can be used to get a block by its number
 	BlockByNumber(ctx context.Context, number uint64, full bool) (*eth.Block, error)
 

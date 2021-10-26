@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/INFURA/go-ethlibs/eth"
 	"github.com/INFURA/go-ethlibs/node"
 )
 
@@ -20,6 +21,89 @@ func getRopstenClient(t *testing.T, ctx context.Context) node.Client {
 	conn, err := node.NewClient(ctx, url)
 	require.NoError(t, err, "creating websocket connection should not fail")
 	return conn
+}
+
+func TestConnection_GetTransactionCount(t *testing.T) {
+	ctx := context.Background()
+	conn := getRopstenClient(t, ctx)
+
+	// Checks the current pending nonce for account can be retrieved
+	blockNum1 := eth.MustBlockNumberOrTag("latest")
+	pendingNonce1, err := conn.GetTransactionCount(ctx, "0xed28874e52A12f0D42118653B0FBCee0ACFadC00", *blockNum1)
+	require.NoError(t, err)
+	require.NotEmpty(t, pendingNonce1, "pending nonce must not be nil")
+
+	// Should catch failure since it is looking for a nonce of a future block
+	blockNum2 := eth.MustBlockNumberOrTag("0x7654321")
+	pendingNonce2, err := conn.GetTransactionCount(ctx, "0xed28874e52A12f0D42118653B0FBCee0ACFadC00", *blockNum2)
+	require.Error(t, err)
+	require.Empty(t, pendingNonce2, "pending nonce must not exist since it is a future block")
+}
+
+func TestConnection_EstimateGas(t *testing.T) {
+	ctx := context.Background()
+	conn := getRopstenClient(t, ctx)
+
+	from := eth.MustAddress("0xed28874e52A12f0D42118653B0FBCee0ACFadC00")
+	tx := eth.Transaction{
+		Nonce:    eth.QuantityFromUInt64(146),
+		GasPrice: eth.OptionalQuantityFromInt(3000000000),
+		Gas:      eth.QuantityFromUInt64(22000),
+		To:       eth.MustAddress("0x43700db832E9Ac990D36d6279A846608643c904E"),
+		Value:    *eth.OptionalQuantityFromInt(100),
+		From:     *from,
+	}
+
+	gas, err := conn.EstimateGas(ctx, tx)
+	require.NoError(t, err)
+	require.NotEqual(t, gas, 0, "estimate gas cannot be equal to zero.")
+}
+
+func TestConnection_MaxPriorityFeePerGas(t *testing.T) {
+	ctx := context.Background()
+	conn := getRopstenClient(t, ctx)
+
+	fee, err := conn.MaxPriorityFeePerGas(ctx)
+	require.NoError(t, err)
+	require.NotEqual(t, fee, 0, "fee cannot be equal to 0")
+}
+
+func TestConnection_GasPrice(t *testing.T) {
+	ctx := context.Background()
+	conn := getRopstenClient(t, ctx)
+
+	gasPrice, err := conn.GasPrice(ctx)
+	require.NoError(t, err)
+	require.NotEqual(t, gasPrice, 0, "gas price cannot be equal to 0")
+}
+
+func TestConnection_NetVersion(t *testing.T) {
+	ctx := context.Background()
+	conn := getRopstenClient(t, ctx)
+
+	netVersion, err := conn.NetVersion(ctx)
+	require.NoError(t, err)
+	require.NotEmpty(t, netVersion, "net version id must not be nil")
+}
+
+func TestConnection_SendRawTransactionInValidEmpty(t *testing.T) {
+	ctx := context.Background()
+	conn := getRopstenClient(t, ctx)
+
+	txHash, err := conn.SendRawTransaction(ctx, "0x0")
+	require.Error(t, err)
+	require.Empty(t, txHash, "txHash must be nil")
+}
+
+func TestConnection_SendRawTransactionInValidOldNonce(t *testing.T) {
+	ctx := context.Background()
+	conn := getRopstenClient(t, ctx)
+
+	data := eth.MustData("0x02f8f70338849502f8f3849502f8f3826c3994b78ab5a21c74451906d6a113072e6aa2f2d905b980b88cf56256c730783078343836353663366336663030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303078307835373666373236633634323130303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030c001a0e2fd5de027d939a99df69954cd36a9f7cac6f3c4bf96eff48b7980be9394a1d7a06f0e4b4fa4642afa99f5caa74f004c93707c6503c7beb7e746352081d77ec054")
+	txHash, err := conn.SendRawTransaction(ctx, data.String())
+	require.Error(t, err)
+	require.Equal(t, err.Error(), "{\"code\":-32000,\"message\":\"nonce too low\"}")
+	require.Empty(t, txHash, "txHash must be nil")
 }
 
 func TestConnection_FutureBlockByNumber(t *testing.T) {
