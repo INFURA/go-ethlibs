@@ -27,18 +27,15 @@ func TestConnection_GetTransactionCount(t *testing.T) {
 	ctx := context.Background()
 	conn := getRopstenClient(t, ctx)
 
-	latestBlockNumber, err := conn.BlockNumber(context.Background())
-	require.NoError(t, err)
-
 	// Checks the current pending nonce for account can be retrieved
-	blockNum1 := eth.QuantityFromUInt64(latestBlockNumber)
-	pendingNonce1, err := conn.GetTransactionCount(ctx, "0xed28874e52A12f0D42118653B0FBCee0ACFadC00", eth.Block{Number: &blockNum1})
+	blockNum1 := eth.MustBlockNumberOrTag("latest")
+	pendingNonce1, err := conn.GetTransactionCount(ctx, "0xed28874e52A12f0D42118653B0FBCee0ACFadC00", *blockNum1)
 	require.NoError(t, err)
 	require.NotEmpty(t, pendingNonce1, "pending nonce must not be nil")
 
 	// Should catch failure since it is looking for a nonce of a future block
-	blockNum2 := eth.QuantityFromUInt64(latestBlockNumber + 1000)
-	pendingNonce2, err := conn.GetTransactionCount(ctx, "0xed28874e52A12f0D42118653B0FBCee0ACFadC00", eth.Block{Number: &blockNum2})
+	blockNum2 := eth.MustBlockNumberOrTag("0x7654321")
+	pendingNonce2, err := conn.GetTransactionCount(ctx, "0xed28874e52A12f0D42118653B0FBCee0ACFadC00", *blockNum2)
 	require.Error(t, err)
 	require.Empty(t, pendingNonce2, "pending nonce must not exist since it is a future block")
 }
@@ -80,13 +77,13 @@ func TestConnection_GasPrice(t *testing.T) {
 	require.NotEqual(t, gasPrice, 0, "gas price cannot be equal to 0")
 }
 
-func TestConnection_NetworkID(t *testing.T) {
+func TestConnection_NetVersion(t *testing.T) {
 	ctx := context.Background()
 	conn := getRopstenClient(t, ctx)
 
-	chainID, err := conn.NetVersion(ctx)
+	netVersion, err := conn.NetVersion(ctx)
 	require.NoError(t, err)
-	require.NotEmpty(t, chainID, "chain id must not be nil")
+	require.NotEmpty(t, netVersion, "net version id must not be nil")
 }
 
 func TestConnection_FutureBlockByNumber(t *testing.T) {

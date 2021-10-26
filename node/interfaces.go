@@ -29,7 +29,7 @@ type Client interface {
 	BlockNumber(ctx context.Context) (uint64, error)
 
 	// NetVersion returns the chain id
-	NetVersion(ctx context.Context) (uint64, error)
+	NetVersion(ctx context.Context) (string, error)
 
 	// EstimateGas returns the estimate gas
 	EstimateGas(ctx context.Context, msg eth.Transaction) (uint64, error)
@@ -41,7 +41,7 @@ type Client interface {
 	GasPrice(ctx context.Context) (uint64, error)
 
 	// GetTransactionCount get the pending nonce for public address
-	GetTransactionCount(ctx context.Context, address eth.Address, block eth.Block) (uint64, error)
+	GetTransactionCount(ctx context.Context, address eth.Address, numberOrTag eth.BlockNumberOrTag) (uint64, error)
 
 	// SendRawTransaction will send the raw signed transaction return tx hash or error
 	SendRawTransaction(ctx context.Context, msg string) (string, error)

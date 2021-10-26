@@ -4,10 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/url"
-	"strconv"
-	"strings"
 
 	"github.com/pkg/errors"
 
@@ -114,11 +111,11 @@ func (c *client) BlockNumber(ctx context.Context) (uint64, error) {
 	return q.UInt64(), nil
 }
 
-func (c *client) GetTransactionCount(ctx context.Context, address eth.Address, block eth.Block) (uint64, error) {
+func (c *client) GetTransactionCount(ctx context.Context, address eth.Address, numberOrTag eth.BlockNumberOrTag) (uint64, error) {
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
 		Method: "eth_getTransactionCount",
-		Params: jsonrpc.MustParams(address, block.Number),
+		Params: jsonrpc.MustParams(address, &numberOrTag),
 	}
 
 	applyContext(ctx, &request)
@@ -136,7 +133,7 @@ func (c *client) GetTransactionCount(ctx context.Context, address eth.Address, b
 	return q.UInt64(), err
 }
 
-func (c *client) NetVersion(ctx context.Context) (uint64, error) {
+func (c *client) NetVersion(ctx context.Context) (string, error) {
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
 		Method: "net_version",
@@ -146,15 +143,14 @@ func (c *client) NetVersion(ctx context.Context) (uint64, error) {
 	applyContext(ctx, &request)
 	response, err := c.Request(ctx, &request)
 	if err != nil {
-		return 0, errors.Wrap(err, "could not make request")
+		return "", errors.Wrap(err, "could not make request")
 	}
 
-	i, err := strconv.ParseInt(strings.Replace(string(response.Result), "\"", "", -1), 10, 64)
-	if err != nil {
-		return 0, errors.Wrap(err, "could not parse int64")
+	if response.Error != nil {
+		return "", errors.New(string(*response.Error))
 	}
 
-	return uint64(i), nil
+	return string(response.Result), nil
 }
 
 func (c *client) BlockByNumber(ctx context.Context, number uint64, full bool) (*eth.Block, error) {
@@ -177,17 +173,14 @@ func (c *client) BlockByNumber(ctx context.Context, number uint64, full bool) (*
 
 func (c *client) EstimateGas(ctx context.Context, msg eth.Transaction) (uint64, error) {
 	arg := map[string]interface{}{
-		"from": msg.From,
-		"to":   msg.To,
+		"from":  msg.From,
+		"to":    msg.To,
+		"value": msg.Value.String(),
 	}
 	if len(msg.Input) > 0 {
 		arg["data"] = msg.Input
 	}
-	if msg.Value.UInt64() != 0 {
-		arg["value"] = "0x" + fmt.Sprintf("%x", msg.Value)
-	} else {
-		arg["value"] = "0x0"
-	}
+
 	request := jsonrpc.Request{
 		ID:     jsonrpc.ID{Num: 1},
 		Method: "eth_estimateGas",
@@ -198,16 +191,13 @@ func (c *client) EstimateGas(ctx context.Context, msg eth.Transaction) (uint64, 
 	if err != nil {
 		return 0, errors.Wrap(err, "could not make request")
 	}
-	if len(response.Result) != 0 {
-		input := string(strings.Replace(string(response.Result), "\"", "", -1))[2:]
-		value, err := strconv.ParseInt(input, 16, 64)
-		if err != nil {
-			return 0, errors.Wrap(err, "could not get value from parse int")
-		}
-		return uint64(value), nil
-	} else {
-		return 0, errors.Wrap(err, "could not get an estimate")
+
+	q := eth.Quantity{}
+	err = json.Unmarshal(response.Result, &q)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not decode result")
 	}
+	return q.UInt64(), err
 }
 
 func (c *client) SendRawTransaction(ctx context.Context, msg string) (string, error) {
@@ -222,7 +212,15 @@ func (c *client) SendRawTransaction(ctx context.Context, msg string) (string, er
 	if err != nil {
 		return "", errors.Wrap(err, "could not make request")
 	}
-	return string(response.Result), nil
+
+	txHash := ""
+	err = json.Unmarshal(response.Result, &txHash)
+	if err != nil {
+		return "", errors.Wrap(err, "could not decode result")
+	}
+
+	data := *eth.MustData(txHash)
+	return data.String(), nil
 }
 
 func (c *client) MaxPriorityFeePerGas(ctx context.Context) (uint64, error) {
@@ -238,13 +236,12 @@ func (c *client) MaxPriorityFeePerGas(ctx context.Context) (uint64, error) {
 		return 0, errors.Wrap(err, "could not make request")
 	}
 
-	input := string(strings.Replace(string(response.Result), "\"", "", -1))[2:]
-	value, err := strconv.ParseInt(input, 16, 64)
+	q := eth.Quantity{}
+	err = json.Unmarshal(response.Result, &q)
 	if err != nil {
-		return 0, errors.Wrap(err, "could not get value from parse int")
+		return 0, errors.Wrap(err, "could not decode result")
 	}
-
-	return uint64(value), nil
+	return q.UInt64(), err
 }
 
 func (c *client) GasPrice(ctx context.Context) (uint64, error) {
@@ -260,13 +257,13 @@ func (c *client) GasPrice(ctx context.Context) (uint64, error) {
 		return 0, errors.Wrap(err, "could not make request")
 	}
 
-	input := string(strings.Replace(string(response.Result), "\"", "", -1))[2:]
-	value, err := strconv.ParseInt(input, 16, 64)
+	q := eth.Quantity{}
+	err = json.Unmarshal(response.Result, &q)
 	if err != nil {
-		return 0, errors.Wrap(err, "could not get value from parse int")
+		return 0, errors.Wrap(err, "could not decode result")
 	}
 
-	return uint64(value), nil
+	return q.UInt64(), err
 }
 
 func (c *client) BlockByNumberOrTag(ctx context.Context, numberOrTag eth.BlockNumberOrTag, full bool) (*eth.Block, error) {
