@@ -124,6 +124,10 @@ func (c *client) GetTransactionCount(ctx context.Context, address eth.Address, n
 		return 0, errors.Wrap(err, "could not make request")
 	}
 
+	if response.Error != nil {
+		return 0, errors.New(string(*response.Error))
+	}
+
 	q := eth.Quantity{}
 	err = json.Unmarshal(response.Result, &q)
 	if err != nil {
@@ -150,7 +154,13 @@ func (c *client) NetVersion(ctx context.Context) (string, error) {
 		return "", errors.New(string(*response.Error))
 	}
 
-	return string(response.Result), nil
+	version := ""
+	err = json.Unmarshal(response.Result, &version)
+	if err != nil {
+		return "", errors.Wrap(err, "could not decode result")
+	}
+
+	return version, nil
 }
 
 func (c *client) BlockByNumber(ctx context.Context, number uint64, full bool) (*eth.Block, error) {
@@ -192,6 +202,10 @@ func (c *client) EstimateGas(ctx context.Context, msg eth.Transaction) (uint64, 
 		return 0, errors.Wrap(err, "could not make request")
 	}
 
+	if response.Error != nil {
+		return 0, errors.New(string(*response.Error))
+	}
+
 	q := eth.Quantity{}
 	err = json.Unmarshal(response.Result, &q)
 	if err != nil {
@@ -213,14 +227,17 @@ func (c *client) SendRawTransaction(ctx context.Context, msg string) (string, er
 		return "", errors.Wrap(err, "could not make request")
 	}
 
-	txHash := ""
+	if response.Error != nil {
+		return "", errors.New(string(*response.Error))
+	}
+
+	txHash := eth.Hash("")
 	err = json.Unmarshal(response.Result, &txHash)
 	if err != nil {
 		return "", errors.Wrap(err, "could not decode result")
 	}
 
-	data := *eth.MustData(txHash)
-	return data.String(), nil
+	return txHash.String(), nil
 }
 
 func (c *client) MaxPriorityFeePerGas(ctx context.Context) (uint64, error) {

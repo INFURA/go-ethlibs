@@ -86,6 +86,26 @@ func TestConnection_NetVersion(t *testing.T) {
 	require.NotEmpty(t, netVersion, "net version id must not be nil")
 }
 
+func TestConnection_SendRawTransactionInValidEmpty(t *testing.T) {
+	ctx := context.Background()
+	conn := getRopstenClient(t, ctx)
+
+	txHash, err := conn.SendRawTransaction(ctx, "0x0")
+	require.Error(t, err)
+	require.Empty(t, txHash, "txHash must be nil")
+}
+
+func TestConnection_SendRawTransactionInValidOldNonce(t *testing.T) {
+	ctx := context.Background()
+	conn := getRopstenClient(t, ctx)
+
+	data := eth.MustData("0x02f8f70338849502f8f3849502f8f3826c3994b78ab5a21c74451906d6a113072e6aa2f2d905b980b88cf56256c730783078343836353663366336663030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303078307835373666373236633634323130303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030c001a0e2fd5de027d939a99df69954cd36a9f7cac6f3c4bf96eff48b7980be9394a1d7a06f0e4b4fa4642afa99f5caa74f004c93707c6503c7beb7e746352081d77ec054")
+	txHash, err := conn.SendRawTransaction(ctx, data.String())
+	require.Error(t, err)
+	require.Equal(t, err.Error(), "{\"code\":-32000,\"message\":\"nonce too low\"}")
+	require.Empty(t, txHash, "txHash must be nil")
+}
+
 func TestConnection_FutureBlockByNumber(t *testing.T) {
 	ctx := context.Background()
 	conn := getRopstenClient(t, ctx)
