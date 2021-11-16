@@ -163,6 +163,32 @@ func (c *client) NetVersion(ctx context.Context) (string, error) {
 	return version, nil
 }
 
+func (c *client) ChainId(ctx context.Context) (string, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_chainId",
+		Params: nil,
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return "", errors.Wrap(err, "could not make request")
+	}
+
+	if response.Error != nil {
+		return "", errors.New(string(*response.Error))
+	}
+
+	chainId := ""
+	err = json.Unmarshal(response.Result, &chainId)
+	if err != nil {
+		return "", errors.Wrap(err, "could not decode result")
+	}
+
+	return chainId, nil
+}
+
 func (c *client) BlockByNumber(ctx context.Context, number uint64, full bool) (*eth.Block, error) {
 	n := eth.QuantityFromUInt64(number)
 

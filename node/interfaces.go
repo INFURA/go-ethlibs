@@ -28,8 +28,11 @@ type Client interface {
 	// BlockNumber returns the current block number at head
 	BlockNumber(ctx context.Context) (uint64, error)
 
-	// NetVersion returns the chain id
+	// NetVersion returns the netversion
 	NetVersion(ctx context.Context) (string, error)
+
+	// ChainId returns the chain id
+	ChainId(ctx context.Context) (string, error)
 
 	// EstimateGas returns the estimate gas
 	EstimateGas(ctx context.Context, msg eth.Transaction) (uint64, error)

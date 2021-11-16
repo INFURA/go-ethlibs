@@ -86,6 +86,15 @@ func TestConnection_NetVersion(t *testing.T) {
 	require.NotEmpty(t, netVersion, "net version id must not be nil")
 }
 
+func TestConnection_ChainId(t *testing.T) {
+	ctx := context.Background()
+	conn := getRopstenClient(t, ctx)
+
+	chainId, err := conn.ChainId(ctx)
+	require.NoError(t, err)
+	require.NotEmpty(t, chainId, "chain id must not be nil")
+}
+
 func TestConnection_SendRawTransactionInValidEmpty(t *testing.T) {
 	ctx := context.Background()
 	conn := getRopstenClient(t, ctx)
