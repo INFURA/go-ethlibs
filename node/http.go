@@ -75,6 +75,8 @@ func (t *httpTransport) dispatchBytes(ctx context.Context, input []byte) ([]byte
 		return nil, errors.Wrap(err, "error in client.Do")
 	}
 
+	defer resp.Body.Close()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading body")
