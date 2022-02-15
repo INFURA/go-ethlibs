@@ -56,9 +56,13 @@ func (t *httpTransport) IsBidirectional() bool {
 
 func (t *httpTransport) dispatchBytes(ctx context.Context, input []byte) ([]byte, error) {
 	t.once.Do(func() {
+		// Since this client is only ever used to access a single endpoint,
+		// we allow all the idle connections to point that host
+		tr := http.DefaultTransport.(*http.Transport).Clone()
+		tr.MaxIdleConnsPerHost = tr.MaxIdleConns
 		t.client = &http.Client{
 			Timeout:   120 * time.Second,
-			Transport: &http.Transport{MaxIdleConnsPerHost: 100},
+			Transport: tr,
 		}
 	})
 
