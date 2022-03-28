@@ -56,7 +56,7 @@ func MustRequest(id int, method string, params ...interface{}) *Request {
 func (r Request) MarshalJSON() ([]byte, error) {
 	r2 := struct {
 		Method  string `json:"method"`
-		Params  Params `json:"params,omitempty"`
+		Params  Params `json:"params"`
 		ID      *ID    `json:"id,omitempty"`
 		JSONRPC string `json:"jsonrpc"`
 	}{
