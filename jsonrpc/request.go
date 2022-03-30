@@ -120,7 +120,7 @@ func (r *Request) UnmarshalJSON(data []byte) error {
 func (r RequestWithNetwork) MarshalJSON() ([]byte, error) {
 	r2 := struct {
 		Method  string `json:"method"`
-		Params  Params `json:"params"`
+		Params  Params `json:"params,omitempty"`
 		ID      *ID    `json:"id,omitempty"`
 		JSONRPC string `json:"jsonrpc"`
 		Network string `json:"network"`

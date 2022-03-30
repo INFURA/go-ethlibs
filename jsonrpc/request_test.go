@@ -358,5 +358,9 @@ func TestMarshalGoodRequests(t *testing.T) {
 		}
 
 		assert.Equal(t, testCase.Expected, string(res), testCase.Description)
+
+		req := Request{}
+		err = json.Unmarshal(res, &req)
+		assert.NoError(t, err, "Got err '%v' unmarshal '%s'", err, string(res))
 	}
 }
