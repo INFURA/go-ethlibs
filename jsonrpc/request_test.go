@@ -261,3 +261,106 @@ func TestRemarshalRequestWithNetworks(t *testing.T) {
 		assert.Equal(t, network, m.(map[string]interface{})["network"])
 	}
 }
+
+func TestMarshalGoodRequests(t *testing.T) {
+
+	type TestCase struct {
+		Description string
+		Expected    string
+		Request     *Request
+	}
+
+	testCases := []TestCase{
+		{
+			Description: "String ID with No Params",
+			Expected:    `{"method":"eth_blockNumber","params":[],"id":"27a5fbbcaa23c1dcca4deb04f1501efb","jsonrpc":"2.0"}`,
+			Request: &Request{
+				ID: ID{
+					Str:      "27a5fbbcaa23c1dcca4deb04f1501efb",
+					IsString: true,
+				},
+				Method: "eth_blockNumber",
+				Params: nil,
+			},
+		},
+		{
+			Description: "Int ID with Empty Params",
+			Expected:    `{"method":"eth_blockNumber","params":[],"id":42,"jsonrpc":"2.0"}`,
+			Request: &Request{
+				ID: ID{
+					Num: 42,
+				},
+				Method: "eth_blockNumber",
+				Params: Params{},
+			},
+		},
+		{
+			Description: "Int ID with Null Params",
+			Expected:    `{"method":"eth_blockNumber","params":[],"id":42,"jsonrpc":"2.0"}`,
+			Request: &Request{
+				ID: ID{
+					Num: 42,
+				},
+				Method: "eth_blockNumber",
+				Params: nil,
+			},
+		},
+		{
+			Description: "Int ID with Empty Params, but no JSONRPC version",
+			Expected:    `{"method":"eth_blockNumber","params":[],"id":42,"jsonrpc":"2.0"}`,
+			Request: &Request{
+				ID: ID{
+					Num: 42,
+				},
+				Method: "eth_blockNumber",
+				Params: Params{},
+			},
+		},
+		{
+			Description: "Int ID with Single Param",
+			Expected:    `{"method":"eth_blockNumber","params":["string"],"id":42,"jsonrpc":"2.0"}`,
+			Request: &Request{
+				ID: ID{
+					Num: 42,
+				},
+				Method: "eth_blockNumber",
+				Params: MustParams("string"),
+			},
+		},
+		{
+			Description: "Int ID with Single Object Param",
+			Expected:    `{"method":"eth_blockNumber","params":[{"foo":"bar"}],"id":42,"jsonrpc":"2.0"}`,
+			Request: &Request{
+				ID: ID{
+					Num: 42,
+				},
+				Method: "eth_blockNumber",
+				Params: MustParams(map[string]string{"foo": "bar"}),
+			},
+		},
+		{
+			Description: "",
+			Expected:    `{"method":"eth_getBlockByNumber","params":["0x599784",true],"id":1839673506133526,"jsonrpc":"2.0"}`,
+			Request: &Request{
+				ID: ID{
+					Num: 1839673506133526,
+				},
+				Method: "eth_getBlockByNumber",
+				Params: MustParams("0x599784", true),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		res, err := json.Marshal(testCase.Request)
+		if assert.NoError(t, err, "Got err '%v' marshal '%q'", err, testCase.Expected) == false {
+			continue
+		}
+
+		assert.Equal(t, testCase.Expected, string(res), testCase.Description)
+
+		req := Request{}
+		err = json.Unmarshal(res, &req)
+		assert.NoError(t, err, "Got err '%v' unmarshal '%s'", err, string(res))
+	}
+}
