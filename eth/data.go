@@ -262,8 +262,8 @@ func (d *Data256) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (d *Data) MarshalJSON() ([]byte, error) {
-	s := string(*d)
+func (d Data) MarshalJSON() ([]byte, error) {
+	s := string(d)
 	return json.Marshal(&s)
 }
 

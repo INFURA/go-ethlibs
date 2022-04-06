@@ -52,9 +52,9 @@ func (a *Address) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *Address) MarshalJSON() ([]byte, error) {
+func (a Address) MarshalJSON() ([]byte, error) {
 	// Seems like geth and parity both return the lower-cased string rather than the checksummed one
-	s := strings.ToLower(string(*a))
+	s := strings.ToLower(string(a))
 	return json.Marshal(&s)
 }
 

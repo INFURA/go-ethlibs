@@ -2,6 +2,7 @@ package eth_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -150,6 +151,23 @@ func TestTransactionTypeAccessList_Populated(t *testing.T) {
 	require.NoError(t, err)
 
 	RequireEqualJSON(t, []byte(payload), j)
+
+	s := struct {
+		Transaction eth.Transaction `json:"transaction"`
+	}{
+		Transaction: tx,
+	}
+
+	expected := fmt.Sprintf(`{"transaction":%s}`, payload)
+
+	b, err := json.Marshal(s)
+	require.NoError(t, err)
+
+	require.JSONEq(t, expected, string(b))
+
+	b2, err := json.Marshal(&s)
+	require.NoError(t, err)
+	require.Equal(t, string(b), string(b2))
 }
 
 func TestTransactionTypeDynamicFee(t *testing.T) {

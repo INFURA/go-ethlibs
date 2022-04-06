@@ -69,3 +69,89 @@ func TestAddressJSON(t *testing.T) {
 		require.Error(t, err, "invalid address must not parse")
 	}
 }
+
+type TestAddressNested struct {
+	Value   eth.Address  `json:"value"`
+	Pointer *eth.Address `json:"pointer"`
+}
+
+type TestAddressStruct struct {
+	Value         eth.Address        `json:"value"`
+	Pointer       *eth.Address       `json:"pointer"`
+	Nested        TestAddressNested  `json:"nested"`
+	NestedPointer *TestAddressNested `json:"nestedPointer"`
+}
+
+func TestAddress_MarshalJSON_Embedded(t *testing.T) {
+	addr := "0xEB3Dbe1E1fa0Fefb4F85A692E65e11ff3Eb4F41F"
+
+	t.Run("eth.Log", func(t *testing.T) {
+		log := eth.Log{
+			Address: *eth.MustAddress(addr),
+			Data:    *eth.MustData("0x1234"),
+		}
+
+		b, err := json.Marshal(log)
+		require.NoError(t, err)
+		require.Equal(
+			t,
+			`{"removed":false,"logIndex":null,"transactionIndex":null,"transactionHash":null,"blockHash":null,"blockNumber":null,"address":"0xeb3dbe1e1fa0fefb4f85a692e65e11ff3eb4f41f","data":"0x1234","topics":null}`,
+			string(b),
+		)
+
+		b2, err := json.Marshal(&log)
+		require.NoError(t, err)
+		require.Equal(t, b, b2)
+	})
+
+	t.Run("Embedded", func(t *testing.T) {
+		s := struct {
+			Address eth.Address `json:"address"`
+		}{
+			Address: *eth.MustAddress(addr),
+		}
+
+		b, err := json.Marshal(s)
+		require.NoError(t, err)
+		require.Equal(t, `{"address":"0xeb3dbe1e1fa0fefb4f85a692e65e11ff3eb4f41f"}`, string(b))
+
+		b2, err := json.Marshal(&s)
+		require.NoError(t, err)
+		require.Equal(t, b, b2)
+	})
+
+	t.Run("Nested", func(t *testing.T) {
+		s := TestAddressStruct{
+			Value:   *eth.MustAddress(addr),
+			Pointer: eth.MustAddress(addr),
+			Nested: TestAddressNested{
+				Value:   *eth.MustAddress(addr),
+				Pointer: eth.MustAddress(addr),
+			},
+			NestedPointer: &TestAddressNested{
+				Value:   *eth.MustAddress(addr),
+				Pointer: eth.MustAddress(addr),
+			},
+		}
+
+		b, err := json.Marshal(s)
+		require.NoError(t, err)
+
+		require.JSONEq(t, `{
+			"value":"0xeb3dbe1e1fa0fefb4f85a692e65e11ff3eb4f41f", 
+			"pointer":"0xeb3dbe1e1fa0fefb4f85a692e65e11ff3eb4f41f", 
+			"nested": {
+				"value":"0xeb3dbe1e1fa0fefb4f85a692e65e11ff3eb4f41f", 
+				"pointer":"0xeb3dbe1e1fa0fefb4f85a692e65e11ff3eb4f41f"
+			},
+			"nestedPointer": {
+				"value":"0xeb3dbe1e1fa0fefb4f85a692e65e11ff3eb4f41f", 
+				"pointer":"0xeb3dbe1e1fa0fefb4f85a692e65e11ff3eb4f41f"
+			}
+		}`, string(b))
+
+		b2, err := json.Marshal(&s)
+		require.NoError(t, err)
+		require.Equal(t, b, b2)
+	})
+}

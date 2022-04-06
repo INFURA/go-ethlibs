@@ -124,7 +124,7 @@ func (nh *NewHeadsResult) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (nh *NewHeadsResult) MarshalJSON() ([]byte, error) {
+func (nh NewHeadsResult) MarshalJSON() ([]byte, error) {
 	switch nh.flavor {
 	case "geth":
 		type geth struct {
@@ -329,6 +329,6 @@ func (nh *NewHeadsResult) MarshalJSON() ([]byte, error) {
 	}
 
 	type unknown NewHeadsResult
-	u := unknown(*nh)
+	u := unknown(nh)
 	return json.Marshal(&u)
 }

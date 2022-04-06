@@ -69,7 +69,7 @@ func (u *Uncle) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (u *Uncle) MarshalJSON() ([]byte, error) {
+func (u Uncle) MarshalJSON() ([]byte, error) {
 	switch u.flavor {
 	case "geth":
 		type geth struct {
@@ -278,6 +278,6 @@ func (u *Uncle) MarshalJSON() ([]byte, error) {
 	}
 
 	type unknown Uncle
-	unk := unknown(*u)
+	unk := unknown(u)
 	return json.Marshal(&unk)
 }

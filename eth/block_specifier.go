@@ -122,7 +122,7 @@ func (b *BlockSpecifier) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (b *BlockSpecifier) MarshalJSON() ([]byte, error) {
+func (b BlockSpecifier) MarshalJSON() ([]byte, error) {
 	if b.Tag != nil {
 		// "earliest"
 		return json.Marshal(b.Tag)
