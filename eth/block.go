@@ -80,7 +80,7 @@ func (b *Block) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (b *Block) MarshalJSON() ([]byte, error) {
+func (b Block) MarshalJSON() ([]byte, error) {
 	switch b.flavor {
 	case "geth":
 		type geth struct {
@@ -293,7 +293,7 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 	}
 
 	type unknown Block
-	u := unknown(*b)
+	u := unknown(b)
 	return json.Marshal(&u)
 }
 
@@ -312,10 +312,9 @@ func (t *TxOrHash) UnmarshalJSON(data []byte) error {
 
 	t.Populated = true
 	return json.Unmarshal(data, &t.Transaction)
-
 }
 
-func (t *TxOrHash) MarshalJSON() ([]byte, error) {
+func (t TxOrHash) MarshalJSON() ([]byte, error) {
 	if t.Populated {
 		return json.Marshal(&t.Transaction)
 	}

@@ -97,3 +97,24 @@ func TestQuantity_DeepCopyInto(t *testing.T) {
 		}()
 	}
 }
+
+func TestQuantity_MarshalJSON(t *testing.T) {
+	s := struct {
+		Value   eth.Quantity  `json:"value"`
+		Pointer *eth.Quantity `json:"pointer"`
+	}{
+		Value:   eth.QuantityFromInt64(0x1234),
+		Pointer: eth.MustQuantity("0x1234"),
+	}
+
+	expected := `{"value":"0x1234","pointer":"0x1234"}`
+
+	b, err := json.Marshal(s)
+	require.NoError(t, err)
+
+	require.JSONEq(t, expected, string(b))
+
+	b2, err := json.Marshal(&s)
+	require.NoError(t, err)
+	require.Equal(t, string(b), string(b2))
+}

@@ -209,7 +209,7 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 	}
 }
 
-func (t *Transaction) MarshalJSON() ([]byte, error) {
+func (t Transaction) MarshalJSON() ([]byte, error) {
 	if t.source == "parity" {
 		type parity struct {
 			// TODO: Revisit once open ethereuem w/ EIP-2930 is released
@@ -272,11 +272,11 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 
 	} else if t.source == "geth" {
 		type geth Transaction
-		g := geth(*t)
+		g := geth(t)
 		return json.Marshal(&g)
 	}
 
 	type unknown Transaction
-	u := unknown(*t)
+	u := unknown(t)
 	return json.Marshal(&u)
 }

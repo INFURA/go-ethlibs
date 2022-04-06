@@ -22,4 +22,16 @@ func TestBlockNumberOrTag_MarshalJSON(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []byte(`"0x7654321"`), b)
 	}
+
+	{
+		s := struct {
+			Tag eth.BlockNumberOrTag `json:"tag"`
+		}{
+			Tag: *eth.MustBlockNumberOrTag("latest"),
+		}
+
+		b, err := json.Marshal(s)
+		require.NoError(t, err)
+		require.Equal(t, []byte(`{"tag":"latest"}`), b)
+	}
 }

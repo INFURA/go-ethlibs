@@ -564,5 +564,9 @@ func TestBlock_BaikalBlock(t *testing.T) {
 	j, err := json.Marshal(&block)
 	require.NoError(t, err)
 
-	RequireEqualJSON(t, []byte(raw), j)
+	require.JSONEq(t, raw, string(j))
+
+	j2, err := json.Marshal(block)
+	require.NoError(t, err)
+	require.JSONEq(t, string(j), string(j2))
 }

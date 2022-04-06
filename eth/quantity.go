@@ -121,7 +121,7 @@ func (q *Quantity) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (q *Quantity) MarshalJSON() ([]byte, error) {
+func (q Quantity) MarshalJSON() ([]byte, error) {
 	if q.s == "" {
 		q.s = bigToQuantityString(&q.i)
 	}
