@@ -1,5 +1,4 @@
 [![GoDoc](https://godoc.org/github.com/INFURA/go-ethlibs?status.svg)](http://godoc.org/github.com/INFURA/go-ethlibs)
-[![CircleCI](https://circleci.com/gh/INFURA/go-ethlibs.svg?style=svg)](https://circleci.com/gh/INFURA/go-ethlibs)
 [![Go Report Card](https://goreportcard.com/badge/github.com/INFURA/go-ethlibs)](https://goreportcard.com/report/github.com/INFURA/go-ethlibs)
 
 # go-ethlibs: Go Ethereum Libraries
