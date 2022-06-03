@@ -106,6 +106,30 @@ func MustBlockSpecifier(value interface{}) *BlockSpecifier {
 	return b
 }
 
+func (b *BlockSpecifier) GetTag() (*Tag, bool) {
+	if b == nil || b.Tag == nil {
+		return nil, false
+	}
+
+	return b.Tag, true
+}
+
+func (b *BlockSpecifier) GetQuantity() (*Quantity, bool) {
+	if b == nil || b.Number == nil {
+		return nil, false
+	}
+
+	return b.Number, true
+}
+
+func (b *BlockSpecifier) GetHash() (*Hash, bool) {
+	if b == nil || b.Hash == nil {
+		return nil, false
+	}
+
+	return b.Hash, true
+}
+
 func (b *BlockSpecifier) UnmarshalJSON(data []byte) error {
 	var v interface{}
 	err := json.Unmarshal(data, &v)
