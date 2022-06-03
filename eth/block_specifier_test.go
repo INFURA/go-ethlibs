@@ -115,3 +115,59 @@ func TestBlockSpecifierMarshalUnmarshal(t *testing.T) {
 		require.Equal(t, tc.MarshalledRaw, m)
 	}
 }
+
+func TestGetTag(t *testing.T) {
+	payload := "latest"
+	spec := eth.MustBlockSpecifier(payload)
+	expectedTag := eth.MustTag("latest")
+
+	tag, isTag := spec.GetTag()
+	require.True(t, isTag)
+	require.Equal(t, expectedTag, tag)
+
+	qty, isNumber := spec.GetQuantity()
+	require.False(t, isNumber)
+	require.Nil(t, qty)
+
+	hash, isHash := spec.GetHash()
+	require.False(t, isHash)
+	require.Nil(t, hash)
+}
+
+func TestGetQuantity(t *testing.T) {
+	payload := "0x0"
+	spec := eth.MustBlockSpecifier(payload)
+	expectedQuantity := eth.MustQuantity("0x0")
+
+	qty, isNumber := spec.GetQuantity()
+	require.True(t, isNumber)
+	require.Equal(t, expectedQuantity, qty)
+
+	tag, isTag := spec.GetTag()
+	require.False(t, isTag)
+	require.Nil(t, tag)
+
+	hash, isHash := spec.GetHash()
+	require.False(t, isHash)
+	require.Nil(t, hash)
+}
+
+func TestGetHash(t *testing.T) {
+	payload := map[string]interface{}{
+		"blockHash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
+	}
+	spec := eth.MustBlockSpecifier(payload)
+	expectedHash := eth.MustHash("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3")
+
+	hash, isHash := spec.GetHash()
+	require.True(t, isHash)
+	require.Equal(t, expectedHash, hash)
+
+	qty, isNumber := spec.GetQuantity()
+	require.False(t, isNumber)
+	require.Nil(t, qty)
+
+	tag, isTag := spec.GetTag()
+	require.False(t, isTag)
+	require.Nil(t, tag)
+}
