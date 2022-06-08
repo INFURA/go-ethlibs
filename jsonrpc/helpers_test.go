@@ -57,10 +57,9 @@ func TestJSONRPCUnmarhsal(t *testing.T) {
 					Num: 0,
 				},
 				Result: nil,
-				Error: map[string]interface{}{
-					// TODO: we should define Error struct so code is an int instead
-					"code":    float64(-32600),
-					"message": "Invalid request",
+				Error: &Error{
+					Code:    -32600,
+					Message: "Invalid request",
 				},
 			},
 		},

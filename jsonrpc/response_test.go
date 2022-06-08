@@ -50,10 +50,9 @@ func TestUnmarshalGoodResponses(t *testing.T) {
 					Num: 0,
 				},
 				Result: nil,
-				Error: map[string]interface{}{
-					// TODO: we should define Error struct so code is an int instead
-					"code":    float64(-32600),
-					"message": "Invalid request",
+				Error: &Error{
+					Code:    -32600,
+					Message: "Invalid request",
 				},
 			},
 		},
@@ -88,11 +87,11 @@ func TestUnmarshalGoodResponses(t *testing.T) {
 		assert.Equal(t, testCase.Response.Result, parsed.Result)
 		assert.Equal(t, testCase.Response.Error, parsed.Error)
 
-		//remarshal without error
+		// remarshal without error
 		remarshalled, err := json.Marshal(parsed)
 		assert.Nil(t, err, "Got err '%v' re-Marshaling parsed JSON", err)
 
-		//log.Printf("[TEST] Remarshalled: %s", string(remarshalled))
+		// log.Printf("[TEST] Remarshalled: %s", string(remarshalled))
 
 		err = json.Unmarshal(remarshalled, &parsed)
 		assert.Nil(t, err, "Got err '%v' re-Unmarshaling marshalled JSON", err)
@@ -119,7 +118,7 @@ func TestUnmarshalBadResponses(t *testing.T) {
 	for _, testCase := range testCases {
 		parsed := Response{}
 		err := json.Unmarshal([]byte(testCase.Raw), &parsed)
-		//log.Printf("[TEST] Expected err: %v", err)
+		// log.Printf("[TEST] Expected err: %v", err)
 		if assert.NotNil(t, err, "Expected err but got %v parsing: %s", err, testCase.Raw) == false {
 			continue
 		}
