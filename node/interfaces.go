@@ -1,5 +1,8 @@
 package node
 
+//go:generate mockgen -source=interfaces.go -destination=mocks/node.go -package=mock
+//go:generate mockgen -source=interfaces.go -destination=interfaces_mock.go -package=node
+
 import (
 	"context"
 

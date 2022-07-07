@@ -5,6 +5,8 @@
 // This package is frozen and no new functionality will be added.
 package websocket
 
+//go:generate mockgen -source=websocket.go -destination=mocks/websocket.go -package=mock
+
 import (
 	"bytes"
 	"context"

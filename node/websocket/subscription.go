@@ -1,5 +1,7 @@
 package websocket
 
+//go:generate mockgen -source=subscription.go -destination=mocks/subscription.go -package=mock
+
 import (
 	"context"
 	"encoding/json"

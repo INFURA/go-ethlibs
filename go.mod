@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/btcsuite/btcd v0.0.0-20190614013741-962a206e94e9
+	github.com/golang/mock v1.6.0
 	github.com/gorilla/websocket v1.4.1
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.3.0
