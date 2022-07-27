@@ -9,9 +9,19 @@ import (
 type Tag string
 
 const (
-	TagLatest   Tag = "latest"
+	// TagLatest aka head block
+	TagLatest Tag = "latest"
+	// TagEarliest aka genesis
 	TagEarliest Tag = "earliest"
-	TagPending  Tag = "pending"
+	// TagSafe lags behind "unsafe" by around 4 seconds and is less likely to reorg
+	TagSafe Tag = "safe"
+	// TagUnsafe will be used as an alias to `TagLatest` to avoid backwards incompatibility.
+	TagUnsafe Tag = "unsafe"
+	// TagFinalized refers to a block that lags by one or two epochs (so 64-128 blocks)
+	// being "unsafe" and ~~will never reorg~~
+	TagFinalized Tag = "finalized"
+	// TagPending refers to pending blocks. (Rarely used)
+	TagPending Tag = "pending"
 )
 
 type BlockNumberOrTag struct {
@@ -25,7 +35,12 @@ func (t Tag) String() string {
 
 func NewTag(s string) (*Tag, error) {
 	switch s {
-	case TagLatest.String(), TagEarliest.String(), TagPending.String():
+	case TagLatest.String(),
+		TagEarliest.String(),
+		TagPending.String(),
+		TagSafe.String(),
+		TagUnsafe.String(),
+		TagFinalized.String():
 		t := Tag(s)
 		return &t, nil
 	default:
@@ -48,13 +63,21 @@ func NewBlockNumberOrTag(value string) (*BlockNumberOrTag, error) {
 		HEX String - an integer block number
 		String "earliest" for the earliest/genesis block
 		String "latest" - for the latest mined block
+		String "unsafe" - for the latest mined block (alias of latest)
+		String "safe" - lags unsafe by around 4 seconds (less likely to reorg)
+		String "finalized" -  lags by one or two epochs (so 64-128 blocks), ~~will never reorg~~.
 		String "pending" - for the pending state/transactions
 	*/
 
 	b := BlockNumberOrTag{}
 
 	switch value {
-	case TagLatest.String(), TagEarliest.String(), TagPending.String():
+	case TagLatest.String(),
+		TagEarliest.String(),
+		TagPending.String(),
+		TagSafe.String(),
+		TagUnsafe.String(),
+		TagFinalized.String():
 		b.tag = Tag(value)
 		return &b, nil
 	default:

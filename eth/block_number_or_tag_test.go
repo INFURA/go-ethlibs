@@ -2,9 +2,10 @@ package eth_test
 
 import (
 	"encoding/json"
+	"testing"
+
 	"github.com/INFURA/go-ethlibs/eth"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestBlockNumberOrTag_MarshalJSON(t *testing.T) {
@@ -14,6 +15,24 @@ func TestBlockNumberOrTag_MarshalJSON(t *testing.T) {
 		b, err := json.Marshal(&tag)
 		require.NoError(t, err)
 		require.Equal(t, []byte(`"latest"`), b)
+	}
+	{
+		tag := eth.MustBlockNumberOrTag("safe")
+		b, err := json.Marshal(&tag)
+		require.NoError(t, err)
+		require.Equal(t, []byte(`"safe"`), b)
+	}
+	{
+		tag := eth.MustBlockNumberOrTag("unsafe")
+		b, err := json.Marshal(&tag)
+		require.NoError(t, err)
+		require.Equal(t, []byte(`"unsafe"`), b)
+	}
+	{
+		tag := eth.MustBlockNumberOrTag("finalized")
+		b, err := json.Marshal(&tag)
+		require.NoError(t, err)
+		require.Equal(t, []byte(`"finalized"`), b)
 	}
 
 	{
