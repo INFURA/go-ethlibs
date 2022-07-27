@@ -37,7 +37,6 @@ func NewTag(s string) (*Tag, error) {
 		TagEarliest.String(),
 		TagPending.String(),
 		TagSafe.String(),
-		TagUnsafe.String(),
 		TagFinalized.String():
 		t := Tag(s)
 		return &t, nil
@@ -61,7 +60,6 @@ func NewBlockNumberOrTag(value string) (*BlockNumberOrTag, error) {
 		HEX String - an integer block number
 		String "earliest" for the earliest/genesis block
 		String "latest" - for the latest mined block
-		String "unsafe" - for the latest mined block (alias of latest)
 		String "safe" - lags unsafe by around 4 seconds (less likely to reorg)
 		String "finalized" -  lags by one or two epochs (so 64-128 blocks), ~~will never reorg~~.
 		String "pending" - for the pending state/transactions
@@ -74,7 +72,6 @@ func NewBlockNumberOrTag(value string) (*BlockNumberOrTag, error) {
 		TagEarliest.String(),
 		TagPending.String(),
 		TagSafe.String(),
-		TagUnsafe.String(),
 		TagFinalized.String():
 		b.tag = Tag(value)
 		return &b, nil
