@@ -15,8 +15,6 @@ const (
 	TagEarliest Tag = "earliest"
 	// TagSafe lags behind "unsafe" by around 4 seconds and is less likely to reorg
 	TagSafe Tag = "safe"
-	// TagUnsafe will be used as an alias to `TagLatest` to avoid backwards incompatibility.
-	TagUnsafe Tag = "unsafe"
 	// TagFinalized refers to a block that typically lags by one or two epochs (so 64-128 blocks)
 	// but can lag further during consensus issues.  Once finalized a block can only reorg via a hard fork.
 	TagFinalized Tag = "finalized"
