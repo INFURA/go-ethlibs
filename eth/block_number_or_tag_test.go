@@ -23,12 +23,6 @@ func TestBlockNumberOrTag_MarshalJSON(t *testing.T) {
 		require.Equal(t, []byte(`"safe"`), b)
 	}
 	{
-		tag := eth.MustBlockNumberOrTag("unsafe")
-		b, err := json.Marshal(&tag)
-		require.NoError(t, err)
-		require.Equal(t, []byte(`"unsafe"`), b)
-	}
-	{
 		tag := eth.MustBlockNumberOrTag("finalized")
 		b, err := json.Marshal(&tag)
 		require.NoError(t, err)
