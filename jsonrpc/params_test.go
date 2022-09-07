@@ -1,6 +1,7 @@
 package jsonrpc
 
 import (
+	"github.com/INFURA/go-ethlibs/eth"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -66,16 +67,16 @@ func TestParams_DecodeInto(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		{
-			Description: "single string",
-			Expected:    []interface{}{"foo"},
-			Input:       MustParams("foo"),
-			Test: func(tc *testCase) ([]interface{}, error) {
-				var str string
-				err := tc.Input.UnmarshalInto(&str)
-				return []interface{}{str}, err
-			},
-		},
+		//{
+		//	Description: "single string",
+		//	Expected:    []interface{}{"foo"},
+		//	Input:       MustParams("foo"),
+		//	Test: func(tc *testCase) ([]interface{}, error) {
+		//		var str string
+		//		err := tc.Input.UnmarshalInto(&str)
+		//		return []interface{}{str}, err
+		//	},
+		//},
 		{
 			Description: "string and bool",
 			Expected:    []interface{}{"foo", true},
@@ -107,6 +108,27 @@ func TestParams_DecodeInto(t *testing.T) {
 				return []interface{}{str}, err
 			},
 		},
+		{
+			Description: "receiver's type is a struct",
+			Expected:    []interface{}{eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("0x3456789"), ToBlock: eth.MustBlockNumberOrTag("0x3456"), BlockHash: (*eth.Data32)(nil), Address: []eth.Address(nil), Topics: [][]eth.Data32(nil)}},
+			Input:       MustParams(&eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("0x3456789"), ToBlock: eth.MustBlockNumberOrTag("0x3456")}),
+			Test: func(tc *testCase) ([]interface{}, error) {
+				var rec eth.LogFilter
+				err := tc.Input.UnmarshalInto(&rec)
+				return []interface{}{rec}, err
+			},
+		},
+		{
+			Description: "multiple element in params",
+			Expected:    []interface{}{eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("0x3456789"), ToBlock: eth.MustBlockNumberOrTag("0x3456")}, eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("0x5678"), ToBlock: eth.MustBlockNumberOrTag("0x1234")}},
+			Input:       MustParams(&eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("0x3456789"), ToBlock: eth.MustBlockNumberOrTag("0x3456")}, &eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("0x5678"), ToBlock: eth.MustBlockNumberOrTag("0x1234")}),
+			Test: func(tc *testCase) ([]interface{}, error) {
+				var rec1 eth.LogFilter
+				var rec2 eth.LogFilter
+				err := tc.Input.UnmarshalInto(&rec1, &rec2)
+				return []interface{}{rec1, rec2}, err
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -134,3 +156,85 @@ func TestParams_DecodeInto(t *testing.T) {
 	object := Object{}
 	assert.Error(t, multiple.UnmarshalSingleParam(3, &object), "should have failed")
 }
+
+func TestParams_DecodeInto_Fail(t *testing.T) {
+
+	type testCase struct {
+		Description string
+		Expected    []interface{}
+		Input       Params
+		Test        func(tc *testCase) ([]interface{}, error)
+	}
+
+	testCases := []testCase{
+		{
+			Description: "params null",
+			Expected:    nil,
+			Input:       nil,
+			Test: func(tc *testCase) ([]interface{}, error) {
+				var str string
+				err := tc.Input.UnmarshalInto(str)
+				return nil, err
+			},
+		},
+		{
+			Description: "len(p)<len(rec)",
+			Expected:    []interface{}{},
+			Input:       MustParams("foo"),
+			Test: func(tc *testCase) ([]interface{}, error) {
+				var str string
+				var b bool
+				err := tc.Input.UnmarshalInto(&str, &b)
+				return []interface{}{}, err
+			},
+		},
+		//{
+		//	Description: "",
+		//	Expected:    []interface{}{eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("3456789"), ToBlock: eth.MustBlockNumberOrTag("0x3456")}, eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("0x5678"), ToBlock: eth.MustBlockNumberOrTag("0x1234")}},
+		//	Input:       MustParams(&eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("3456789"), ToBlock: eth.MustBlockNumberOrTag("0x3456")}, &eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("0x5678"), ToBlock: eth.MustBlockNumberOrTag("0x1234")}),
+		//	Test: func(tc *testCase) ([]interface{}, error) {
+		//		var rec eth.LogFilter
+		//		err := tc.Input.UnmarshalInto(&rec)
+		//		return []interface{}{}, err
+		//	},
+		//},
+
+	}
+
+	for _, testCase := range testCases {
+		actual, err := testCase.Test(&testCase)
+		if testCase.Input != nil {
+			assert.Error(t, err, "should fail")
+		}
+		assert.Equal(t, testCase.Expected, actual, "%#v", testCase)
+	}
+
+}
+
+//func TestParams_parsePositionalArguments_Fail(t *testing.T) {
+//
+//	type testCase struct {
+//		Description string
+//		args        []reflect.Value
+//		err         error
+//		rawArgs     json.RawMessage
+//		types       []reflect.Type
+//		//Test        func(tc *testCase) ([]interface{}, error)
+//	}
+//
+//	testCases := []testCase{{
+//		Description: "err == nil",
+//		args:        nil,
+//		err:         err,
+//		rawArgs:     json.RawMessage{{"[asdfghj]"}},
+//		types:       []reflect.Type{erty},
+//	},
+//	}
+//
+//	for _, testCase := range testCases {
+//		actual, err := ParsePositionalArguments(testCase.rawArgs, testCase.types)
+//		assert.NoError(t, err, "should not fail")
+//		assert.Equal(t, testCase.args, actual, "%#v", testCase)
+//	}
+//
+//}

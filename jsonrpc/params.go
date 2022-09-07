@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"io"
 	"reflect"
-
-	"github.com/pkg/errors"
+	"strings"
 )
 
 // Params is an ARRAY of json.RawMessages.  This is because *Ethereum* RPCs always use
@@ -96,10 +96,16 @@ func (p Params) UnmarshalInto(receivers ...interface{}) error {
 		return errors.New("not enough params to decode")
 	}
 
-	receiversType := listFields(receivers)
-	rawParams := json.RawMessage("[" + string(p[0]) + "]")
+	receiversType := listTypes(receivers)
 
-	_, err := parsePositionalArguments(rawParams, receiversType)
+	var paramElement []string
+	for _, i := range p {
+		paramElement = append(paramElement, string(i))
+	}
+
+	rawParams := json.RawMessage("[" + strings.Join(paramElement, ",") + "]")
+
+	_, err := ParsePositionalArguments(rawParams, receiversType)
 	if err != nil {
 		return err
 	}
@@ -133,14 +139,14 @@ func (p Params) UnmarshalSingleParam(pos int, receiver interface{}) error {
 // parsePositionalArguments tries to parse the given args to an array of values with the
 // given types. It returns the parsed values or an error when the args could not be
 // parsed. Missing optional arguments are returned as reflect.Zero values.
-func parsePositionalArguments(rawArgs json.RawMessage, types []reflect.Type) ([]reflect.Value, error) {
+func ParsePositionalArguments(rawArgs json.RawMessage, types []reflect.Type) ([]reflect.Value, error) {
 	dec := json.NewDecoder(bytes.NewReader(rawArgs))
 	var args []reflect.Value
 	tok, err := dec.Token()
 	switch {
 	case err == io.EOF || tok == nil && err == nil:
-		// "params" is optional and may be empty. Also allow "params":null even though it's
-		// not in the spec because our own client used to send it.
+	// "params" is optional and may be empty. Also allow "params":null even though it's
+	// not in the spec because our own client used to send it.
 	case err != nil:
 		return nil, err
 	case tok == json.Delim('['):
@@ -164,8 +170,8 @@ func parsePositionalArguments(rawArgs json.RawMessage, types []reflect.Type) ([]
 func parseArgumentArray(dec *json.Decoder, types []reflect.Type) ([]reflect.Value, error) {
 	args := make([]reflect.Value, 0, len(types))
 	for i := 0; dec.More(); i++ {
-		if i >= len(types) {
-			return args, fmt.Errorf("too many arguments, want at most %d", len(types))
+		if i >= len(types) { //no error when decoding a subset of param
+			return args, nil
 		}
 		argval := reflect.New(types[i])
 		if err := dec.Decode(argval.Interface()); err != nil {
@@ -181,10 +187,12 @@ func parseArgumentArray(dec *json.Decoder, types []reflect.Type) ([]reflect.Valu
 	return args, err
 }
 
-func listFields(a interface{}) []reflect.Type {
-	v := reflect.ValueOf(a).Type()
+func listTypes(a []interface{}) []reflect.Type {
 	var arrayType []reflect.Type
-	arrayType = append(arrayType, v)
+	for _, i := range a {
+		v := reflect.ValueOf(i).Type()
+		arrayType = append(arrayType, v)
+	}
 
 	return arrayType
 }
