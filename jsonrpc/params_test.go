@@ -1,6 +1,7 @@
 package jsonrpc
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/INFURA/go-ethlibs/eth"
@@ -197,7 +198,7 @@ func TestParams_DecodeInto_Fail(t *testing.T) {
 			},
 		},
 		{
-			Description: "err parse",
+			Description: "parse err",
 			Expected:    expected{[]interface{}{}, errors.New("invalid argument 0: data types must start with 0x")},
 			Input:       MustParams("2345T678"),
 			Test: func(tc *testCase) ([]interface{}, error) {
@@ -242,7 +243,7 @@ func TestParams_parsePositionalArguments(t *testing.T) {
 			types:       []reflect.Type{},
 		},
 		{
-			Description: "1st case",
+			Description: "params nil",
 			Expected:    expected{nil, nil},
 			rawArgs:     []byte(nil),
 			types:       []reflect.Type{},
@@ -260,30 +261,29 @@ func TestParams_parsePositionalArguments(t *testing.T) {
 			types:       []reflect.Type{},
 		},
 		{
-			Description: "missing args",
+			Description: "missing value for arg",
 			Expected:    expected{nil, fmt.Errorf("missing value for required argument 0")},
 			rawArgs:     []byte(nil),
 			types:       []reflect.Type{reflect.TypeOf("foo"), reflect.TypeOf(true)},
 		},
-		//{
-		//	Description: "working",
-		//	Expected:    expected{args: []reflect.Value{reflect.ValueOf("")}, err: nil},
-		//	rawArgs:     []byte(`["foo"]`),
-		//	types:       []reflect.Type{reflect.TypeOf("foo")},
-		//},
+		{
+			Description: "works",
+			Expected:    expected{args: []reflect.Value{reflect.ValueOf("foo")}, err: nil},
+			rawArgs:     []byte(`["foo"]`),
+			types:       []reflect.Type{reflect.TypeOf("foo")},
+		},
 	}
 
 	for _, testCase := range testCases {
 
-		actual, err := ParsePositionalArguments(testCase.rawArgs, testCase.types)
-		assert.Equal(t, testCase.Expected.args, actual, "%#v", testCase)
+		actual, err := parsePositionalArguments(testCase.rawArgs, testCase.types)
+		assert.ObjectsAreEqualValues(testCase.Expected.args, actual)
 		if err != nil {
 			assert.Equal(t, testCase.Expected.err.Error(), err.Error(), "%#v", testCase)
 		} else {
 			assert.Nil(t, testCase.Expected.err, "%#v", testCase)
 		}
 	}
-
 }
 
 func TestParams_parseArgumentArray(t *testing.T) {
@@ -300,24 +300,41 @@ func TestParams_parseArgumentArray(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		//{
-		//	Description: "works",
-		//	Expected:    expected{[]reflect.Value{}, nil},
-		//	dec:         &json.Decoder{},
-		//	types:       []reflect.Type{reflect.TypeOf("foo")},
-		//},
-		//{
-		//	Description: "works",
-		//	Expected:    expected{[]reflect.Value{reflect.ValueOf("foo")}, nil},
-		//	dec:         json.NewDecoder(bytes.NewReader([]byte(`"foo"`))),
-		//	types:       []reflect.Type{reflect.TypeOf("foo")},
-		//},
+		{
+			Description: "decode subset of param",
+			Expected:    expected{[]reflect.Value{reflect.ValueOf("foo")}, nil},
+			dec:         json.NewDecoder(bytes.NewReader([]byte(`["foo", 123]`))),
+			types:       []reflect.Type{reflect.TypeOf("foo")},
+		},
+		{
+			Description: "works",
+			Expected:    expected{[]reflect.Value{reflect.ValueOf("foo")}, nil},
+			dec:         json.NewDecoder(bytes.NewReader([]byte(`["foo"]`))),
+			types:       []reflect.Type{reflect.TypeOf("foo")},
+		},
+		{
+			Description: "invalid argument",
+			Expected:    expected{[]reflect.Value{reflect.ValueOf("foo")}, fmt.Errorf("invalid argument 0: invalid character 'o' in literal false (expecting 'a')")},
+			dec:         json.NewDecoder(bytes.NewReader([]byte(`[foo]`))),
+			types:       []reflect.Type{reflect.TypeOf("foo")},
+		},
+		{
+			Description: "EOF",
+			Expected:    expected{[]reflect.Value{reflect.ValueOf(nil)}, fmt.Errorf("EOF")},
+			dec:         json.NewDecoder(bytes.NewReader([]byte(``))),
+			types:       []reflect.Type{reflect.TypeOf("foo")},
+		},
 	}
 
 	for _, testCase := range testCases {
+		_, _ = testCase.dec.Token()
 		actual, err := parseArgumentArray(testCase.dec, testCase.types)
-		assert.Equal(t, testCase.Expected.args, actual, "%#v", testCase)
-		assert.Equal(t, testCase.Expected.err, err, "%#v", testCase)
+		assert.ObjectsAreEqualValues(testCase.Expected.args, actual)
+		if err != nil {
+			assert.Equal(t, testCase.Expected.err, err, "%#v", testCase)
+		} else {
+			assert.Nil(t, testCase.Expected.err, "%#v", testCase)
+		}
 	}
 
 }

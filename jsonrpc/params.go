@@ -105,7 +105,7 @@ func (p Params) UnmarshalInto(receivers ...interface{}) error {
 
 	rawParams := json.RawMessage("[" + strings.Join(paramElement, ",") + "]")
 
-	_, err := ParsePositionalArguments(rawParams, receiversType)
+	_, err := parsePositionalArguments(rawParams, receiversType)
 	if err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ func (p Params) UnmarshalSingleParam(pos int, receiver interface{}) error {
 // parsePositionalArguments tries to parse the given args to an array of values with the
 // given types. It returns the parsed values or an error when the args could not be
 // parsed. Missing optional arguments are returned as reflect.Zero values.
-func ParsePositionalArguments(rawArgs json.RawMessage, types []reflect.Type) ([]reflect.Value, error) {
+func parsePositionalArguments(rawArgs json.RawMessage, types []reflect.Type) ([]reflect.Value, error) {
 	dec := json.NewDecoder(bytes.NewReader(rawArgs))
 	var args []reflect.Value
 	tok, err := dec.Token()
@@ -164,33 +164,26 @@ func ParsePositionalArguments(rawArgs json.RawMessage, types []reflect.Type) ([]
 		}
 		args = append(args, reflect.Zero(types[i]))
 	}
-	fmt.Println(args)
 	return args, nil
-}
-
-type Object struct {
-	Foo string `json:"foo"`
-	Bar int    `json:"bar"`
 }
 
 func parseArgumentArray(dec *json.Decoder, types []reflect.Type) ([]reflect.Value, error) {
 	args := make([]reflect.Value, 0, len(types))
-	fmt.Println(dec)
+
 	for i := 0; dec.More(); i++ {
 		if i >= len(types) { //no error when decoding a subset of param
 			return args, nil
 		}
 		argval := reflect.New(types[i])
-		//fmt.Println(reflect.Indirect(argval).Interface().(*Object))
+
 		if err := dec.Decode(argval.Interface()); err != nil {
 			return args, fmt.Errorf("invalid argument %d: %v", i, err)
 		}
-		fmt.Println(argval)
+
 		if argval.IsNil() && types[i].Kind() != reflect.Ptr {
 			return args, fmt.Errorf("missing value for required argument %d", i)
 		}
 		args = append(args, argval.Elem())
-		fmt.Println(args)
 	}
 	// Read end of args array.
 	_, err := dec.Token()
