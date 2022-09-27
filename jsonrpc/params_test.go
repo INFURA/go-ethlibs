@@ -178,7 +178,7 @@ func TestParams_DecodeInto_Fail(t *testing.T) {
 	testCases := []testCase{
 		{
 			Description: "params null",
-			Expected:    expected{nil, nil},
+			Expected:    expected{output: nil, err: nil},
 			Input:       nil,
 			Test: func(tc *testCase) ([]interface{}, error) {
 				var str string
@@ -188,7 +188,7 @@ func TestParams_DecodeInto_Fail(t *testing.T) {
 		},
 		{
 			Description: "len(p)<len(rec)",
-			Expected:    expected{[]interface{}{}, errors.New("not enough params to decode")},
+			Expected:    expected{output: []interface{}{}, err: errors.New("not enough params to decode")},
 			Input:       MustParams("foo"),
 			Test: func(tc *testCase) ([]interface{}, error) {
 				var str string
@@ -199,7 +199,7 @@ func TestParams_DecodeInto_Fail(t *testing.T) {
 		},
 		{
 			Description: "parse err",
-			Expected:    expected{[]interface{}{}, errors.New("invalid argument 0: data types must start with 0x")},
+			Expected:    expected{output: []interface{}{}, err: errors.New("invalid argument 0: data types must start with 0x")},
 			Input:       MustParams("2345T678"),
 			Test: func(tc *testCase) ([]interface{}, error) {
 				var str eth.Hash
@@ -238,31 +238,31 @@ func TestParams_parsePositionalArguments(t *testing.T) {
 	testCases := []testCase{
 		{
 			Description: "default case err",
-			Expected:    expected{[]reflect.Value(nil), errors.New("non-array args")},
+			Expected:    expected{args: []reflect.Value(nil), err: errors.New("non-array args")},
 			rawArgs:     []byte(`{"foo"}`),
 			types:       []reflect.Type{},
 		},
 		{
 			Description: "params nil",
-			Expected:    expected{nil, nil},
+			Expected:    expected{args: nil, err: nil},
 			rawArgs:     []byte(nil),
 			types:       []reflect.Type{},
 		},
 		{
 			Description: "token err",
-			Expected:    expected{nil, errors.New("invalid character ',' looking for beginning of value")},
+			Expected:    expected{args: nil, err: errors.New("invalid character ',' looking for beginning of value")},
 			rawArgs:     []byte(","),
 			types:       []reflect.Type{},
 		},
 		{
 			Description: "reading err",
-			Expected:    expected{nil, fmt.Errorf("EOF")},
+			Expected:    expected{args: nil, err: fmt.Errorf("EOF")},
 			rawArgs:     []byte("["),
 			types:       []reflect.Type{},
 		},
 		{
 			Description: "missing value for arg",
-			Expected:    expected{nil, fmt.Errorf("missing value for required argument 0")},
+			Expected:    expected{args: nil, err: fmt.Errorf("missing value for required argument 0")},
 			rawArgs:     []byte(nil),
 			types:       []reflect.Type{reflect.TypeOf("foo"), reflect.TypeOf(true)},
 		},
@@ -302,25 +302,20 @@ func TestParams_parseArgumentArray(t *testing.T) {
 	testCases := []testCase{
 		{
 			Description: "decode subset of param",
-			Expected:    expected{[]reflect.Value{reflect.ValueOf("foo")}, nil},
+			Expected:    expected{args: []reflect.Value{reflect.ValueOf("foo")}, err: nil},
 			dec:         json.NewDecoder(bytes.NewReader([]byte(`["foo", 123]`))),
 			types:       []reflect.Type{reflect.TypeOf("foo")},
 		},
 		{
 			Description: "works",
-			Expected:    expected{[]reflect.Value{reflect.ValueOf("foo")}, nil},
+			Expected:    expected{args: []reflect.Value{reflect.ValueOf("foo")}, err: nil},
 			dec:         json.NewDecoder(bytes.NewReader([]byte(`["foo"]`))),
 			types:       []reflect.Type{reflect.TypeOf("foo")},
 		},
-		{
-			Description: "invalid argument",
-			Expected:    expected{[]reflect.Value{reflect.ValueOf("foo")}, fmt.Errorf("invalid argument 0: invalid character 'o' in literal false (expecting 'a')")},
-			dec:         json.NewDecoder(bytes.NewReader([]byte(`[foo]`))),
-			types:       []reflect.Type{reflect.TypeOf("foo")},
-		},
+
 		{
 			Description: "EOF",
-			Expected:    expected{[]reflect.Value{reflect.ValueOf(nil)}, fmt.Errorf("EOF")},
+			Expected:    expected{args: []reflect.Value{reflect.ValueOf(nil)}, err: fmt.Errorf("EOF")},
 			dec:         json.NewDecoder(bytes.NewReader([]byte(``))),
 			types:       []reflect.Type{reflect.TypeOf("foo")},
 		},

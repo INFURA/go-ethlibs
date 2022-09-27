@@ -78,7 +78,8 @@ func MakeParams(params ...interface{}) (Params, error) {
 // UnmarshalInto will decode Params into the passed in values, which
 // must be pointer receivers.  The type of the passed in value is used to Unmarshal the data.
 // UnmarshalInto will fail if the parameters cannot be converted to the passed-in types.
-//
+// Check each type of each param, return an error if it's not the right one and which argument.
+
 // Example:
 //
 //   var blockNum string
@@ -87,6 +88,7 @@ func MakeParams(params ...interface{}) (Params, error) {
 //
 // IMPORTANT: While Go will compile with non-pointer receivers, the Unmarshal attempt will
 // *always* fail with an error.
+
 func (p Params) UnmarshalInto(receivers ...interface{}) error {
 	if p == nil {
 		return nil
@@ -96,6 +98,7 @@ func (p Params) UnmarshalInto(receivers ...interface{}) error {
 		return errors.New("not enough params to decode")
 	}
 
+	// Return an array of the receivers' types
 	receiversType := listTypes(receivers)
 
 	var paramElement []string
@@ -103,6 +106,7 @@ func (p Params) UnmarshalInto(receivers ...interface{}) error {
 		paramElement = append(paramElement, string(i))
 	}
 
+	// Return p Params in json.Rawmessage type with [] to be parsed
 	rawParams := json.RawMessage("[" + strings.Join(paramElement, ",") + "]")
 
 	_, err := parsePositionalArguments(rawParams, receiversType)
