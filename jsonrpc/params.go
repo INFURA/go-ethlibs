@@ -98,27 +98,30 @@ func (p Params) UnmarshalInto(receivers ...interface{}) error {
 		return errors.New("not enough params to decode")
 	}
 
-	// Return an array of the receivers' types
-	receiversType := listTypes(receivers)
+	// Return an array of the receivers' types and check if the receiver is a ptr
+	receiversType, err := listTypes(receivers)
+	if err != nil {
+		return err
+	}
 
 	var paramElement []string
 	for _, i := range p {
 		paramElement = append(paramElement, string(i))
 	}
 
-	// Return p Params in json.Rawmessage type with [] to be parsed
+	// Return p Params in json.RawMessage type with [] to be parsed
 	rawParams := json.RawMessage("[" + strings.Join(paramElement, ",") + "]")
 
-	_, err := parsePositionalArguments(rawParams, receiversType)
+	receiversValues, err := parsePositionalArguments(rawParams, receiversType)
 	if err != nil {
 		return err
 	}
 
 	for i, r := range receivers {
-		err := json.Unmarshal(p[i], r)
-		if err != nil {
-			return err
+		if receiversValues[i].IsZero() {
+			continue
 		}
+		reflect.ValueOf(r).Elem().Set(receiversValues[i].Elem())
 	}
 
 	return nil
@@ -194,11 +197,14 @@ func parseArgumentArray(dec *json.Decoder, types []reflect.Type) ([]reflect.Valu
 	return args, err
 }
 
-func listTypes(a []interface{}) []reflect.Type {
+func listTypes(a []interface{}) ([]reflect.Type, error) {
 	var arrayType []reflect.Type
 	for _, i := range a {
 		v := reflect.ValueOf(i).Type()
+		if v.Kind() != reflect.Ptr {
+			return nil, fmt.Errorf("the receiver %d is not a pointer", i)
+		}
 		arrayType = append(arrayType, v)
 	}
-	return arrayType
+	return arrayType, nil
 }
