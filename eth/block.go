@@ -39,8 +39,22 @@ type Block struct {
 	// Parity Specific Fields
 	SealFields *[]Data `json:"sealFields,omitempty"`
 
+	//Celo Specific Fields
+	Randomness     *Randomness     `json:"randomness,omitempty"`
+	EpochSnarkData *EpochSnarkData `json:"epochSnarkData,omitempty"`
+
 	// Track the flavor so we can re-encode correctly
 	flavor string
+}
+
+type Randomness struct {
+	Revealed  *Hash
+	Committed *Hash
+}
+
+type EpochSnarkData struct {
+	Bitmap    *Quantity
+	Signature []byte
 }
 
 func (b *Block) DepopulateTransactions() {
@@ -62,6 +76,9 @@ func (b *Block) UnmarshalJSON(data []byte) error {
 	if b.SealFields == nil {
 		// It's a geth response, which is always the same regardless of consensus algorithm
 		b.flavor = "geth"
+	} else if b.SHA3Uncles == "" && b.Randomness != nil {
+		//It's Celo
+		b.flavor = "celo"
 	} else {
 		// It's a parity response, which differs by the consensus algorithm
 		b.flavor = "parity-unknown"
@@ -290,6 +307,53 @@ func (b Block) MarshalJSON() ([]byte, error) {
 		}
 
 		return json.Marshal(&e)
+	case "celo":
+		type celo struct {
+			Number           *Quantity       `json:"number"`
+			Hash             *Hash           `json:"hash"`
+			ParentHash       Hash            `json:"parentHash"`
+			LogsBloom        Data256         `json:"logsBloom"`
+			TransactionsRoot Data32          `json:"transactionsRoot"`
+			StateRoot        Data32          `json:"stateRoot"`
+			ReceiptsRoot     Data32          `json:"receiptsRoot"`
+			Miner            Address         `json:"miner"`
+			TotalDifficulty  Quantity        `json:"totalDifficulty"`
+			ExtraData        Data            `json:"extraData"`
+			Size             Quantity        `json:"size"`
+			GasLimit         Quantity        `json:"gasLimit"`
+			GasUsed          Quantity        `json:"gasUsed"`
+			Timestamp        Quantity        `json:"timestamp"`
+			Transactions     []TxOrHash      `json:"transactions"`
+			Randomness       *Randomness     `json:"randomness,omitempty"`
+			EpochSnarkData   *EpochSnarkData `json:"epochSnarkData,omitempty"`
+
+			BaseFeePerGas *Quantity `json:"baseFeePerGas,omitempty"`
+
+			MixHash *Data `json:"mixHash"`
+		}
+
+		c := celo{
+			Number:           b.Number,
+			Hash:             b.Hash,
+			ParentHash:       b.ParentHash,
+			LogsBloom:        b.LogsBloom,
+			TransactionsRoot: b.TransactionsRoot,
+			StateRoot:        b.StateRoot,
+			ReceiptsRoot:     b.ReceiptsRoot,
+			Miner:            b.Miner,
+			TotalDifficulty:  b.TotalDifficulty,
+			ExtraData:        b.ExtraData,
+			Size:             b.Size,
+			GasLimit:         b.GasLimit,
+			GasUsed:          b.GasUsed,
+			Timestamp:        b.Timestamp,
+			Transactions:     b.Transactions,
+			BaseFeePerGas:    b.BaseFeePerGas,
+			MixHash:          b.MixHash,
+			EpochSnarkData:   b.EpochSnarkData,
+			Randomness:       b.Randomness,
+		}
+		return json.Marshal(&c)
 	}
 
 	type unknown Block
