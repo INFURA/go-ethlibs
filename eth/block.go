@@ -40,21 +40,21 @@ type Block struct {
 	SealFields *[]Data `json:"sealFields,omitempty"`
 
 	//Celo Specific Fields
-	Randomness     *Randomness     `json:"randomness,omitempty"`
-	EpochSnarkData *EpochSnarkData `json:"epochSnarkData,omitempty"`
+	Randomness     *Randomness     `json:"randomness"`
+	EpochSnarkData *EpochSnarkData `json:"epochSnarkData"`
 
 	// Track the flavor so we can re-encode correctly
 	flavor string
 }
 
 type Randomness struct {
-	Revealed  *Hash
-	Committed *Hash
+	Revealed  *Hash `json:"revealed"`
+	Committed *Hash `json:"committed"`
 }
 
 type EpochSnarkData struct {
-	Bitmap    *Quantity
-	Signature []byte
+	Bitmap    *Quantity `json:"bitmap"`
+	Signature []byte    `json:"signature"`
 }
 
 func (b *Block) DepopulateTransactions() {
@@ -324,8 +324,8 @@ func (b Block) MarshalJSON() ([]byte, error) {
 			GasUsed          Quantity        `json:"gasUsed"`
 			Timestamp        Quantity        `json:"timestamp"`
 			Transactions     []TxOrHash      `json:"transactions"`
-			Randomness       *Randomness     `json:"randomness,omitempty"`
-			EpochSnarkData   *EpochSnarkData `json:"epochSnarkData,omitempty"`
+			Randomness       *Randomness     `json:"randomness"`
+			EpochSnarkData   *EpochSnarkData `json:"epochSnarkData"`
 
 			BaseFeePerGas *Quantity `json:"baseFeePerGas,omitempty"`
 
