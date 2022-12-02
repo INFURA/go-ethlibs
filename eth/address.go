@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/sha3"
 
-	"github.com/INFURA/go-ethlibs/rlp"
+	"github.com/ConsenSys/go-ethlibs/rlp"
 )
 
 type Address Data20

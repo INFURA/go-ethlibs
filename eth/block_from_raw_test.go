@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/INFURA/go-ethlibs/eth"
+	"github.com/ConsenSys/go-ethlibs/eth"
 )
 
 func TestBlock_FromRaw(t *testing.T) {

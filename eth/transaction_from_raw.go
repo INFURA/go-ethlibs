@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/INFURA/go-ethlibs/rlp"
+	"github.com/ConsenSys/go-ethlibs/rlp"
 )
 
 // FromRaw populates a Transaction's fields from the raw transaction data supplied as a hexadecimal encoded string.

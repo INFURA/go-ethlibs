@@ -7,7 +7,7 @@ import (
 	secp256k1 "github.com/btcsuite/btcd/btcec"
 	"github.com/stretchr/testify/require"
 
-	"github.com/INFURA/go-ethlibs/eth"
+	"github.com/ConsenSys/go-ethlibs/eth"
 )
 
 func TestECSignAndRecover(t *testing.T) {

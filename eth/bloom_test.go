@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/INFURA/go-ethlibs/eth"
+	"github.com/ConsenSys/go-ethlibs/eth"
 )
 
 func TestBloom_AddLogs(t *testing.T) {

@@ -5,11 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/url"
+	"fmt"
 
 	"github.com/pkg/errors"
 
-	"github.com/INFURA/go-ethlibs/eth"
-	"github.com/INFURA/go-ethlibs/jsonrpc"
+	"github.com/ConsenSys/go-ethlibs/eth"
+	"github.com/ConsenSys/go-ethlibs/jsonrpc"
 )
 
 var (
@@ -161,6 +162,58 @@ func (c *client) NetVersion(ctx context.Context) (string, error) {
 	}
 
 	return version, nil
+}
+
+func (c *client) NetPeerCount(ctx context.Context) (uint64, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "net_peerCount",
+		Params: nil,
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not make request")
+	}
+
+	if response.Error != nil {
+		return 0, errors.New(string(*response.Error))
+	}
+
+	peerCount := eth.Quantity{}
+	err = json.Unmarshal(response.Result, &peerCount)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not decode result")
+	}
+
+	return peerCount.UInt64(), nil
+}
+
+func (c *client) Syncing(ctx context.Context) (bool, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_syncing",
+		Params: nil,
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return true, errors.Wrap(err, "could not make request")
+	}
+
+	if response.Error != nil {
+		return true, errors.New(string(*response.Error))
+	}
+
+	syncing := true
+	err = json.Unmarshal(response.Result, &syncing)
+	if err != nil {
+		return true, errors.Wrap(fmt.Errorf("%w %s", err, response.Result), "could not decode result")
+	}
+
+	return false, nil
 }
 
 func (c *client) ChainId(ctx context.Context) (string, error) {

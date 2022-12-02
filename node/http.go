@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/INFURA/go-ethlibs/jsonrpc"
+	"github.com/ConsenSys/go-ethlibs/jsonrpc"
 	"github.com/pkg/errors"
 )
 
