@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/INFURA/go-ethlibs/node/websocket"
+	"github.com/ConsenSys/go-ethlibs/node/websocket"
 )
 
 func getRopstenConnection(t *testing.T, ctx context.Context) websocket.Connection {

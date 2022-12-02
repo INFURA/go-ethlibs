@@ -6,8 +6,8 @@ package node
 import (
 	"context"
 
-	"github.com/INFURA/go-ethlibs/eth"
-	"github.com/INFURA/go-ethlibs/jsonrpc"
+	"github.com/ConsenSys/go-ethlibs/eth"
+	"github.com/ConsenSys/go-ethlibs/jsonrpc"
 )
 
 type Requester interface {

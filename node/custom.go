@@ -5,7 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/INFURA/go-ethlibs/jsonrpc"
+	"github.com/ConsenSys/go-ethlibs/jsonrpc"
 )
 
 type customTransport struct {

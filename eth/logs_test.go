@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/INFURA/go-ethlibs/eth"
+	"github.com/ConsenSys/go-ethlibs/eth"
 )
 
 func TestLog_UnmarshalJSON(t *testing.T) {

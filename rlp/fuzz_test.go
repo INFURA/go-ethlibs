@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/INFURA/go-ethlibs/rlp"
+	"github.com/ConsenSys/go-ethlibs/rlp"
 )
 
 func fuzz(s string) error {

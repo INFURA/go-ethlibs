@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/INFURA/go-ethlibs/eth"
-	"github.com/INFURA/go-ethlibs/node"
+	"github.com/ConsenSys/go-ethlibs/eth"
+	"github.com/ConsenSys/go-ethlibs/node"
 )
 
 func getRopstenClient(t *testing.T, ctx context.Context) node.Client {

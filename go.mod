@@ -1,4 +1,4 @@
-module github.com/INFURA/go-ethlibs
+module github.com/ConsenSys/go-ethlibs
 
 go 1.17
 

@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/INFURA/go-ethlibs/jsonrpc"
+	"github.com/ConsenSys/go-ethlibs/jsonrpc"
 )
 
 func newLoopingTransport(ctx context.Context, conn connCloser, readMessage readMessageFunc, writeMessage writeMessageFunc) *loopingTransport {

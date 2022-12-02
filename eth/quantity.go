@@ -9,7 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/INFURA/go-ethlibs/rlp"
+	"github.com/ConsenSys/go-ethlibs/rlp"
 )
 
 type Quantity struct {

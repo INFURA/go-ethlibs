@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/INFURA/go-ethlibs/eth"
+	"github.com/ConsenSys/go-ethlibs/eth"
 )
 
 func TestTransactionFailedContractCreation(t *testing.T) {

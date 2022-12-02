@@ -8,9 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	eth "github.com/INFURA/go-ethlibs/eth"
-	jsonrpc "github.com/INFURA/go-ethlibs/jsonrpc"
-	node "github.com/INFURA/go-ethlibs/node"
+	eth "github.com/ConsenSys/go-ethlibs/eth"
+	jsonrpc "github.com/ConsenSys/go-ethlibs/jsonrpc"
+	node "github.com/ConsenSys/go-ethlibs/node"
 	gomock "github.com/golang/mock/gomock"
 )
 
