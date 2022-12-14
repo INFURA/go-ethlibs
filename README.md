@@ -16,7 +16,9 @@ eventually graduate into stand-alone packages.
 - `jsonrpc`: JSONRPC request and response parsing
 - `node`: A proto-ethclient in the `node` namespace
 - `rlp`: Independent implementation of RLP parsing
-
+- `logging`: A wraper for logging
+- `metrics`: Promethus metrics recorder
+- `utils`: A collection of utility packages
 
 ## License
 

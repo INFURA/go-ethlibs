@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/ConsenSys/infura-binance/pkg/conf"
-	"github.com/ConsenSys/infura-binance/pkg/jsonrpc"
+	"github.com/ConsenSys/go-ethlibs/conf"
+	"github.com/ConsenSys/go-ethlibs/jsonrpc"
 	"go.uber.org/zap"
 )
 

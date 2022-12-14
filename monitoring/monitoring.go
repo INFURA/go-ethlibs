@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/ConsenSys/infura-binance/pkg/conf"
+	"github.com/ConsenSys/go-ethlibs/conf"
 	"github.com/DataDog/datadog-go/statsd"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
