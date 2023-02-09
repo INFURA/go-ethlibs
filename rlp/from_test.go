@@ -94,6 +94,38 @@ func TestFrom(t *testing.T) {
 	}
 
 	{
+		// one zero byte
+		// NOTE: This is valid RLP but is not a valid representation of an Ethereum "scalar" because of this
+		// rule in the yellow paper
+		//
+		// > When interpreting RLP data, if an expected fragment is decoded as a scalar and leading zeroes are found
+		// > in the byte sequence, clients are required to consider it non-canonical and treat it in the same manner as
+		// > otherwise invalid RLP data, dismissing it completely.
+		input := "0x8100"
+		decoded, err := rlp.From(input)
+		require.NoError(t, err)
+		require.Equal(t, "0x00", decoded.String)
+	}
+
+	{
+		// zero.
+		// NOTE: Like the above this is valid RLP but not a valid representation of an Ethereum scalar, which should
+		// use 0x80 instead.
+		input := "0x00"
+		decoded, err := rlp.From(input)
+		require.NoError(t, err)
+		require.Equal(t, "0x00", decoded.String)
+	}
+
+	{
+		// empty string
+		input := "0x80"
+		decoded, err := rlp.From(input)
+		require.NoError(t, err)
+		require.Equal(t, "0x", decoded.String)
+	}
+
+	{
 		// "empty" RLP
 		input := "0x"
 		decoded, err := rlp.From(input)

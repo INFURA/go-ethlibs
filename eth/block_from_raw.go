@@ -130,48 +130,40 @@ func (b *Block) FromRaw(input string) error {
 	}
 
 	// Difficulty
-	if q, err := NewQuantity(header[7].String); err == nil {
+	if q, err := NewQuantityFromRLP(header[7]); err == nil {
 		b.Difficulty = *q
 	} else {
 		return errors.Wrap(err, "could not convert header field 7 to Difficulty")
 	}
 
-	// Number has a special case where genesis block number is null instead of 0
-	if header[8].String == "0x" {
-		q := QuantityFromUInt64(0)
-		b.Number = &q
+	// Number
+	if q, err := NewQuantityFromRLP(header[8]); err == nil {
+		b.Number = q
 	} else {
-		if q, err := NewQuantity(header[8].String); err == nil {
-			b.Number = q
-		} else {
 
-			return errors.Wrap(err, "could not convert header field 8 to Number")
-		}
+		return errors.Wrap(err, "could not convert header field 8 to Number")
 	}
+
 	for i := range transactions {
 		transactions[i].Transaction.BlockNumber = b.Number
 	}
 
 	// GasLimit
-	if q, err := NewQuantity(header[9].String); err == nil {
+	if q, err := NewQuantityFromRLP(header[9]); err == nil {
 		b.GasLimit = *q
 	} else {
 		return errors.Wrap(err, "could not convert header field 9 to GasLimit")
 	}
 
-	// GasUsed, also has a sepcial case where genesis value can be null instead of 0
-	if header[10].String == "0x" {
-		b.GasUsed = QuantityFromUInt64(0)
+	// GasUsed
+	if q, err := NewQuantityFromRLP(header[10]); err == nil {
+		b.GasUsed = *q
 	} else {
-		if q, err := NewQuantity(header[10].String); err == nil {
-			b.GasUsed = *q
-		} else {
-			return errors.Wrap(err, "could not convert header field 10 to GasUsed")
-		}
+		return errors.Wrap(err, "could not convert header field 10 to GasUsed")
 	}
 
 	// Timestamp
-	if q, err := NewQuantity(header[11].String); err == nil {
+	if q, err := NewQuantityFromRLP(header[11]); err == nil {
 		b.Timestamp = *q
 	} else {
 		return errors.Wrap(err, "could not convert header field 11 to Timestamp")
