@@ -28,6 +28,10 @@ type Block struct {
 	// EIP-1559 BaseFeePerGas
 	BaseFeePerGas *Quantity `json:"baseFeePerGas,omitempty"`
 
+	// EIP-4895 Withdrawals
+	WithdrawalsRoot *Data32      `json:"withdrawalsRoot,omitempty"`
+	Withdrawals     []Withdrawal `json:"withdrawals,omitempty"`
+
 	// Ethhash POW Fields
 	Nonce   *Data8 `json:"nonce"`
 	MixHash *Data  `json:"mixHash"`
@@ -83,6 +87,71 @@ func (b *Block) UnmarshalJSON(data []byte) error {
 func (b Block) MarshalJSON() ([]byte, error) {
 	switch b.flavor {
 	case "geth":
+		// Note that post EIP-4895 we have to behave slightly differently if WithdrawalsRoot is set.
+		// if it's set, then `Withdrawals` should be non-nil
+		// if it's not set, then Withdrawals should be omitted
+		if b.WithdrawalsRoot != nil {
+			type withWithdrawals struct {
+				Number           *Quantity  `json:"number"`
+				Hash             *Hash      `json:"hash"`
+				ParentHash       Hash       `json:"parentHash"`
+				SHA3Uncles       Data32     `json:"sha3Uncles"`
+				LogsBloom        Data256    `json:"logsBloom"`
+				TransactionsRoot Data32     `json:"transactionsRoot"`
+				StateRoot        Data32     `json:"stateRoot"`
+				ReceiptsRoot     Data32     `json:"receiptsRoot"`
+				Miner            Address    `json:"miner"`
+				Difficulty       Quantity   `json:"difficulty"`
+				TotalDifficulty  Quantity   `json:"totalDifficulty"`
+				ExtraData        Data       `json:"extraData"`
+				Size             Quantity   `json:"size"`
+				GasLimit         Quantity   `json:"gasLimit"`
+				GasUsed          Quantity   `json:"gasUsed"`
+				Timestamp        Quantity   `json:"timestamp"`
+				Transactions     []TxOrHash `json:"transactions"`
+				Uncles           []Hash     `json:"uncles"`
+
+				// EIP-1559 BaseFeePerGas
+				BaseFeePerGas *Quantity `json:"baseFeePerGas,omitempty"`
+
+				// EIP-4895 Withdrawals
+				WithdrawalsRoot *Data32      `json:"withdrawalsRoot"`
+				Withdrawals     []Withdrawal `json:"withdrawals"`
+
+				Nonce   *Data8 `json:"nonce"`
+				MixHash *Data  `json:"mixHash"`
+			}
+
+			w := withWithdrawals{
+				Number:           b.Number,
+				Hash:             b.Hash,
+				ParentHash:       b.ParentHash,
+				SHA3Uncles:       b.SHA3Uncles,
+				LogsBloom:        b.LogsBloom,
+				TransactionsRoot: b.TransactionsRoot,
+				StateRoot:        b.StateRoot,
+				ReceiptsRoot:     b.ReceiptsRoot,
+				Miner:            b.Miner,
+				Difficulty:       b.Difficulty,
+				TotalDifficulty:  b.TotalDifficulty,
+				ExtraData:        b.ExtraData,
+				Size:             b.Size,
+				GasLimit:         b.GasLimit,
+				GasUsed:          b.GasUsed,
+				Timestamp:        b.Timestamp,
+				Transactions:     b.Transactions,
+				Uncles:           b.Uncles,
+				BaseFeePerGas:    b.BaseFeePerGas,
+				Nonce:            b.Nonce,
+				MixHash:          b.MixHash,
+				WithdrawalsRoot:  b.WithdrawalsRoot,
+				Withdrawals:      b.Withdrawals,
+			}
+
+			return json.Marshal(&w)
+		}
+
+		// otherwise, fallback to pre-EIP-4895 behavior
 		type geth struct {
 			Number           *Quantity  `json:"number"`
 			Hash             *Hash      `json:"hash"`

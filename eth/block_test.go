@@ -554,7 +554,8 @@ func TestBlockWithSuccessfulContractCreation(t *testing.T) {
 	RequireEqualJSON(t, []byte(full), j)
 }
 
-func TestBlock_BaikalBlock(t *testing.T) {
+func TestBlock_BaikalBlockMarshalling(t *testing.T) {
+	// Ensure we can correctly marshal and unmarshal a Baikal block with base and priority fees
 	raw := `{"baseFeePerGas":"0x7","difficulty":"0x2","extraData":"0x00000000000000000000000000000000000000000000000000000000000000009d3524c9acd91e52c9636eff76173d1de58419611da303ee131bc4dae18ecba17a01174694cce18611bbd691b24f171d5a68ae208e43f792b105fdaf950963af00","gasLimit":"0x1c9c380","gasUsed":"0xcf1f","hash":"0xe47daeae74c521fc4a8e7fece9820bcb68a1d83382ef06700e67caba4245ef47","logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","miner":"0x0000000000000000000000000000000000000000","mixHash":"0x0000000000000000000000000000000000000000000000000000000000000000","nonce":"0x0000000000000000","number":"0x8496","parentHash":"0xd8c32ba3341e8a239c41390fd68fd51a76ded9a4cc0260918acc1a54e0f3315d","receiptsRoot":"0x340f7266a1624ed1d28caeed494df579e00e1e2355587d256c333b7f80ab1756","sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","size":"0x2c3","stateRoot":"0x93bfec7c3496021d3ff4674ad96ffe856e1f3cf1fed59770756ab4a074d0e535","timestamp":"0x60ab38f3","totalDifficulty":"0xf94c","transactions":[{"blockHash":"0xe47daeae74c521fc4a8e7fece9820bcb68a1d83382ef06700e67caba4245ef47","blockNumber":"0x8496","from":"0xaaec86394441f915bce3e6ab399977e9906f3b69","gas":"0xbc614e","gasPrice":"0x2717","maxFeePerGas":"0x186a0","maxPriorityFeePerGas":"0x2710","hash":"0x0159dbb589269604b6ee9879fce507a6a6812be569f7c932f455bf66f3159db7","input":"0x6000","nonce":"0xeb","to":null,"transactionIndex":"0x0","value":"0x64","type":"0x2","accessList":[],"chainId":"0x66a","v":"0x1","r":"0x2473341eed9c3d64c05fcd1df85e5eff021cde441769e3a52fede9e0f1d298d3","s":"0x1f91bba26132cb1172e1a85c5d13e8881056282070710229fa99dfaa8fa911e4"}],"transactionsRoot":"0x658830e11eab0d07fd04dfe524711e509111ad0b543bb310296cb67a638445e4","uncles":[]}`
 
 	var block eth.Block
@@ -569,4 +570,36 @@ func TestBlock_BaikalBlock(t *testing.T) {
 	j2, err := json.Marshal(block)
 	require.NoError(t, err)
 	require.JSONEq(t, string(j), string(j2))
+}
+
+func TestBlock_ZhejiangBlockMarshalling(t *testing.T) {
+	// Ensure we can correctly marshal and unmarshal a Zhejiang block with withdrawals
+	raw := `{"baseFeePerGas":"0x7","difficulty":"0x0","extraData":"0x","gasLimit":"0x1c9c380","gasUsed":"0x0","hash":"0x5affb899fa8ffaa05c5eb0b6a575c188e07b6e5a9e2bfacc68fef07c6e03e16d","logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","miner":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","mixHash":"0x29826a39a321555d4c49136f75940cbf2905aa6d83eeabe4caf78459034c4c1c","nonce":"0x0000000000000000","number":"0xa80f","parentHash":"0xdee92882dee56c645f143c789ea73ce49fd4fcf0f32f33e761c27c992ea6fc7d","receiptsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","size":"0x424","stateRoot":"0x2a746996126dee2bdfad85143f6faa8577e7277ebfdbc8047e8f21e212cf624e","timestamp":"0x63e28a08","totalDifficulty":"0x1","transactions":[],"transactionsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","uncles":[],"withdrawals":[{"index":"0x2005","validatorIndex":"0xbd00","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2006","validatorIndex":"0xbd01","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2007","validatorIndex":"0xbd02","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2008","validatorIndex":"0xbd03","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2009","validatorIndex":"0xbd04","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x200a","validatorIndex":"0xbd05","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x200b","validatorIndex":"0xbd06","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x200c","validatorIndex":"0xbd07","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x200d","validatorIndex":"0xbd08","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x200e","validatorIndex":"0xbd09","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x200f","validatorIndex":"0xbd0a","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2010","validatorIndex":"0xbd0b","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2011","validatorIndex":"0xbd0c","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2012","validatorIndex":"0xbd0d","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2013","validatorIndex":"0xbd0e","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2014","validatorIndex":"0xbd0f","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"}],"withdrawalsRoot":"0xc209d0a9f422316d602b55ff3aa0b45d09883d1e835c3aea080754c5a12478c4"}`
+
+	var block eth.Block
+	err := json.Unmarshal([]byte(raw), &block)
+	require.NoError(t, err)
+
+	j, err := json.Marshal(&block)
+	require.NoError(t, err)
+
+	require.JSONEq(t, raw, string(j))
+
+	j2, err := json.Marshal(block)
+	require.NoError(t, err)
+	require.JSONEq(t, string(j), string(j2))
+
+	require.NotNil(t, block.WithdrawalsRoot)
+	require.Equal(t, "0xc209d0a9f422316d602b55ff3aa0b45d09883d1e835c3aea080754c5a12478c4", block.WithdrawalsRoot.String())
+	require.Len(t, block.Withdrawals, 16)
+
+	require.Equal(t, "0x2005", block.Withdrawals[0].Index.String())
+	require.Equal(t, "0xbd00", block.Withdrawals[0].ValidatorIndex.String())
+	require.Equal(t, "0xf97e180c050e5Ab072211Ad2C213Eb5AEE4DF134", block.Withdrawals[0].Address.String())
+	require.Equal(t, "0x2546b", block.Withdrawals[0].Amount.String())
+
+	require.Equal(t, "0x2014", block.Withdrawals[15].Index.String())
+	require.Equal(t, "0xbd0f", block.Withdrawals[15].ValidatorIndex.String())
+	require.Equal(t, "0xf97e180c050e5Ab072211Ad2C213Eb5AEE4DF134", block.Withdrawals[15].Address.String())
+	require.Equal(t, "0x2546b", block.Withdrawals[15].Amount.String())
 }

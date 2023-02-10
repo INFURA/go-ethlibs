@@ -1,11 +1,13 @@
 package eth_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/INFURA/go-ethlibs/eth"
+	"github.com/INFURA/go-ethlibs/rlp"
 )
 
 func TestBlock_FromRaw(t *testing.T) {
@@ -197,4 +199,115 @@ func TestBlockFromRaw_ErigonMerge(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(2), tx.ChainId.Int64())
 	require.Equal(t, "0x5d7c132dbcab7511b78de0fad3d4a37988b438bd50db5f77e63213b691dd1c1f", tx.Hash.String())
+}
+
+func TestBlock_FromRaw_ZhejiangBlock(t *testing.T) {
+	// the rawRLP of block 0xa80f (43023) on Zhejiang obtained via:
+	// curl https://rpc.zhejiang.ethpandaops.io/ -H 'Content-Type: application/json' -d '{"method":"debug_getRawBlock","params":["0xa80f"],"id":1,"jsonrpc":"2.0"}'
+	rawRLP := `0xf90421f90219a0dee92882dee56c645f143c789ea73ce49fd4fcf0f32f33e761c27c992ea6fc7da01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794f97e180c050e5ab072211ad2c213eb5aee4df134a02a746996126dee2bdfad85143f6faa8577e7277ebfdbc8047e8f21e212cf624ea056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008082a80f8401c9c380808463e28a0880a029826a39a321555d4c49136f75940cbf2905aa6d83eeabe4caf78459034c4c1c88000000000000000007a0c209d0a9f422316d602b55ff3aa0b45d09883d1e835c3aea080754c5a12478c4c0c0f90200df82200582bd0094f97e180c050e5ab072211ad2c213eb5aee4df1348302546bdf82200682bd0194f97e180c050e5ab072211ad2c213eb5aee4df1348302546bdf82200782bd0294f97e180c050e5ab072211ad2c213eb5aee4df1348302546bdf82200882bd0394f97e180c050e5ab072211ad2c213eb5aee4df1348302546bdf82200982bd0494f97e180c050e5ab072211ad2c213eb5aee4df1348302546bdf82200a82bd0594f97e180c050e5ab072211ad2c213eb5aee4df1348302546bdf82200b82bd0694f97e180c050e5ab072211ad2c213eb5aee4df1348302546bdf82200c82bd0794f97e180c050e5ab072211ad2c213eb5aee4df1348302546bdf82200d82bd0894f97e180c050e5ab072211ad2c213eb5aee4df1348302546bdf82200e82bd0994f97e180c050e5ab072211ad2c213eb5aee4df1348302546bdf82200f82bd0a94f97e180c050e5ab072211ad2c213eb5aee4df1348302546bdf82201082bd0b94f97e180c050e5ab072211ad2c213eb5aee4df1348302546bdf82201182bd0c94f97e180c050e5ab072211ad2c213eb5aee4df1348302546bdf82201282bd0d94f97e180c050e5ab072211ad2c213eb5aee4df1348302546bdf82201382bd0e94f97e180c050e5ab072211ad2c213eb5aee4df1348302546bdf82201482bd0f94f97e180c050e5ab072211ad2c213eb5aee4df1348302546b`
+
+	// let's ensure we get the same eth.Block from both JSON and RLP
+	// the rawJSON below is obtained from:
+	//   curl https://rpc.zhejiang.ethpandaops.io/ -H 'Content-Type: application/json' -d '{"method":"eth_getBlockByNumber","params":["0xa80f",false],"id":1,"jsonrpc":"2.0"}'
+	rawJSON := `{"baseFeePerGas":"0x7","difficulty":"0x0","extraData":"0x","gasLimit":"0x1c9c380","gasUsed":"0x0","hash":"0x5affb899fa8ffaa05c5eb0b6a575c188e07b6e5a9e2bfacc68fef07c6e03e16d","logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","miner":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","mixHash":"0x29826a39a321555d4c49136f75940cbf2905aa6d83eeabe4caf78459034c4c1c","nonce":"0x0000000000000000","number":"0xa80f","parentHash":"0xdee92882dee56c645f143c789ea73ce49fd4fcf0f32f33e761c27c992ea6fc7d","receiptsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","size":"0x424","stateRoot":"0x2a746996126dee2bdfad85143f6faa8577e7277ebfdbc8047e8f21e212cf624e","timestamp":"0x63e28a08","totalDifficulty":"0x1","transactions":[],"transactionsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","uncles":[],"withdrawals":[{"index":"0x2005","validatorIndex":"0xbd00","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2006","validatorIndex":"0xbd01","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2007","validatorIndex":"0xbd02","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2008","validatorIndex":"0xbd03","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2009","validatorIndex":"0xbd04","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x200a","validatorIndex":"0xbd05","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x200b","validatorIndex":"0xbd06","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x200c","validatorIndex":"0xbd07","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x200d","validatorIndex":"0xbd08","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x200e","validatorIndex":"0xbd09","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x200f","validatorIndex":"0xbd0a","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2010","validatorIndex":"0xbd0b","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2011","validatorIndex":"0xbd0c","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2012","validatorIndex":"0xbd0d","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2013","validatorIndex":"0xbd0e","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"},{"index":"0x2014","validatorIndex":"0xbd0f","address":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","amount":"0x2546b"}],"withdrawalsRoot":"0xc209d0a9f422316d602b55ff3aa0b45d09883d1e835c3aea080754c5a12478c4"}`
+
+	blockFromJSON := eth.Block{}
+	err := json.Unmarshal([]byte(rawJSON), &blockFromJSON)
+	require.NoError(t, err)
+
+	blockFromRLP := eth.Block{}
+	err = blockFromRLP.FromRaw(rawRLP)
+	require.NoError(t, err)
+
+	t.Run("compare JSON and RLP", func(t *testing.T) {
+		require.Equal(t, blockFromJSON.Hash.String(), blockFromRLP.Hash.String())
+		require.Equal(t, blockFromJSON.Withdrawals, blockFromRLP.Withdrawals)
+	})
+
+	t.Run("manual encoding", func(t *testing.T) {
+		// To be absolutely sure we're doing this correctly, let's also manually build up the RLP of the block
+		// based on our reading of the EIP, and comprare what we get with what we can generate from the rawRLP and JSON
+		rlpRepresentationOfBlock := rlp.Value{
+			List: []rlp.Value{
+				{
+					/*
+						execution_payload_header_rlp = RLP([
+						  parent_hash,
+						  0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347, # ommers hash
+						  coinbase,
+						  state_root,
+						  txs_root,
+						  receipts_root,
+						  logs_bloom,
+						  0, # difficulty
+						  number,
+						  gas_limit,
+						  gas_used,
+						  timestamp,
+						  extradata,
+						  prev_randao,
+						  0x0000000000000000, # nonce
+						  base_fee_per_gas,
+						  withdrawals_root,
+						])
+					*/
+					List: []rlp.Value{
+						blockFromJSON.ParentHash.RLP(),
+						blockFromJSON.SHA3Uncles.RLP(),
+						blockFromJSON.Miner.RLP(),
+						blockFromJSON.StateRoot.RLP(),
+						blockFromJSON.TransactionsRoot.RLP(),
+						blockFromJSON.ReceiptsRoot.RLP(),
+						blockFromJSON.LogsBloom.RLP(),
+						blockFromJSON.Difficulty.RLP(),
+						blockFromJSON.Number.RLP(),
+						blockFromJSON.GasLimit.RLP(),
+						blockFromJSON.GasUsed.RLP(),
+						blockFromJSON.Timestamp.RLP(),
+						blockFromJSON.ExtraData.RLP(),
+						blockFromJSON.MixHash.RLP(),
+						blockFromJSON.Nonce.RLP(),
+						blockFromJSON.BaseFeePerGas.RLP(),
+						blockFromJSON.WithdrawalsRoot.RLP(),
+					},
+				},
+				// transactions
+				{
+					List: []rlp.Value{},
+				},
+				// uncles
+				{
+					List: []rlp.Value{},
+				},
+				// withdrawals
+				{
+					List: make([]rlp.Value, len(blockFromJSON.Withdrawals)),
+				},
+			},
+		}
+
+		// populate withdrawals list
+		for i := range blockFromJSON.Withdrawals {
+			rlpRepresentationOfBlock.List[3].List[i] = blockFromJSON.Withdrawals[i].RLP()
+		}
+
+		t.Run("compare encoded RLP", func(t *testing.T) {
+			parsedRawRLP, err := rlp.From(rawRLP)
+			require.NoError(t, err)
+			require.Equal(t, *parsedRawRLP, rlpRepresentationOfBlock)
+		})
+
+		t.Run("encode and decode", func(t *testing.T) {
+			createdRLP, err := rlpRepresentationOfBlock.Encode()
+			require.NoError(t, err)
+			require.Equal(t, rawRLP, createdRLP)
+
+			b := eth.Block{}
+			err = b.FromRaw(createdRLP)
+			require.NoError(t, err)
+
+			require.Equal(t, blockFromJSON.Hash.String(), b.Hash.String())
+			require.Equal(t, blockFromJSON.Withdrawals, b.Withdrawals)
+		})
+	})
 }

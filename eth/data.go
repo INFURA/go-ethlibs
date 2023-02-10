@@ -314,8 +314,22 @@ func (d *Data) RLP() rlp.Value {
 	}
 }
 
+// RLP returns the Data8 as an RLP-encoded string.
+func (d *Data8) RLP() rlp.Value {
+	return rlp.Value{
+		String: d.String(),
+	}
+}
+
 // RLP returns the Data32 as an RLP-encoded string.
 func (d *Data32) RLP() rlp.Value {
+	return rlp.Value{
+		String: d.String(),
+	}
+}
+
+// RLP returns the Data256 as an RLP-encoded string.
+func (d *Data256) RLP() rlp.Value {
 	return rlp.Value{
 		String: d.String(),
 	}

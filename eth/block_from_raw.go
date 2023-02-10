@@ -14,11 +14,15 @@ func (b *Block) FromRaw(input string) error {
 		return errors.Wrap(err, "could not RLP decode raw input")
 	}
 
-	// decoded should be 3 lists: header, transactions, uncles
+	// The decoded RLP should be a list, and should have 3 or 4 sub-lists inside:
+	//  - the block header (which is itself a list)
+	//  - the transactions
+	//  - any ommer/uncle blocks (alays an empty list post-Merge) (
+	//  - withdrawals list (post Shanghai EIP-4895)
 	switch len(decoded.List) {
 	case 0:
 		return errors.New("raw input decoded to non-list or empty list")
-	case 3:
+	case 3, 4:
 		// expected
 		break
 	default:
@@ -33,9 +37,12 @@ func (b *Block) FromRaw(input string) error {
 	hash, err := NewHash(h)
 
 	header, txs, uncles := decoded.List[0].List, decoded.List[1].List, decoded.List[2].List
-	// header should be 15 items for legacy blocks, 16 for EIP-1559 blocks
+	// header should be a list of:
+	//   - 15 items for legacy pre-London blocks
+	//   - 16 items for EIP-1559 London blocks
+	//   - 17 items for EIP-4895 Shanghai blocks
 	switch len(header) {
-	case 15, 16:
+	case 15, 16, 17:
 	default:
 		return errors.Errorf("unexpected decoded header list size %d", len(header))
 	}
@@ -77,6 +84,35 @@ func (b *Block) FromRaw(input string) error {
 			uncleHashes[i] = *hh
 		} else {
 			return errors.Wrap(err, "could not encode uncle to hash")
+		}
+	}
+
+	withdrawals := make([]Withdrawal, 0)
+	if len(decoded.List) >= 4 {
+		for _, withdrawalRlp := range decoded.List[3].List {
+			index, err := NewQuantityFromRLP(withdrawalRlp.List[0])
+			if err != nil {
+				return errors.Wrap(err, "could not decode withdrawals")
+			}
+			validatorIndex, err := NewQuantityFromRLP(withdrawalRlp.List[1])
+			if err != nil {
+				return errors.Wrap(err, "could not decode withdrawals")
+			}
+			address, err := NewAddress(withdrawalRlp.List[2].String)
+			if err != nil {
+				return errors.Wrap(err, "could not decode withdrawals")
+			}
+			amount, err := NewQuantityFromRLP(withdrawalRlp.List[3])
+			if err != nil {
+				return errors.Wrap(err, "could not decode withdrawals")
+			}
+			w := Withdrawal{
+				Index:          *index,
+				ValidatorIndex: *validatorIndex,
+				Address:        *address,
+				Amount:         *amount,
+			}
+			withdrawals = append(withdrawals, w)
 		}
 	}
 
@@ -140,7 +176,6 @@ func (b *Block) FromRaw(input string) error {
 	if q, err := NewQuantityFromRLP(header[8]); err == nil {
 		b.Number = q
 	} else {
-
 		return errors.Wrap(err, "could not convert header field 8 to Number")
 	}
 
@@ -190,13 +225,23 @@ func (b *Block) FromRaw(input string) error {
 		return errors.Wrap(err, "could not convert header field 14 to Nonce")
 	}
 
-	// BaseFee (EIP-1559 enabled blocks)
+	// BaseFee (EIP-1559 enabled London blocks)
 	if len(header) >= 16 {
 		q, err := NewQuantityFromRLP(header[15])
 		if err != nil {
 			return errors.Wrap(err, "could not convert header field 15 to BaseFeePerGas")
 		}
 		b.BaseFeePerGas = q
+	}
+
+	// WithdrawalsRoot (EIP-4895 enabled Shanghai blocks)
+	if len(header) >= 17 {
+		d, err := NewData32(header[16].String)
+		if err != nil {
+			return errors.Wrap(err, "could not convert header field 15 to BaseFeePerGas")
+		}
+		b.WithdrawalsRoot = d
+		b.Withdrawals = withdrawals
 	}
 
 	b.Hash = hash
