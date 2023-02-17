@@ -238,7 +238,7 @@ func (b *Block) FromRaw(input string) error {
 	if len(header) >= 17 {
 		d, err := NewData32(header[16].String)
 		if err != nil {
-			return errors.Wrap(err, "could not convert header field 15 to BaseFeePerGas")
+			return errors.Wrap(err, "could not convert header field 16 to WithdrawalsRoot")
 		}
 		b.WithdrawalsRoot = d
 		b.Withdrawals = withdrawals
