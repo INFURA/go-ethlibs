@@ -37,6 +37,9 @@ type NewHeadsResult struct {
 	// EIP-1559 BaseFeePerGas
 	BaseFeePerGas *Quantity `json:"baseFeePerGas,omitempty"`
 
+	// EIP-4895 Withdrawals
+	WithdrawalsRoot *Data32 `json:"withdrawalsRoot,omitempty"`
+
 	// Ethhash POW Fields
 	Nonce   *Data8 `json:"nonce"`
 	MixHash *Data  `json:"mixHash"`
@@ -82,6 +85,9 @@ func (nh *NewHeadsResult) FromBlock(block *Block) {
 
 		// EIP-1559 BaseFeePerGas
 		BaseFeePerGas: block.BaseFeePerGas,
+
+		// EIP-4895 Withdrawals
+		WithdrawalsRoot: block.WithdrawalsRoot,
 
 		flavor: block.flavor,
 	}
@@ -150,6 +156,9 @@ func (nh NewHeadsResult) MarshalJSON() ([]byte, error) {
 			// EIP-1559 BaseFeePerGas
 			BaseFeePerGas *Quantity `json:"baseFeePerGas,omitempty"`
 
+			// EIP-4895 Withdrawals
+			WithdrawalsRoot *Data32 `json:"withdrawalsRoot,omitempty"`
+
 			Nonce   *Data8 `json:"nonce"`
 			MixHash *Data  `json:"mixHash"`
 		}
@@ -171,9 +180,10 @@ func (nh NewHeadsResult) MarshalJSON() ([]byte, error) {
 			GasUsed:   nh.GasUsed,
 			Timestamp: nh.Timestamp,
 			// Transactions:     nh.Transactions,
-			BaseFeePerGas: nh.BaseFeePerGas,
-			Nonce:         nh.Nonce,
-			MixHash:       nh.MixHash,
+			BaseFeePerGas:   nh.BaseFeePerGas,
+			WithdrawalsRoot: nh.WithdrawalsRoot,
+			Nonce:           nh.Nonce,
+			MixHash:         nh.MixHash,
 		}
 
 		return json.Marshal(&g)
