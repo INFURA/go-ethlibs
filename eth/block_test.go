@@ -602,4 +602,22 @@ func TestBlock_ZhejiangBlockMarshalling(t *testing.T) {
 	require.Equal(t, "0xbd0f", block.Withdrawals[15].ValidatorIndex.String())
 	require.Equal(t, "0xf97e180c050e5Ab072211Ad2C213Eb5AEE4DF134", block.Withdrawals[15].Address.String())
 	require.Equal(t, "0x2546b", block.Withdrawals[15].Amount.String())
+
+	t.Run("DeepCopying", func(t *testing.T) {
+		other := block.DeepCopy()
+		original, err := json.Marshal(&block)
+		require.NoError(t, err)
+
+		copied, err := json.Marshal(&other)
+		require.NoError(t, err)
+
+		require.Len(t, other.Withdrawals, 16)
+
+		require.JSONEq(t, string(original), string(copied))
+
+		// ensure that block.Withdrawal and other.Withdrawal actually point to two different slices
+		// mutate other and make sure block isn't changed to ensure not aliases of same slice
+		other.Withdrawals[0].Index = eth.QuantityFromInt64(0xdeadbeef)
+		require.NotEqual(t, block.Withdrawals[0].Index.Int64(), other.Withdrawals[0].Index.Int64())
+	})
 }
