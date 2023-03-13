@@ -11,11 +11,11 @@ import (
 	"github.com/INFURA/go-ethlibs/node"
 )
 
-func getRopstenClient(t *testing.T, ctx context.Context) node.Client {
+func getGoerliClient(t *testing.T, ctx context.Context) node.Client {
 	// These test require a ropsten websocket URL to test with, for example ws://localhost:8546 or wss://ropsten.infura.io/ws/v3/:YOUR_PROJECT_ID
-	url := os.Getenv("ETHLIBS_TEST_ROPSTEN_WS_URL")
+	url := os.Getenv("ETHLIBS_TEST_GOERLI_WS_URL")
 	if url == "" {
-		t.Skip("ETHLIBS_TEST_ROPSTEN_WS_URL not set, skipping test.  Set to a valid websocket URL to execute this test.")
+		t.Skip("ETHLIBS_TEST_GOERLI_WS_URL not set, skipping test.  Set to a valid websocket URL to execute this test.")
 	}
 
 	conn, err := node.NewClient(ctx, url)
@@ -25,7 +25,7 @@ func getRopstenClient(t *testing.T, ctx context.Context) node.Client {
 
 func TestConnection_GetTransactionCount(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getGoerliClient(t, ctx)
 
 	// Checks the current pending nonce for account can be retrieved
 	blockNum1 := eth.MustBlockNumberOrTag("latest")
@@ -42,7 +42,7 @@ func TestConnection_GetTransactionCount(t *testing.T) {
 
 func TestConnection_EstimateGas(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getGoerliClient(t, ctx)
 
 	from := eth.MustAddress("0xed28874e52A12f0D42118653B0FBCee0ACFadC00")
 	tx := eth.Transaction{
@@ -61,7 +61,7 @@ func TestConnection_EstimateGas(t *testing.T) {
 
 func TestConnection_MaxPriorityFeePerGas(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getGoerliClient(t, ctx)
 
 	fee, err := conn.MaxPriorityFeePerGas(ctx)
 	require.NoError(t, err)
@@ -70,7 +70,7 @@ func TestConnection_MaxPriorityFeePerGas(t *testing.T) {
 
 func TestConnection_GasPrice(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getGoerliClient(t, ctx)
 
 	gasPrice, err := conn.GasPrice(ctx)
 	require.NoError(t, err)
@@ -79,7 +79,7 @@ func TestConnection_GasPrice(t *testing.T) {
 
 func TestConnection_NetVersion(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getGoerliClient(t, ctx)
 
 	netVersion, err := conn.NetVersion(ctx)
 	require.NoError(t, err)
@@ -88,7 +88,7 @@ func TestConnection_NetVersion(t *testing.T) {
 
 func TestConnection_ChainId(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getGoerliClient(t, ctx)
 
 	chainId, err := conn.ChainId(ctx)
 	require.NoError(t, err)
@@ -97,7 +97,7 @@ func TestConnection_ChainId(t *testing.T) {
 
 func TestConnection_SendRawTransactionInValidEmpty(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getGoerliClient(t, ctx)
 
 	txHash, err := conn.SendRawTransaction(ctx, "0x0")
 	require.Error(t, err)
@@ -106,9 +106,9 @@ func TestConnection_SendRawTransactionInValidEmpty(t *testing.T) {
 
 func TestConnection_SendRawTransactionInValidOldNonce(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getGoerliClient(t, ctx)
 
-	data := eth.MustData("0x02f8f70338849502f8f3849502f8f3826c3994b78ab5a21c74451906d6a113072e6aa2f2d905b980b88cf56256c730783078343836353663366336663030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303078307835373666373236633634323130303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030c001a0e2fd5de027d939a99df69954cd36a9f7cac6f3c4bf96eff48b7980be9394a1d7a06f0e4b4fa4642afa99f5caa74f004c93707c6503c7beb7e746352081d77ec054")
+	data := eth.MustData("0xf86e0185174876e8008252089460c063d3f3b744e2d153fcbe66a068b09109cf1b865af3107a400084baadf00d2ea0b4d9e2edbd2a2d9a38cf0415f9d03849e6a6f2de8562d7cd74eda89397882030a056edb455e9ffa07ad22f8b06f9065564911f796a026e1b2177ecaad995198aaa")
 	txHash, err := conn.SendRawTransaction(ctx, data.String())
 	require.Error(t, err)
 	require.Equal(t, err.Error(), "{\"code\":-32000,\"message\":\"nonce too low\"}")
@@ -117,7 +117,7 @@ func TestConnection_SendRawTransactionInValidOldNonce(t *testing.T) {
 
 func TestConnection_FutureBlockByNumber(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getGoerliClient(t, ctx)
 
 	blockNumber, err := conn.BlockNumber(ctx)
 	require.NoError(t, err)
@@ -135,7 +135,7 @@ func TestConnection_FutureBlockByNumber(t *testing.T) {
 
 func TestConnection_InvalidBlockByHash(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getGoerliClient(t, ctx)
 
 	b, err := conn.BlockByHash(ctx, "invalid", false)
 	require.Error(t, err, "requesting an invalid hash should return an error")
@@ -151,14 +151,15 @@ func TestConnection_InvalidBlockByHash(t *testing.T) {
 	require.Equal(t, node.ErrBlockNotFound, err)
 
 	// get the genesis block which should _not_ fail
-	b, err = conn.BlockByHash(ctx, "0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d", true)
+	// https://goerli.etherscan.io/block/8000000
+	b, err = conn.BlockByHash(ctx, "0x2ae83825ac6b2a2b2509da8617cf31072a5628e9a818f177316f4f4bcdfafd06", true)
 	require.NoError(t, err, "genesis block hash should not return an error")
 	require.NotNil(t, b, "genesis block should be retrievable by hash")
 }
 
 func TestConnection_InvalidTransactionByHash(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getGoerliClient(t, ctx)
 
 	tx, err := conn.TransactionByHash(ctx, "invalid")
 	require.Error(t, err, "requesting an invalid hash should return an error")
@@ -174,7 +175,8 @@ func TestConnection_InvalidTransactionByHash(t *testing.T) {
 	require.Equal(t, node.ErrTransactionNotFound, err)
 
 	// get an early tx which should _not_ fail
-	tx, err = conn.TransactionByHash(ctx, "0x230f6e1739286f9cbf768e34a9ff3d69a2a72b92c8c3383fbdf163035c695332")
+	// https://goerli.etherscan.io/tx/0x752ca2e3175c0dfd8b8612abcd2dac3134445f29e764d33645726cbcd57aefd1
+	tx, err = conn.TransactionByHash(ctx, "0x752ca2e3175c0dfd8b8612abcd2dac3134445f29e764d33645726cbcd57aefd1")
 	require.NoError(t, err, "early tx should not return an error")
 	require.NotNil(t, tx, "early tx should be retrievable by hash")
 }
