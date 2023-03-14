@@ -12,6 +12,7 @@
 *.out
 
 .idea
+.vscode
 vendor/
 
 .tool-versions
