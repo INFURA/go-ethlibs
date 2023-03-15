@@ -41,6 +41,23 @@ func getClient(t *testing.T, ctx context.Context) node.Client {
 	return conn
 }
 
+func TestConnection_Call_Simple_Contract(t *testing.T) {
+	ctx := context.Background()
+	conn := getClient(t, ctx)
+
+	tx := eth.Transaction{
+		From:  *eth.MustAddress("0x148772F29058DcC772613260b078dCa8C14afF6c"),
+		To:    eth.MustAddress("0x790b2DaF786774BEe346b9B8913b259eD2d354D0"), // contract address
+		Value: *eth.MustQuantity("0x00"),
+		// mul(2,3)
+		Input: *eth.MustData("0xc8a4ac9c00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003"),
+	}
+
+	hash, err := conn.Call(ctx, tx, *eth.MustBlockNumberOrTag("latest"))
+	require.NoError(t, err)
+	require.Equal(t, hash, "0x0000000000000000000000000000000000000000000000000000000000000006")
+}
+
 func TestConnection_GetTransactionCount(t *testing.T) {
 	ctx := context.Background()
 	conn := getClient(t, ctx)

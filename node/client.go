@@ -481,3 +481,37 @@ func applyContext(ctx context.Context, request *jsonrpc.Request) {
 		request.ID = *id
 	}
 }
+
+func (c *client) Call(ctx context.Context, msg eth.Transaction, numberOrTag eth.BlockNumberOrTag) (string, error) {
+	arg := map[string]interface{}{
+		"from":  msg.From,
+		"to":    msg.To,
+		"value": msg.Value.String(),
+	}
+	if len(msg.Input) > 0 {
+		arg["data"] = msg.Input
+	}
+
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_call",
+		Params: jsonrpc.MustParams(arg, &numberOrTag),
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return "", errors.Wrap(err, "could not make request")
+	}
+	if response.Error != nil {
+		return "", errors.New(string(*response.Error))
+	}
+
+	txHash := eth.Hash("")
+	err = json.Unmarshal(response.Result, &txHash)
+	if err != nil {
+		return "", errors.Wrap(err, "could not decode result")
+	}
+
+	return txHash.String(), nil
+}

@@ -34,6 +34,10 @@ type Client interface {
 	// NetVersion returns the netversion
 	NetVersion(ctx context.Context) (string, error)
 
+	// executes a new message call immediately without creating a transaction on the blockchain
+	// is used to call read-only functions of a smart contract
+	Call(ctx context.Context, msg eth.Transaction, numberOrTag eth.BlockNumberOrTag) (string, error)
+
 	// ChainId returns the chain id
 	ChainId(ctx context.Context) (string, error)
 
