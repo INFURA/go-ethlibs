@@ -20,4 +20,4 @@ eventually graduate into stand-alone packages.
 
 ## License
 
-MIT
+MIT.
