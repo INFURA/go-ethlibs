@@ -4,6 +4,9 @@ import (
 	"context"
 	"os"
 	"testing"
+	"net/http"
+    ob64 "encoding/base64"
+    "fmt"
 
 	"github.com/stretchr/testify/require"
 
@@ -11,21 +14,36 @@ import (
 	"github.com/INFURA/go-ethlibs/node"
 )
 
-func getRopstenClient(t *testing.T, ctx context.Context) node.Client {
+func getTestClient(t *testing.T, ctx context.Context) node.Client {
 	// These test require a ropsten websocket URL to test with, for example ws://localhost:8546 or wss://ropsten.infura.io/ws/v3/:YOUR_PROJECT_ID
-	url := os.Getenv("ETHLIBS_TEST_ROPSTEN_WS_URL")
-	if url == "" {
-		t.Skip("ETHLIBS_TEST_ROPSTEN_WS_URL not set, skipping test.  Set to a valid websocket URL to execute this test.")
+	base_url := os.Getenv("ETHLIBS_TEST_WS_URL")
+	if base_url == "" {
+		t.Skip("ETHLIBS_TEST_WS_URL not set, skipping test.  Set to a valid websocket URL to execute this test.")
+	}
+	auth_id := os.Getenv("AUTH_ID")
+	if auth_id == "" {
+		t.Skip("AUTH_ID not set, skipping test.")
+	}
+    url := fmt.Sprintf("%s%s", base_url, auth_id)
+
+    auth_pass := os.Getenv("AUTH_PASS")
+    if auth_pass == "" {
+		t.Skip("AUTH_PASS not set, skipping test.")
 	}
 
-	conn, err := node.NewClient(ctx, url)
+    base64Header := ob64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", auth_id, auth_pass)))
+
+    header := http.Header{
+        "Authorization": {fmt.Sprintf("Basic %s", base64Header)},
+    }
+	conn, err := node.NewClient(ctx, url, header)
 	require.NoError(t, err, "creating websocket connection should not fail")
 	return conn
 }
 
 func TestConnection_GetTransactionCount(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getTestClient(t, ctx)
 
 	// Checks the current pending nonce for account can be retrieved
 	blockNum1 := eth.MustBlockNumberOrTag("latest")
@@ -42,7 +60,7 @@ func TestConnection_GetTransactionCount(t *testing.T) {
 
 func TestConnection_EstimateGas(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getTestClient(t, ctx)
 
 	from := eth.MustAddress("0xed28874e52A12f0D42118653B0FBCee0ACFadC00")
 	tx := eth.Transaction{
@@ -61,7 +79,7 @@ func TestConnection_EstimateGas(t *testing.T) {
 
 func TestConnection_MaxPriorityFeePerGas(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getTestClient(t, ctx)
 
 	fee, err := conn.MaxPriorityFeePerGas(ctx)
 	require.NoError(t, err)
@@ -70,7 +88,7 @@ func TestConnection_MaxPriorityFeePerGas(t *testing.T) {
 
 func TestConnection_GasPrice(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getTestClient(t, ctx)
 
 	gasPrice, err := conn.GasPrice(ctx)
 	require.NoError(t, err)
@@ -79,7 +97,7 @@ func TestConnection_GasPrice(t *testing.T) {
 
 func TestConnection_NetVersion(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getTestClient(t, ctx)
 
 	netVersion, err := conn.NetVersion(ctx)
 	require.NoError(t, err)
@@ -88,7 +106,7 @@ func TestConnection_NetVersion(t *testing.T) {
 
 func TestConnection_ChainId(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getTestClient(t, ctx)
 
 	chainId, err := conn.ChainId(ctx)
 	require.NoError(t, err)
@@ -97,7 +115,7 @@ func TestConnection_ChainId(t *testing.T) {
 
 func TestConnection_SendRawTransactionInValidEmpty(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getTestClient(t, ctx)
 
 	txHash, err := conn.SendRawTransaction(ctx, "0x0")
 	require.Error(t, err)
@@ -106,7 +124,7 @@ func TestConnection_SendRawTransactionInValidEmpty(t *testing.T) {
 
 func TestConnection_SendRawTransactionInValidOldNonce(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getTestClient(t, ctx)
 
 	data := eth.MustData("0x02f8f70338849502f8f3849502f8f3826c3994b78ab5a21c74451906d6a113072e6aa2f2d905b980b88cf56256c730783078343836353663366336663030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303078307835373666373236633634323130303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030c001a0e2fd5de027d939a99df69954cd36a9f7cac6f3c4bf96eff48b7980be9394a1d7a06f0e4b4fa4642afa99f5caa74f004c93707c6503c7beb7e746352081d77ec054")
 	txHash, err := conn.SendRawTransaction(ctx, data.String())
@@ -117,7 +135,7 @@ func TestConnection_SendRawTransactionInValidOldNonce(t *testing.T) {
 
 func TestConnection_FutureBlockByNumber(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getTestClient(t, ctx)
 
 	blockNumber, err := conn.BlockNumber(ctx)
 	require.NoError(t, err)
@@ -135,7 +153,7 @@ func TestConnection_FutureBlockByNumber(t *testing.T) {
 
 func TestConnection_InvalidBlockByHash(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getTestClient(t, ctx)
 
 	b, err := conn.BlockByHash(ctx, "invalid", false)
 	require.Error(t, err, "requesting an invalid hash should return an error")
@@ -158,7 +176,7 @@ func TestConnection_InvalidBlockByHash(t *testing.T) {
 
 func TestConnection_InvalidTransactionByHash(t *testing.T) {
 	ctx := context.Background()
-	conn := getRopstenClient(t, ctx)
+	conn := getTestClient(t, ctx)
 
 	tx, err := conn.TransactionByHash(ctx, "invalid")
 	require.Error(t, err, "requesting an invalid hash should return an error")

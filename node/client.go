@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/url"
+	"net/http"
 
 	"github.com/pkg/errors"
 
@@ -19,7 +20,7 @@ var (
 
 var _ Client = (*client)(nil)
 
-func NewClient(ctx context.Context, rawURL string) (Client, error) {
+func NewClient(ctx context.Context, rawURL string, requestHeader http.Header) (Client, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not parse url")
@@ -31,7 +32,7 @@ func NewClient(ctx context.Context, rawURL string) (Client, error) {
 	case "http", "https":
 		transport, err = newHTTPTransport(ctx, parsedURL)
 	case "wss", "ws":
-		transport, err = newWebsocketTransport(ctx, parsedURL)
+		transport, err = newWebsocketTransport(ctx, parsedURL, requestHeader)
 	default:
 		transport, err = newIPCTransport(ctx, parsedURL)
 	}
