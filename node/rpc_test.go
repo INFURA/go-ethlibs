@@ -58,6 +58,15 @@ func TestConnection_Call_Simple_Contract(t *testing.T) {
 	require.Equal(t, hash, "0x0000000000000000000000000000000000000000000000000000000000000006")
 }
 
+func TestConnection_Get_Accounts(t *testing.T) {
+	ctx := context.Background()
+	conn := getClient(t, ctx)
+
+	accountList, err := conn.GetAccounts(ctx)
+	require.NoError(t, err)
+	require.Empty(t, accountList)
+}
+
 func TestConnection_GetTransactionCount(t *testing.T) {
 	ctx := context.Background()
 	conn := getClient(t, ctx)

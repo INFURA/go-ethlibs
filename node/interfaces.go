@@ -38,6 +38,9 @@ type Client interface {
 	// is used to call read-only functions of a smart contract
 	Call(ctx context.Context, msg eth.Transaction, numberOrTag eth.BlockNumberOrTag) (string, error)
 
+    // executes get_accounts and retrieves address array
+	GetAccounts(ctx context.Context) ([]eth.Address, error)
+
 	// ChainId returns the chain id
 	ChainId(ctx context.Context) (string, error)
 

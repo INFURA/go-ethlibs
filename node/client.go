@@ -515,3 +515,28 @@ func (c *client) Call(ctx context.Context, msg eth.Transaction, numberOrTag eth.
 
 	return txHash.String(), nil
 }
+
+func (c *client) GetAccounts(ctx context.Context) ([]eth.Address, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_accounts",
+		Params: nil,
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not make request")
+	}
+	if response.Error != nil {
+		return nil, errors.New(string(*response.Error))
+	}
+
+	accountList := make([]eth.Address, 0)
+	err = json.Unmarshal(response.Result, &accountList)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not decode result")
+	}
+
+	return accountList, nil
+}
