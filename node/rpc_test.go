@@ -2,11 +2,11 @@ package node_test
 
 import (
 	"context"
+	ob64 "encoding/base64"
+	"fmt"
+	"net/http"
 	"os"
 	"testing"
-	"net/http"
-    ob64 "encoding/base64"
-    "fmt"
 
 	"github.com/stretchr/testify/require"
 
@@ -15,27 +15,26 @@ import (
 )
 
 func getClient(t *testing.T, ctx context.Context) node.Client {
-	// These test require a ropsten websocket URL to test with, for example ws://localhost:8546 or wss://ropsten.infura.io/ws/v3/:YOUR_PROJECT_ID
-	base_url := os.Getenv("ETHLIBS_TEST_WS_URL")
+	base_url := os.Getenv("ETHLIBS_TEST_URL")
 	if base_url == "" {
-		t.Skip("ETHLIBS_TEST_WS_URL not set, skipping test.  Set to a valid websocket URL to execute this test.")
+		t.Skip("ETHLIBS_TEST_URL not set, skipping test.  Set to a valid websocket URL to execute this test.")
 	}
 	auth_id := os.Getenv("AUTH_ID")
 	if auth_id == "" {
 		t.Skip("AUTH_ID not set, skipping test.")
 	}
-    url := fmt.Sprintf("%s%s", base_url, auth_id)
+	url := fmt.Sprintf("%s%s", base_url, auth_id)
 
-    auth_pass := os.Getenv("AUTH_PASS")
-    if auth_pass == "" {
+	auth_pass := os.Getenv("AUTH_PASS")
+	if auth_pass == "" {
 		t.Skip("AUTH_PASS not set, skipping test.")
 	}
 
-    base64Header := ob64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", auth_id, auth_pass)))
+	base64Header := ob64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", auth_id, auth_pass)))
 
-    header := http.Header{
-        "Authorization": {fmt.Sprintf("Basic %s", base64Header)},
-    }
+	header := http.Header{
+		"Authorization": {fmt.Sprintf("Basic %s", base64Header)},
+	}
 	conn, err := node.NewClient(ctx, url, header)
 	require.NoError(t, err, "creating websocket connection should not fail")
 	return conn

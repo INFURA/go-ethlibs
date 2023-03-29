@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"net/url"
 	"net/http"
+	"net/url"
 
 	"github.com/pkg/errors"
 
@@ -30,7 +30,7 @@ func NewClient(ctx context.Context, rawURL string, requestHeader http.Header) (C
 
 	switch parsedURL.Scheme {
 	case "http", "https":
-		transport, err = newHTTPTransport(ctx, parsedURL)
+		transport, err = newHTTPTransport(ctx, parsedURL, requestHeader)
 	case "wss", "ws":
 		transport, err = newWebsocketTransport(ctx, parsedURL, requestHeader)
 	default:

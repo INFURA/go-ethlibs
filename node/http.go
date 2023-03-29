@@ -14,13 +14,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-func newHTTPTransport(ctx context.Context, parsedURL *url.URL) (transport, error) {
+func newHTTPTransport(ctx context.Context, parsedURL *url.URL, header http.Header) (transport, error) {
 	return &httpTransport{
+		header: header,
 		rawURL: parsedURL.String(),
 	}, nil
 }
 
 type httpTransport struct {
+	header http.Header
 	rawURL string
 	client *http.Client
 	once   sync.Once
@@ -72,6 +74,7 @@ func (t *httpTransport) dispatchBytes(ctx context.Context, input []byte) ([]byte
 	}
 
 	r = r.WithContext(ctx)
+	r.Header = t.header
 	r.Header.Add("Content-Type", "application/json")
 
 	resp, err := t.client.Do(r)
