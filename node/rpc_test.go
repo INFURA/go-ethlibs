@@ -17,7 +17,7 @@ import (
 func getClient(t *testing.T, ctx context.Context) node.Client {
 	base_url := os.Getenv("ETHLIBS_TEST_URL")
 	if base_url == "" {
-		t.Skip("ETHLIBS_TEST_URL not set, skipping test.  Set to a valid websocket URL to execute this test.")
+		t.Skip("ETHLIBS_TEST_URL not set, skipping test. Set to a valid http/ws URL to execute this test.")
 	}
 	auth_id := os.Getenv("AUTH_ID")
 	if auth_id == "" {
@@ -64,6 +64,15 @@ func TestConnection_Get_Accounts(t *testing.T) {
 	accountList, err := conn.GetAccounts(ctx)
 	require.NoError(t, err)
 	require.Empty(t, accountList)
+}
+
+func TestConnection_Get_Balance(t *testing.T) {
+	ctx := context.Background()
+	conn := getClient(t, ctx)
+
+	bal, err := conn.GetBalance(ctx, *eth.MustAddress("0x148772F29058DcC772613260b078dCa8C14afF6c"), *eth.MustBlockNumberOrTag("latest"))
+	require.NoError(t, err)
+	require.NotNil(t, bal)
 }
 
 func TestConnection_GetTransactionCount(t *testing.T) {

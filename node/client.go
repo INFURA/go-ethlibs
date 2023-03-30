@@ -540,3 +540,28 @@ func (c *client) GetAccounts(ctx context.Context) ([]eth.Address, error) {
 
 	return accountList, nil
 }
+
+func (c *client) GetBalance(ctx context.Context, addr eth.Address, numberOrTag eth.BlockNumberOrTag) (uint64, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_getBalance",
+		Params: jsonrpc.MustParams(addr, &numberOrTag),
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not make request")
+	}
+	if response.Error != nil {
+		return 0, errors.New(string(*response.Error))
+	}
+
+	q := eth.Quantity{}
+	err = json.Unmarshal(response.Result, &q)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not decode result")
+	}
+
+	return q.UInt64(), nil
+}

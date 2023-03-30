@@ -185,7 +185,7 @@ func (m *MockClient) Call(ctx context.Context, msg eth.Transaction) (string, err
 // Call indicates an expected call of Call.
 func (mr *MockClientMockRecorder) Call(ctx, msg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Call", reflect.TypeOf((*MockClient)(nil).EstimateGas), ctx, msg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Call", reflect.TypeOf((*MockClient)(nil).Call), ctx, msg)
 }
 
 // GetAccounts mocks base method.
@@ -200,7 +200,22 @@ func (m *MockClient) GetAccounts(ctx context.Context) ([]eth.Address, error) {
 // Call indicates an expected call of GetAccounts.
 func (mr *MockClientMockRecorder) GetAccounts(ctx, msg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccounts", reflect.TypeOf((*MockClient)(nil).EstimateGas), ctx, msg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccounts", reflect.TypeOf((*MockClient)(nil).GetAccounts), ctx, msg)
+}
+
+// GetBalance mocks base method.
+func (m *MockClient) GetBalance(ctx context.Context) (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBalance", ctx)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Call indicates an expected call of GetBalance.
+func (mr *MockClientMockRecorder) GetBalance(ctx, msg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBalance", reflect.TypeOf((*MockClient)(nil).GetBalance), ctx, msg)
 }
 
 // ChainId mocks base method.
