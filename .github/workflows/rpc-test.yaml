@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  ETHLIBS_TEST_URL: https://goerli.infura.io/v3/
+  NODE_URL: ${{ secrets.NODE_URL }}
   AUTH_ID: ${{ secrets.INFURA_PROJECT_ID }}
   AUTH_PASS: ${{ secrets.INFURA_API_KEY }}
 
