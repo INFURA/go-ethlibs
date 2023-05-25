@@ -16,3 +16,6 @@
 vendor/
 
 .tool-versions
+
+# local
+.env

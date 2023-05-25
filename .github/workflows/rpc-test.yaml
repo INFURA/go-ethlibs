@@ -14,9 +14,10 @@ env:
   NODE_URL: ${{ secrets.NODE_URL }}
   AUTH_ID: ${{ secrets.INFURA_PROJECT_ID }}
   AUTH_PASS: ${{ secrets.INFURA_API_KEY }}
+  NODE_META_URL: ${{ secrets.NODE_META_URL }}
 
 jobs:
-  rpc-test:
+  rpc-eth-test:
     name: Unit tests
     runs-on: ubuntu-latest
     steps:
@@ -26,3 +27,14 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run unit tests
         run: go test -v ./node/rpc_test.go
+        
+  # rpc-meta-test:
+  #   name: Unit tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/setup-go@v3
+  #       with:
+  #         go-version: '^1.17.0'
+  #     - uses: actions/checkout@v3
+  #     - name: Run unit tests
+  #       run: go test -v ./node/rpc_test.go

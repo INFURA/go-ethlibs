@@ -2,10 +2,7 @@ package node_test
 
 import (
 	"context"
-	ob64 "encoding/base64"
-	"fmt"
 	"net/http"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -15,40 +12,10 @@ import (
 )
 
 func getClient(t *testing.T, ctx context.Context) node.Client {
-
-	// Save base URL. Fail if not set.
-	// NODE_URL must end with trailing '/' i.e http://url:port/
-	base_url := os.Getenv("NODE_URL")
-	if base_url == "" {
-		t.Skip("NODE_URL not set, skipping test.")
-	}
-
-	// If AUTH_ID is not set, return connection without Basic Auth header
-	auth_id := os.Getenv("AUTH_ID")
-	if auth_id == "" {
-		conn, err := node.NewClient(ctx, base_url, http.Header{})
-		require.NoError(t, err, "creating websocket connection should not fail")
-		return conn
-	}
-
-	// If AUTH_ID is present then check AUTH_PASS and create Basic Auth http header
-	// This is ment for INFURA test nodes to work in a secure way
-	auth_pass := os.Getenv("AUTH_PASS")
-	if auth_pass == "" {
-		t.Skip("AUTH_PASS not set, skipping test.")
-	}
-
-	// format URL -> base_url/auth_id
-	url := fmt.Sprintf("%s%s", base_url, auth_id)
-
-	// Create Basic Auth token base64(id:pass) for http header
-	base64Header := ob64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", auth_id, auth_pass)))
-	header := http.Header{
-		"Authorization": {fmt.Sprintf("Basic %s", base64Header)},
-	}
+	url := "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
 
 	// Create connection
-	conn, err := node.NewClient(ctx, url, header)
+	conn, err := node.NewClient(ctx, url, http.Header{})
 	require.NoError(t, err, "creating websocket connection should not fail")
 	return conn
 }
