@@ -211,10 +211,10 @@ func TestMetaRpc_State_GetTransactionCount(t *testing.T) {
 
 	// Checks the current pending nonce for account can be retrieved
 	blockNum1 := eth.MustBlockNumberOrTag("latest")
-	pendingNonce1, err := conn.GetTransactionCount(ctx, ALICE, *blockNum1)
-	println("pendingNonce1: ", pendingNonce1)
+	count, err := conn.GetTransactionCount(ctx, ALICE, *blockNum1)
+	println("count: ", count)
 	require.NoError(t, err)
-	require.NotEmpty(t, pendingNonce1, "pending nonce must not be nil")
+	require.NotEmpty(t, count, "pending nonce must not be nil")
 
 	// Should catch failure since it is looking for a nonce of a future block
 	// blockNum2 := eth.MustBlockNumberOrTag("0x7654321")
