@@ -476,6 +476,10 @@ func (in *Transaction) DeepCopyInto(out *Transaction) {
 	in.V.DeepCopyInto(&out.V)
 	in.R.DeepCopyInto(&out.R)
 	in.S.DeepCopyInto(&out.S)
+	if in.YParity != nil {
+		in, out := &in.YParity, &out.YParity
+		*out = (*in).DeepCopy()
+	}
 	if in.GasPrice != nil {
 		in, out := &in.GasPrice, &out.GasPrice
 		*out = (*in).DeepCopy()

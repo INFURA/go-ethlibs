@@ -72,6 +72,7 @@ func (t *Transaction) FromRaw(input string) error {
 		t.Input = data
 		t.AccessList = &accessList
 		t.V = v
+		t.YParity = &v
 		t.R = r
 		t.S = s
 		t.ChainId = &chainId
@@ -121,6 +122,7 @@ func (t *Transaction) FromRaw(input string) error {
 		t.Input = data
 		t.AccessList = &accessList
 		t.V = v
+		t.YParity = &v
 		t.R = r
 		t.S = s
 		t.ChainId = &chainId
@@ -168,6 +170,7 @@ func (t *Transaction) FromRaw(input string) error {
 		t.Value = value
 		t.Input = data
 		t.V = v
+		t.YParity = nil
 		t.R = r
 		t.S = s
 

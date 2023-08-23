@@ -32,6 +32,7 @@ type Transaction struct {
 	V           Quantity  `json:"v"`
 	R           Quantity  `json:"r"`
 	S           Quantity  `json:"s"`
+	YParity     *Quantity `json:"yParity,omitempty"`
 
 	// Gas Price (optional since not included in EIP-1559)
 	GasPrice *Quantity `json:"gasPrice,omitempty"`
@@ -161,6 +162,12 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 		if err != nil {
 			return nil, err
 		}
+		var yParity Quantity
+		if t.YParity != nil {
+			yParity = *t.YParity
+		} else {
+			yParity = t.V
+		}
 		payload := rlp.Value{List: []rlp.Value{
 			t.ChainId.RLP(),
 			t.Nonce.RLP(),
@@ -170,7 +177,7 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 			t.Value.RLP(),
 			{String: t.Input.String()},
 			t.AccessList.RLP(),
-			t.V.RLP(),
+			yParity.RLP(),
 			t.R.RLP(),
 			t.S.RLP(),
 		}}
@@ -185,6 +192,12 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 		if err != nil {
 			return nil, err
 		}
+		var yParity Quantity
+		if t.YParity != nil {
+			yParity = *t.YParity
+		} else {
+			yParity = t.V
+		}
 		payload := rlp.Value{List: []rlp.Value{
 			t.ChainId.RLP(),
 			t.Nonce.RLP(),
@@ -195,7 +208,7 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 			t.Value.RLP(),
 			{String: t.Input.String()},
 			t.AccessList.RLP(),
-			t.V.RLP(),
+			yParity.RLP(),
 			t.R.RLP(),
 			t.S.RLP(),
 		}}

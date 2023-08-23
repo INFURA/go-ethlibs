@@ -184,6 +184,7 @@ func TestTransactionTypeDynamicFee(t *testing.T) {
         "transactionIndex": "0x41",
         "value": "0x0",
         "v": "0x1",
+        "yParity": "0x1",
         "r": "0x396864e5f9132327defdb1449504252e1fa6bce73feb8cd6f348a342b198af34",
         "s": "0x44dbba72e6d3304104848277143252ee43627c82f02d1ef8e404e1bf97c70158",
         "gasPrice": "0x4a817c800",
@@ -206,6 +207,8 @@ func TestTransactionTypeDynamicFee(t *testing.T) {
 	require.NotNil(t, tx.Type)
 	require.Equal(t, eth.TransactionTypeDynamicFee, tx.Type.Int64())
 	require.Equal(t, eth.TransactionTypeDynamicFee, tx.TransactionType())
+	require.NotNil(t, tx.YParity)
+	require.Equal(t, tx.V, *tx.YParity)
 
 	j, err := json.Marshal(&tx)
 	require.NoError(t, err)

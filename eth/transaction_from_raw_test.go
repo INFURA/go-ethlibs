@@ -120,6 +120,8 @@ func TestTransaction_FromRawEIP2930(t *testing.T) {
 		require.Equal(t, "0x1684eb52101a049f7bda9b0239dbd56db6735f8eed4207cdabd682dde3ed06bf", tx.R.String())
 		require.Equal(t, "0x71d5cf480a272dc907ff4a4efb2a4a96e2132409592268747acfa5d03f50deb7", tx.S.String())
 		require.Equal(t, "0x0", tx.V.String())
+		require.NotNil(t, tx.YParity)
+		require.Equal(t, "0x0", tx.YParity.String())
 		require.Equal(t, "0x8A8eAFb1cf62BfBeb1741769DAE1a9dd47996192", tx.To.String())
 		require.Equal(t, "0x1", tx.Type.String())
 		require.Equal(t, int64(0), tx.Value.Int64())
