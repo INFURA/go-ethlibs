@@ -335,6 +335,18 @@ func (d *Data256) RLP() rlp.Value {
 	}
 }
 
+type Hashes []Data32
+
+func (slice Hashes) RLP() rlp.Value {
+	v := rlp.Value{
+		List: make([]rlp.Value, len(slice)),
+	}
+	for i := range slice {
+		v.List[i].String = slice[i].String()
+	}
+	return v
+}
+
 type hasBytes interface {
 	Bytes() []byte
 }

@@ -1,11 +1,16 @@
 package eth_test
 
 import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/INFURA/go-ethlibs/eth"
+	"github.com/INFURA/go-ethlibs/rlp"
 )
 
 func TestTransaction_FromRaw(t *testing.T) {
@@ -25,6 +30,32 @@ func TestTransaction_FromRaw(t *testing.T) {
 	chainId, err := signature.ChainId()
 	require.NoError(t, err)
 	require.Equal(t, eth.QuantityFromInt64(42), *chainId)
+
+	require.True(t, tx.IsProtected())
+}
+
+// polygon
+func TestTransaction_PolygonFromRaw(t *testing.T) {
+	input := "0xf88a228523702ac8c182c350944c078868285cf84f5501b64e9008e7da8236711580a47f8661a1000000000000000000000000000000000000000000023b56e96692a478da0000820135a058a0bcf00d4db5a85eca237a1f021236df2af619d1dbda1b1071a08b8ee512f9a000f960dd89b8232792959f5c59a9594acce1c77da320e1532aa36bce31a42159"
+	tx := eth.Transaction{}
+	err := tx.FromRaw(input)
+	require.NoError(t, err)
+	require.Equal(t, "0xa92d0a000c44a8c548360b5c7e2d940e430dbb091048791315233d6ec656c7d1", tx.Hash.String())
+	require.Equal(t, eth.MustAddress("0x7f54c0a57b5bcdfef12688a04068e987c1fe31a4").String(), tx.From.String())
+
+	b, err := json.MarshalIndent(&tx, "", "  ")
+	require.NoError(t, err)
+	t.Logf("Decoded tx: \n%s", string(b))
+
+	signature, err := tx.Signature()
+	require.NoError(t, err)
+	r, s, v := signature.EIP155Values()
+	require.Equal(t, tx.R, r)
+	require.Equal(t, tx.S, s)
+	require.Equal(t, tx.V, v)
+	chainId, err := signature.ChainId()
+	require.NoError(t, err)
+	require.Equal(t, eth.QuantityFromInt64(0x89), *chainId)
 
 	require.True(t, tx.IsProtected())
 }
@@ -130,6 +161,165 @@ func TestTransaction_FromRawEIP2930(t *testing.T) {
 		require.Equal(t, raw, rep.String())
 
 		require.True(t, tx.IsProtected())
+	}
+}
+
+func TestTransaction_FromRawEIP4844(t *testing.T) {
+	hash := `0xdc50d6f000e5f46a205c7d84107240d43e10f5c16d2e6ee8035a0da9200dcebe`
+	// This raw tx was generated from go-ethereum's unit tests.  Since the blobs, commitments and proofs are all zero I've "compressed"
+	// the transaction by eliminating a run of 262148 consecutive zeros, hence the odd way this is constructed to keep the unit test
+	// payload a reasonable size.
+	rawBlob := strings.Repeat(`00`, 131072)
+	raw := (`0x03fa020125f8b7010516058261a894030405000000000000000000000000000000000063b20000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c00fe1a0010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c44401401a069263c625a202b369d6a507123da6da09913411a798569800ab6acc8ea025fc8a07a55f584d158ece16253c9c4c932d07eb8bdff4870076c9b7e37aecd074e3528fa020004ba020000` +
+		// the blob is 128KB of zeros
+		rawBlob +
+		// and append the empty string commitments and proofs, RLP encoded as single entry lists
+		strings.Repeat(`f1b0c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000`, 2))
+
+	tx := eth.Transaction{}
+	err := tx.FromRaw(raw)
+	require.NoError(t, err)
+	require.Equal(t, hash, tx.Hash.String())
+	require.NotEmpty(t, tx.BlobVersionedHashes)
+	require.NotNil(t, tx.BlobBundle)
+	require.NotEmpty(t, tx.From.String())
+	require.Equal(t, len(tx.BlobVersionedHashes), len(tx.BlobBundle.Blobs))
+	require.Equal(t, len(tx.BlobVersionedHashes), len(tx.BlobBundle.Commitments))
+	require.Equal(t, len(tx.BlobVersionedHashes), len(tx.BlobBundle.Proofs))
+	require.Equal(t, rawBlob, tx.BlobBundle.Blobs[0].String()[2:])
+	require.Equal(t, "0xc00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", tx.BlobBundle.Commitments[0].String())
+	require.Equal(t, "0xc00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", tx.BlobBundle.Proofs[0].String())
+}
+
+func TestTransaction_FromRaw_BesuBlobs(t *testing.T) {
+	// The tests in this function are derived from:
+	// https://github.com/hyperledger/besu/blob/main/ethereum/core/src/test/java/org/hyperledger/besu/ethereum/core/encoding/BlobTransactionEncodingTest.java#L42
+	//
+	// The R/S/V/preimage/signingHash/etc values were extracted from the runtime values of the besu unit tests since
+	// the values aren't compared anywhere in the test themselves.
+	var rawNetworkRepresentation string
+	// Same contents as https://github.com/hyperledger/besu/blob/main/ethereum/core/src/test/resources/org/hyperledger/besu/ethereum/core/encoding/blob2.txt
+
+	if contents, err := os.ReadFile("testdata/raw/eip_4844_raw_blob_network_repr_besu_example.txt"); err != nil {
+		t.Skipf("Raw blob file unavailable: %s", err.Error())
+	} else {
+		rawNetworkRepresentation = string(contents)
+	}
+	tx := eth.Transaction{}
+	err := tx.FromRaw(rawNetworkRepresentation)
+	require.NoError(t, err)
+
+	require.Equal(t, "59716453833386226137613404642880905403104304569521254368985594550943831948713", tx.R.Big().String())
+	require.Equal(t, "33984205643972324058974709030721249530161914536639609134031478843917742230160", tx.S.Big().String())
+	require.Equal(t, "1", tx.V.Big().String())
+
+	if preimage, err := tx.SigningPreimage(*tx.ChainId); err != nil {
+		require.NoError(t, err)
+	} else {
+		require.Equal(t, "0x03f84c0780843b9aca008506fc23ac00830186a09400000000000000000000000000000000000001008080c001e1a0010657f37554c781402a22917dee2f75def7ab966d7b770905398eba3c444014", preimage.String())
+	}
+
+	if signingHash, err := tx.SigningHash(*tx.ChainId); err != nil {
+		require.NoError(t, err)
+	} else {
+		require.Equal(t, "0xa9a537abe25c227bbc7f7eceb8b795ec1831dbda32f8194c3688b1add711646b", signingHash.String())
+	}
+
+	require.Equal(t, "0xd886baa4d7824402a508487d94b8efed257832170ecb5f5a85b8d2e15317728c", tx.Hash.String())
+	require.Equal(t, eth.ToChecksumAddress("0xcf49fda3be353c69b41ed96333cd24302da4556f"), tx.From.String())
+	require.NotEmpty(t, tx.BlobVersionedHashes)
+	require.NotNil(t, tx.BlobBundle)
+	require.NotEmpty(t, tx.From.String())
+
+	encoded, err := tx.NetworkRepresentation()
+	require.NoError(t, err)
+	require.Equal(t, rawNetworkRepresentation, encoded.String())
+
+	// RawRepresentation should return just the body payload, no blobs
+	t.Run("compare raw representation", func(t *testing.T) {
+		raw, err := tx.RawRepresentation()
+		require.NoError(t, err)
+		require.Equal(t, "0x03", raw.String()[:4])
+
+		// Decode the raw representation w/o the 0x03 prefix
+		decodedRaw, err := rlp.From("0x" + raw.String()[4:])
+		require.NoError(t, err)
+		// and decode the network representation w/o the prefix as well
+		decodedNetwork, err := rlp.From("0x" + rawNetworkRepresentation[4:])
+		require.NoError(t, err)
+		require.Equal(t, 4, len(decodedNetwork.List))
+
+		// The RLP of the raw body and the first list in the network
+		// representation should match
+		require.Condition(t, func() (success bool) {
+			encodedRaw, err := decodedRaw.Encode()
+			require.NoError(t, err)
+
+			encodedNetworkBody, err := decodedNetwork.List[0].Encode()
+			require.NoError(t, err)
+
+			return encodedRaw == encodedNetworkBody
+		})
+	})
+
+	// These raw txs are NOT in network representation, but we should still support that
+	// They are taken from:
+	// https://github.com/hyperledger/besu/blob/main/ethereum/core/src/test/java/org/hyperledger/besu/ethereum/core/encoding/BlobTransactionEncodingTest.java#L34-L45
+	for i, testCase := range []struct {
+		raw  string
+		err  error
+		from string
+		hash string
+	}{
+		{
+			raw:  "0x03f89d850120b996ed3685012a1a646085012a1a64608303345094ffb38a7a99e3e2335be83fc74b7faa19d55312418308a80280c085012a1a6460e1a00153a6a1e053cf4c5a09e84088ed8ad7cb53d76c8168f1b82f7cfebfcd06da1a01a007785223eec68459d72265f10bdb30ec3415252a63100605a03142fa211ebbe9a07dbbf9e081fa7b9a01202e4d9ee0e0e513f80efbbab6c784635429905389ce86",
+			hash: "0x534869a82832a2299fa500788100e0cf15e3a554e1d886739a6dc99b9321ca29",
+			from: "0x8472727b0538eb1a66bfcae3aab915a552af717d",
+			err:  nil,
+		},
+		{
+			raw:  "0x03f89d850120b996ed81f0847735940084b2d05e158307a12094000000000000000000000000000000000010101001855f495f4955c084b2d05e15e1a001d343d3cd62abd9c5754cbe5128c25ea90786a8ae75fb79c8cf95f4dcdd08ec80a014103732b5a9789bbf5ea859ed904155398abbef343f8fd63007efb70795d382a07272e847382789a092eadf08e2b9002e727376f8466fff0e4d4639fd60a528f2",
+			hash: "0xfb997a3392b654be7498b72ac7258dfdc3329917227ad09b91648667ce43a199",
+			from: "0x73fe966507a1d9172ebc4c43a253bba0d5df4925",
+			err:  nil,
+		},
+		{
+			raw:  "0x03f89d850120b996ed81f1843b9aca00847735940e8307a12094000000000000000000000000000000000010101001855f495f4955c0847735940ee1a001d552e24560ec2f168be1d4a6385df61c70afe4288f00a3ad172da1a6f2b4f280a0b6690786e5fe79df67dcb60e8a9e8555142c3c96ffd5097c838717f0a7f64129a0112f01ed0cd3b86495f01736fbbc1b793f71565223aa26f093471a4d8605d198",
+			hash: "0x127ddcc9a245f508ed30e14a517221478abe53d446eb1cbaca82b1f536dd6b72",
+			from: "0x5bf5f24e6125ec27c6a651a4da25fd0228fedd5b",
+			err:  nil,
+		},
+		{
+			raw:  "0x03f897850120b996ed80840bebc200843b9aca078303345094c8d369b164361a8961286cfbab3bc10f962185a88080c08411e1a300e1a0011df88a2971c8a7ac494a7ba37ec1acaa1fc1edeeb38c839b5d1693d47b69b080a032f122f06e5802224db4c8a58fd22c75173a713f63f89936f811c144b9e40129a043a2a872cbfa5727007adf6a48febe5f190d2e4cd5ed6122823fb6ff47ecda32",
+			hash: "0xef1e339ff3fabfbe77ed9bff79d7d92cddc338eb7f9be3918521a7722e0be5cb",
+			from: "0xc3ff483dfe9246e4d39382733f096fb949345fd1",
+			err:  nil,
+		},
+	} {
+		t.Run(fmt.Sprintf("besu_tx_raw_%d", i), func(t *testing.T) {
+			tx := eth.Transaction{}
+			err := tx.FromRaw(testCase.raw)
+			if testCase.err != nil {
+				require.EqualError(t, err, testCase.err.Error())
+				return
+			}
+
+			require.NoError(t, err)
+			require.Nil(t, tx.BlobBundle)
+			require.Equal(t, eth.TransactionTypeBlob, tx.Type.Int64())
+			require.Equal(t, eth.ToChecksumAddress(testCase.from), tx.From.String())
+			require.Equal(t, testCase.hash, tx.Hash.String())
+
+			// Raw Representation should match the raw values
+			rawRepresentation, err := tx.RawRepresentation()
+			require.NoError(t, err)
+			require.Equal(t, testCase.raw, rawRepresentation.String())
+
+			// And Network Representation should fail
+			networkRepresentation, err := tx.NetworkRepresentation()
+			require.Error(t, err)
+			require.Nil(t, networkRepresentation)
+		})
 	}
 }
 

@@ -34,6 +34,8 @@ func (t *Transaction) FromRaw(input string) error {
 		r                    Quantity
 		s                    Quantity
 		accessList           AccessList
+		maxFeePerBlobGas     Quantity
+		blobVersionedHashes  []Hash
 	)
 
 	if !strings.HasPrefix(input, "0x") {
@@ -150,6 +152,126 @@ func (t *Transaction) FromRaw(input string) error {
 		t.Hash = raw.Hash()
 		t.From = *sender
 		return nil
+	case firstByte == byte(TransactionTypeBlob):
+		// EIP-4844 transaction
+		var (
+			body        rlp.Value
+			blobs       []Data
+			commitments []Data
+			proofs      []Data
+			hasBlobs    bool = false
+		)
+		// The raw tx can be a full "Network Representation" tx of the form:
+		// 0x03 || rlp([tx_payload_body, blobs, commitments, proofs])
+		//
+		// Or just the tx payload body:
+		// 0x03 || rlp([chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to, value, data, access_list, max_fee_per_blob_gas, blob_versioned_hashes, y_parity, r, s])
+		payload := "0x" + input[4:]
+		decoded, err := rlp.From(payload)
+
+		switch len(decoded.List) {
+		case 14:
+			body = *decoded
+			hasBlobs = false
+		case 4:
+			// TransactionPayloadBody is itself an RLP list of:
+			// [chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to, value, data, access_list, max_fee_per_blob_gas, blob_versioned_hashes, y_parity, r, s]
+			if err := rlpDecodeList(decoded, &body, &blobs, &commitments, &proofs); err != nil {
+				return err
+			}
+			hasBlobs = true
+		default:
+			return errors.New("blob transaction invalid tx RLP length")
+		}
+
+		if err := rlpDecodeList(&body, &chainId, &nonce, &maxPriorityFeePerGas, &maxFeePerGas, &gasLimit, &to, &value, &data, &accessList, &maxFeePerBlobGas, &blobVersionedHashes, &v, &r, &s); err != nil {
+			return errors.Wrap(err, "could not decode RLP components")
+		}
+
+		if hasBlobs && (len(blobVersionedHashes) != len(blobs) || len(blobs) != len(commitments) || len(commitments) != len(proofs)) {
+			return errors.New("mismatched blob field counts")
+		}
+
+		// TODO: at this point we could verify these two constraints
+		//
+		// - blobVersionedHashes[i] = "0x01" + sha256(commitments[i])[4:]
+		// - the KZG commitments match the corresponding blobs and proofs
+		//
+		// However, this all requires additionally implementing a sha256 method
+		// for eth.Data and the use of a KZG proof framework, both of which
+		// feel outside the scope of this package, especially considering
+		// that these fields are not exposed at the JSONRPC layer which is
+		// our primary focus.
+		//
+		// In pseudocode this all would look something like:
+		//
+		//  for i := range blobVersionedHashes {
+		//	  blobHash := commitments[i].Sha256()
+		//	  versionedHash := "0x01" + blobHash[4:]
+		//	  if blobVersionedHashes[i] != versionedHash {
+		//	    return errors.New("incorrect blob versioned hash")
+		//	  }
+		//	  if err := kzg_verify_proofs(commitments[i], blobs[i], proofs[i]); err != nil {
+		//	    return err
+		//	  }
+		//  }
+		//
+
+		if r.Int64() == 0 && s.Int64() == 0 {
+			return errors.New("unsigned transactions not supported")
+		}
+
+		t.Type = OptionalQuantityFromInt(int(firstByte))
+		t.ChainId = &chainId
+		t.Nonce = nonce
+		t.MaxPriorityFeePerGas = &maxPriorityFeePerGas
+		t.MaxFeePerGas = &maxFeePerGas
+		t.Gas = gasLimit
+		t.To = to
+		t.Value = value
+		t.Input = data
+		t.AccessList = &accessList
+		t.MaxFeePerBlobGas = &maxFeePerBlobGas
+		t.BlobVersionedHashes = blobVersionedHashes
+		t.V = v
+		t.YParity = &v
+		t.R = r
+		t.S = s
+
+		if hasBlobs {
+			t.BlobBundle = &BlobsBundleV1{
+				Blobs:       blobs,
+				Commitments: commitments,
+				Proofs:      proofs,
+			}
+		} else {
+			t.BlobBundle = nil
+		}
+
+		signature, err := NewEIP2718Signature(chainId, r, s, v)
+		if err != nil {
+			return err
+		}
+
+		signingHash, err := t.SigningHash(signature.chainId)
+		if err != nil {
+			return err
+		}
+
+		sender, err := signature.Recover(signingHash)
+		if err != nil {
+			return err
+		}
+
+		raw, err := t.RawRepresentation()
+		if err != nil {
+			return err
+		}
+
+		t.Hash = raw.Hash()
+		t.From = *sender
+		return nil
+
 	case firstByte > 0x7f:
 		// In EIP-2718 types larger than 0x7f are reserved since they potentially conflict with legacy RLP encoded
 		// transactions.  As such we can attempt to decode any such transactions as legacy format and attempt to
@@ -205,6 +327,8 @@ func (t *Transaction) FromRaw(input string) error {
 // rlpDecodeList decodes an RLP list into the passed in receivers.  Currently only the receiver types needed for
 // legacy and EIP-2930 transactions are implemented, new receivers can easily be added in the for loop.
 //
+// input is either a string or pointer to an rlp.Value, if it's a string then it's assumed to be RLP encoded and is decoded first
+//
 // Note that when calling this function, the receivers MUST be pointers never values, and for "optional" receivers
 // such as Address a pointer to a pointer must be passed.  For example:
 //
@@ -215,10 +339,17 @@ func (t *Transaction) FromRaw(input string) error {
 //    err := rlpDecodeList(payload, &addr, &nonce)
 //
 // TODO: Consider making this function public once all receiver types in the eth package are supported.
-func rlpDecodeList(input string, receivers ...interface{}) error {
-	decoded, err := rlp.From(input)
-	if err != nil {
-		return err
+func rlpDecodeList(input interface{}, receivers ...interface{}) error {
+	var decoded *rlp.Value
+	switch i := input.(type) {
+	case string:
+		if d, err := rlp.From(i); err != nil {
+			return err
+		} else {
+			decoded = d
+		}
+	case *rlp.Value:
+		decoded = i
 	}
 
 	if len(decoded.List) < len(receivers) {
@@ -250,6 +381,24 @@ func rlpDecodeList(input string, receivers ...interface{}) error {
 				return errors.Wrapf(err, "could not decode list item %d to Data", i)
 			}
 			*receiver = *d
+		case *[]Data:
+			*receiver = make([]Data, len(value.List))
+			for j := range value.List {
+				d, err := NewData(value.List[j].String)
+				if err != nil {
+					return errors.Wrapf(err, "could not decode list item %d %d to Data", i, j)
+				}
+				(*receiver)[j] = *d
+			}
+		case *[]Data32:
+			*receiver = make([]Data32, len(value.List))
+			for j := range value.List {
+				d, err := NewData32(value.List[j].String)
+				if err != nil {
+					return errors.Wrapf(err, "could not decode list item %d %d to Data", i, j)
+				}
+				(*receiver)[j] = *d
+			}
 		case *rlp.Value:
 			*receiver = value
 		case *AccessList:
