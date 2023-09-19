@@ -32,6 +32,13 @@ type Block struct {
 	WithdrawalsRoot *Data32      `json:"withdrawalsRoot,omitempty"`
 	Withdrawals     []Withdrawal `json:"withdrawals,omitempty"`
 
+	// EIP-4788 Beacon Block Root
+	ParentBeaconBlockRoot *Hash `json:"parentBeaconBlockRoot,omitempty"`
+
+	// EIP-4844 Blob related block fields
+	ExcessBlobGas *Quantity `json:"excessBlobGas,omitempty"`
+	BlobGasUsed   *Quantity `json:"blobGasUsed,omitempty"`
+
 	// Ethhash POW Fields
 	Nonce   *Data8 `json:"nonce"`
 	MixHash *Data  `json:"mixHash"`
@@ -118,34 +125,44 @@ func (b Block) MarshalJSON() ([]byte, error) {
 				WithdrawalsRoot *Data32      `json:"withdrawalsRoot"`
 				Withdrawals     []Withdrawal `json:"withdrawals"`
 
+				// EIP-4788 Beacon Block Root
+				ParentBeaconBlockRoot *Hash `json:"parentBeaconBlockRoot,omitempty"`
+
+				// EIP-4844 Blob related block fields
+				ExcessBlobGas *Quantity `json:"excessBlobGas,omitempty"`
+				BlobGasUsed   *Quantity `json:"blobGasUsed,omitempty"`
+
 				Nonce   *Data8 `json:"nonce"`
 				MixHash *Data  `json:"mixHash"`
 			}
 
 			w := withWithdrawals{
-				Number:           b.Number,
-				Hash:             b.Hash,
-				ParentHash:       b.ParentHash,
-				SHA3Uncles:       b.SHA3Uncles,
-				LogsBloom:        b.LogsBloom,
-				TransactionsRoot: b.TransactionsRoot,
-				StateRoot:        b.StateRoot,
-				ReceiptsRoot:     b.ReceiptsRoot,
-				Miner:            b.Miner,
-				Difficulty:       b.Difficulty,
-				TotalDifficulty:  b.TotalDifficulty,
-				ExtraData:        b.ExtraData,
-				Size:             b.Size,
-				GasLimit:         b.GasLimit,
-				GasUsed:          b.GasUsed,
-				Timestamp:        b.Timestamp,
-				Transactions:     b.Transactions,
-				Uncles:           b.Uncles,
-				BaseFeePerGas:    b.BaseFeePerGas,
-				Nonce:            b.Nonce,
-				MixHash:          b.MixHash,
-				WithdrawalsRoot:  b.WithdrawalsRoot,
-				Withdrawals:      b.Withdrawals,
+				Number:                b.Number,
+				Hash:                  b.Hash,
+				ParentHash:            b.ParentHash,
+				SHA3Uncles:            b.SHA3Uncles,
+				LogsBloom:             b.LogsBloom,
+				TransactionsRoot:      b.TransactionsRoot,
+				StateRoot:             b.StateRoot,
+				ReceiptsRoot:          b.ReceiptsRoot,
+				Miner:                 b.Miner,
+				Difficulty:            b.Difficulty,
+				TotalDifficulty:       b.TotalDifficulty,
+				ExtraData:             b.ExtraData,
+				Size:                  b.Size,
+				GasLimit:              b.GasLimit,
+				GasUsed:               b.GasUsed,
+				Timestamp:             b.Timestamp,
+				Transactions:          b.Transactions,
+				Uncles:                b.Uncles,
+				BaseFeePerGas:         b.BaseFeePerGas,
+				Nonce:                 b.Nonce,
+				MixHash:               b.MixHash,
+				WithdrawalsRoot:       b.WithdrawalsRoot,
+				Withdrawals:           b.Withdrawals,
+				ParentBeaconBlockRoot: b.ParentBeaconBlockRoot,
+				ExcessBlobGas:         b.ExcessBlobGas,
+				BlobGasUsed:           b.BlobGasUsed,
 			}
 
 			return json.Marshal(&w)

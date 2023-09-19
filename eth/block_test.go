@@ -621,3 +621,38 @@ func TestBlock_ZhejiangBlockMarshalling(t *testing.T) {
 		require.NotEqual(t, block.Withdrawals[0].Index.Int64(), other.Withdrawals[0].Index.Int64())
 	})
 }
+
+func TestBlock_DencunDevnet8Block(t *testing.T) {
+	// curl https://rpc.dencun-devnet-8.ethpandaops.io/ -H 'Content-Type: application/json' -d '{"method":"eth_getBlockByNumber","params":["0x2a1cb", true],"id":1,"jsonrpc":"2.0"}' | jq -c .result
+	raw := `{"baseFeePerGas":"0x7","blobGasUsed":"0x60000","difficulty":"0x0","excessBlobGas":"0x0","extraData":"0x4e65746865726d696e64","gasLimit":"0x1c9c380","gasUsed":"0xf618","hash":"0xfc2715ff196e23ae613ed6f837abd9035329a720a1f4e8dce3b0694c867ba052","logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","miner":"0xf97e180c050e5ab072211ad2c213eb5aee4df134","mixHash":"0xfe22e918a42ab40a176372da0352271d7a8d206af1f0f81b4ae24e0366b294e1","nonce":"0x0000000000000000","number":"0x2a1cb","parentBeaconBlockRoot":"0x3e75ca617f5191780dc90f5054d192c29167813ca0e38b84b26c30ae8886998b","parentHash":"0x0efbec3f110f71016eabe050984405a0f5b5bf7d4c653aaeb876a2a83d7e2a95","receiptsRoot":"0x9af165447e5b3193e9ac8389418648ee6d6cb1d37459fe65cfc245fc358721bd","sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","size":"0x437","stateRoot":"0x4662ac8f239eb6b068a89d82db55fbd699bc883a43812a6ced13976f91c30b71","timestamp":"0x65004480","totalDifficulty":"0x1","transactions":[{"blockHash":"0xfc2715ff196e23ae613ed6f837abd9035329a720a1f4e8dce3b0694c867ba052","blockNumber":"0x2a1cb","from":"0xad01b55d7c3448b8899862eb335fbb17075d8de2","gas":"0x5208","gasPrice":"0x1d1a94a201c","maxFeePerGas":"0x1d1a94a201c","maxPriorityFeePerGas":"0x1d1a94a201c","maxFeePerBlobGas":"0x3e8","hash":"0x5ceec39b631763ae0b45a8fb55c373f38b8fab308336ca1dc90ecd2b3cf06d00","input":"0x","nonce":"0x1b483","to":"0x000000000000000000000000000000000000f1c1","transactionIndex":"0x0","value":"0x0","type":"0x3","accessList":[],"chainId":"0x1a1f0ff42","blobVersionedHashes":["0x01a128c46fc61395706686d6284f83c6c86dfc15769b9363171ea9d8566e6e76"],"v":"0x0","r":"0x343c6239323a81ef61293cb4a4d37b6df47fbf68114adb5dd41581151a077da1","s":"0x48c21f6872feaf181d37cc4f9bbb356d3f10b352ceb38d1c3b190d749f95a11b","yParity":"0x0"},{"blockHash":"0xfc2715ff196e23ae613ed6f837abd9035329a720a1f4e8dce3b0694c867ba052","blockNumber":"0x2a1cb","from":"0xad01b55d7c3448b8899862eb335fbb17075d8de2","gas":"0x5208","gasPrice":"0x1d1a94a201c","maxFeePerGas":"0x1d1a94a201c","maxPriorityFeePerGas":"0x1d1a94a201c","maxFeePerBlobGas":"0x3e8","hash":"0xed2587d8c4cccd09bc2c0ac50dd0bc596177b3eef2624957114fd8c075ff71f7","input":"0x","nonce":"0x1b484","to":"0x000000000000000000000000000000000000f1c1","transactionIndex":"0x1","value":"0x0","type":"0x3","accessList":[],"chainId":"0x1a1f0ff42","blobVersionedHashes":["0x01f79951ba3a9c2a617bece3d0a355a32c21d2502b5d1245dcef954c1e97e301"],"v":"0x0","r":"0x1bffc7230fbf4675f4050ddfc09a0ea8957f6ed839f2a6aafe8d60ba3704f0a6","s":"0x42cf198e98b71eb47ab04b3115bb96de8ca8ee36ed92990efc258a0f80f4fa98","yParity":"0x0"},{"blockHash":"0xfc2715ff196e23ae613ed6f837abd9035329a720a1f4e8dce3b0694c867ba052","blockNumber":"0x2a1cb","from":"0xad01b55d7c3448b8899862eb335fbb17075d8de2","gas":"0x5208","gasPrice":"0x1d1a94a201c","maxFeePerGas":"0x1d1a94a201c","maxPriorityFeePerGas":"0x1d1a94a201c","maxFeePerBlobGas":"0x3e8","hash":"0x8b6536d1dacf8f2e4d95bb8b2ed05067b96b27a8b3abe004d29a712cafdf712a","input":"0x","nonce":"0x1b485","to":"0x000000000000000000000000000000000000f1c1","transactionIndex":"0x2","value":"0x0","type":"0x3","accessList":[],"chainId":"0x1a1f0ff42","blobVersionedHashes":["0x017c8f97daa97f4089502ff59f05e40217f2644a9462588189c5ca4e24221d08"],"v":"0x0","r":"0x8146d689e09836b87d4fe551cc590c83f6c96029f8def92686bfd1859fed4704","s":"0x4357b7bc331e23381841b6afc98cf4bd322cd6d90dd9f2f1af78b593611c7251","yParity":"0x0"}],"transactionsRoot":"0xc5f62b8c7d89e8dce123a91ebe4fd2428f9960f13316e99ff4a8754bd8ee6fa8","uncles":[],"withdrawals":[],"withdrawalsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"}`
+
+	var block eth.Block
+	err := json.Unmarshal([]byte(raw), &block)
+	require.NoError(t, err)
+
+	require.NotNil(t, block.ParentBeaconBlockRoot)
+	require.Equal(t, "0x3e75ca617f5191780dc90f5054d192c29167813ca0e38b84b26c30ae8886998b", block.ParentBeaconBlockRoot.String())
+
+	require.NotNil(t, block.ExcessBlobGas)
+	require.Equal(t, "0x0", block.ExcessBlobGas.String())
+
+	require.NotNil(t, block.BlobGasUsed)
+	require.Equal(t, "0x60000", block.BlobGasUsed.String())
+
+	require.Len(t, block.Transactions, 3)
+	for i := range block.Transactions {
+		tx := block.Transactions[i]
+		require.Equal(t, block.Hash.String(), tx.BlockHash.String())
+		require.Equal(t, "0x3", tx.Type.String())
+		require.NotEmpty(t, tx.BlobVersionedHashes)
+	}
+
+	j, err := json.Marshal(&block)
+	require.NoError(t, err)
+
+	require.JSONEq(t, raw, string(j))
+
+	deepCopy := block.DeepCopy()
+	require.NotNil(t, deepCopy.ParentBeaconBlockRoot)
+	require.Equal(t, block.ParentBeaconBlockRoot, deepCopy.ParentBeaconBlockRoot)
+}

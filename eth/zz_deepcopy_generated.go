@@ -125,6 +125,19 @@ func (in *Block) DeepCopyInto(out *Block) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.ParentBeaconBlockRoot != nil {
+		in, out := &in.ParentBeaconBlockRoot, &out.ParentBeaconBlockRoot
+		*out = new(Data32)
+		**out = **in
+	}
+	if in.ExcessBlobGas != nil {
+		in, out := &in.ExcessBlobGas, &out.ExcessBlobGas
+		*out = (*in).DeepCopy()
+	}
+	if in.BlobGasUsed != nil {
+		in, out := &in.BlobGasUsed, &out.BlobGasUsed
+		*out = (*in).DeepCopy()
+	}
 	if in.Nonce != nil {
 		in, out := &in.Nonce, &out.Nonce
 		*out = new(Data8)
