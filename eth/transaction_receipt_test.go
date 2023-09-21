@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/INFURA/go-ethlibs/eth"
 	"github.com/stretchr/testify/require"
+
+	"github.com/INFURA/go-ethlibs/eth"
 )
 
 func TestTransactionReceipts(t *testing.T) {
@@ -202,4 +203,40 @@ func TestTransactionReceipts(t *testing.T) {
 		require.Equal(t, eth.TransactionTypeAccessList, receipt.TransactionType())
 	}
 
+}
+
+func TestTransactionReceipt_4844(t *testing.T) {
+	// curl https://rpc.dencun-devnet-8.ethpandaops.io/ -H 'Content-Type: application/json' -d '{"method":"eth_getTransactionReceipt","params":["0x5ceec39b631763ae0b45a8fb55c373f38b8fab308336ca1dc90ecd2b3cf06d00"],"id":1,"jsonrpc":"2.0"}'
+	raw := `{
+		"blobGasPrice": "0x1",
+		"blobGasUsed": "0x20000",
+		"blockHash": "0xfc2715ff196e23ae613ed6f837abd9035329a720a1f4e8dce3b0694c867ba052",
+		"blockNumber": "0x2a1cb",
+		"contractAddress": null,
+		"cumulativeGasUsed": "0x5208",
+		"effectiveGasPrice": "0x1d1a94a201c",
+		"from": "0xad01b55d7c3448b8899862eb335fbb17075d8de2",
+		"gasUsed": "0x5208",
+		"logs": [],
+		"logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+		"status": "0x1",
+		"to": "0x000000000000000000000000000000000000f1c1",
+		"transactionHash": "0x5ceec39b631763ae0b45a8fb55c373f38b8fab308336ca1dc90ecd2b3cf06d00",
+		"transactionIndex": "0x0",
+		"type": "0x3"
+	  }`
+
+	receipt := eth.TransactionReceipt{}
+	err := json.Unmarshal([]byte(raw), &receipt)
+	require.NoError(t, err, "unmarshal must succeed")
+
+	require.NotNil(t, receipt.Type)
+	require.Equal(t, "0x3", receipt.Type.String())
+	require.Equal(t, "0x1", receipt.BlobGasPrice.String())
+	require.Equal(t, "0x20000", receipt.BlobGasUsed.String())
+
+	// convert back to JSON and compare
+	b, err := json.Marshal(&receipt)
+	require.NoError(t, err)
+	require.JSONEq(t, raw, string(b))
 }

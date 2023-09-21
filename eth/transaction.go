@@ -15,6 +15,7 @@ var (
 	TransactionTypeLegacy     = int64(0x0) // TransactionTypeLegacy refers to pre-EIP-2718 transactions.
 	TransactionTypeAccessList = int64(0x1) // TransactionTypeAccessList refers to EIP-2930 transactions.
 	TransactionTypeDynamicFee = int64(0x2) // TransactionTypeDynamicFee refers to EIP-1559 transactions.
+	TransactionTypeBlob       = int64(0x3) // TransactionTypeBlob refers to EIP-4844 "blob" transactions.
 )
 
 type Transaction struct {
@@ -32,6 +33,7 @@ type Transaction struct {
 	V           Quantity  `json:"v"`
 	R           Quantity  `json:"r"`
 	S           Quantity  `json:"s"`
+	YParity     *Quantity `json:"yParity,omitempty"`
 
 	// Gas Price (optional since not included in EIP-1559)
 	GasPrice *Quantity `json:"gasPrice,omitempty"`
@@ -51,8 +53,26 @@ type Transaction struct {
 	// EIP-2930 accessList
 	AccessList *AccessList `json:"accessList,omitempty"`
 
+	// EIP-4844 blob fields
+	MaxFeePerBlobGas    *Quantity `json:"maxFeePerBlobGas,omitempty"`
+	BlobVersionedHashes Hashes    `json:"blobVersionedHashes,omitempty"`
+
+	// EIP-4844 Blob transactions in "Network Representation" include the additional
+	// fields from the BlobsBundleV1 engine API schema.  However, these fields are not
+	// available at the execution layer and thus not expected to be seen when
+	// dealing with JSONRPC representations of transactions, and are excluded from
+	// JSON Marshalling.  As such, this field is only populated when decoding a
+	// raw transaction in "Network Representation" and the fields must be accessed directly.
+	BlobBundle *BlobsBundleV1 `json:"-"`
+
 	// Keep the source so we can recreate its expected representation
 	source string
+}
+
+type BlobsBundleV1 struct {
+	Blobs       []Data `json:"blobs"`
+	Commitments []Data `json:"commitments"`
+	Proofs      []Data `json:"proofs"`
 }
 
 type NewPendingTxBodyNotificationParams struct {
@@ -121,6 +141,22 @@ func (t *Transaction) RequiredFields() error {
 		if t.MaxPriorityFeePerGas == nil {
 			fields = append(fields, "maxPriorityFeePerGas")
 		}
+	case TransactionTypeBlob:
+		if t.ChainId == nil {
+			fields = append(fields, "chainId")
+		}
+		if t.MaxFeePerBlobGas == nil {
+			fields = append(fields, "maxFeePerBlobGas")
+		}
+		if t.BlobVersionedHashes == nil {
+			fields = append(fields, "blobVersionedHashes")
+		}
+		if t.To == nil {
+			// Contract creation not supported in blob txs
+			fields = append(fields, "to")
+		}
+	default:
+		return errors.New("unsupported transaction type")
 	}
 
 	if len(fields) > 0 {
@@ -161,6 +197,12 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 		if err != nil {
 			return nil, err
 		}
+		var yParity Quantity
+		if t.YParity != nil {
+			yParity = *t.YParity
+		} else {
+			yParity = t.V
+		}
 		payload := rlp.Value{List: []rlp.Value{
 			t.ChainId.RLP(),
 			t.Nonce.RLP(),
@@ -170,7 +212,7 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 			t.Value.RLP(),
 			{String: t.Input.String()},
 			t.AccessList.RLP(),
-			t.V.RLP(),
+			yParity.RLP(),
 			t.R.RLP(),
 			t.S.RLP(),
 		}}
@@ -185,6 +227,12 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 		if err != nil {
 			return nil, err
 		}
+		var yParity Quantity
+		if t.YParity != nil {
+			yParity = *t.YParity
+		} else {
+			yParity = t.V
+		}
 		payload := rlp.Value{List: []rlp.Value{
 			t.ChainId.RLP(),
 			t.Nonce.RLP(),
@@ -195,10 +243,109 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 			t.Value.RLP(),
 			{String: t.Input.String()},
 			t.AccessList.RLP(),
-			t.V.RLP(),
+			yParity.RLP(),
 			t.R.RLP(),
 			t.S.RLP(),
 		}}
+		if encodedPayload, err := payload.Encode(); err != nil {
+			return nil, err
+		} else {
+			return NewData(typePrefix + encodedPayload[2:])
+		}
+	case TransactionTypeBlob:
+		// We introduce a new EIP-2718 transaction, “blob transaction”, where the TransactionType is BLOB_TX_TYPE and the TransactionPayload is the RLP serialization of the following TransactionPayloadBody:
+		//[chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to, value, data, access_list, max_fee_per_blob_gas, blob_versioned_hashes, y_parity, r, s]
+		typePrefix, err := t.Type.RLP().Encode()
+		if err != nil {
+			return nil, err
+		}
+		payload := rlp.Value{List: []rlp.Value{
+			t.ChainId.RLP(),
+			t.Nonce.RLP(),
+			t.MaxPriorityFeePerGas.RLP(),
+			t.MaxFeePerGas.RLP(),
+			t.Gas.RLP(),
+			t.To.RLP(),
+			t.Value.RLP(),
+			{String: t.Input.String()},
+			t.AccessList.RLP(),
+			t.MaxFeePerBlobGas.RLP(),
+			t.BlobVersionedHashes.RLP(),
+			t.YParity.RLP(),
+			t.R.RLP(),
+			t.S.RLP(),
+		}}
+		if encodedPayload, err := payload.Encode(); err != nil {
+			return nil, err
+		} else {
+			return NewData(typePrefix + encodedPayload[2:])
+		}
+	default:
+		return nil, errors.New("unsupported transaction type")
+	}
+}
+
+// NetworkRepresentation returns the transaction encoded as a raw hexadecimal data string suitable
+// for network transmission, or an error.  For Blob transactions this includes the blob payload.
+func (t *Transaction) NetworkRepresentation() (*Data, error) {
+	if err := t.RequiredFields(); err != nil {
+		return nil, err
+	}
+
+	switch t.TransactionType() {
+	case TransactionTypeLegacy, TransactionTypeAccessList, TransactionTypeDynamicFee:
+		// For most transaction types, the "Raw" and "Network" representations are the same
+		return t.RawRepresentation()
+	case TransactionTypeBlob:
+		// Blob transactions have two network representations. During transaction gossip responses (PooledTransactions),
+		// the EIP-2718 TransactionPayload of the blob transaction is wrapped to become:
+		//
+		// rlp([tx_payload_body, blobs, commitments, proofs])
+		typePrefix, err := t.Type.RLP().Encode()
+		if err != nil {
+			return nil, err
+		}
+
+		if t.BlobBundle == nil {
+			return nil, errors.New("network representation of blob txs requires populated blob data")
+		}
+
+		body := rlp.Value{List: []rlp.Value{
+			t.ChainId.RLP(),
+			t.Nonce.RLP(),
+			t.MaxPriorityFeePerGas.RLP(),
+			t.MaxFeePerGas.RLP(),
+			t.Gas.RLP(),
+			t.To.RLP(),
+			t.Value.RLP(),
+			{String: t.Input.String()},
+			t.AccessList.RLP(),
+			t.MaxFeePerBlobGas.RLP(),
+			t.BlobVersionedHashes.RLP(),
+			t.YParity.RLP(),
+			t.R.RLP(),
+			t.S.RLP(),
+		}}
+		dataList := func(data []Data) rlp.Value {
+			v := rlp.Value{
+				List: make([]rlp.Value, 0, len(data)),
+			}
+			for i := range data {
+				v.List = append(v.List, data[i].RLP())
+			}
+			return v
+		}
+		blobs := dataList(t.BlobBundle.Blobs)
+		commitments := dataList(t.BlobBundle.Commitments)
+		proofs := dataList(t.BlobBundle.Proofs)
+
+		payload := rlp.Value{List: []rlp.Value{
+			body,
+			blobs,
+			commitments,
+			proofs,
+		}}
+
 		if encodedPayload, err := payload.Encode(); err != nil {
 			return nil, err
 		} else {

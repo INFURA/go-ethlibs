@@ -42,7 +42,7 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 	switch t.TransactionType() {
 	case TransactionTypeLegacy:
 		t.R, t.S, t.V = signature.EIP155Values()
-	case TransactionTypeAccessList, TransactionTypeDynamicFee:
+	case TransactionTypeAccessList, TransactionTypeDynamicFee, TransactionTypeBlob:
 		// set chainId and RSV to EIP2718 values
 		t.ChainId = &chainId
 		t.R, t.S, t.V = signature.EIP2718Values()
@@ -159,8 +159,31 @@ func (t *Transaction) SigningPreimage(chainId Quantity) (*Data, error) {
 		if err != nil {
 			return nil, err
 		}
-		// And return it with the 0x01 prefix
+		// And return it with the 0x02 prefix
 		return NewData("0x02" + encoded[2:])
+	case TransactionTypeBlob:
+		// The signature values y_parity, r, and s are calculated by constructing a secp256k1 signature over the following digest:
+		//keccak256(BLOB_TX_TYPE || rlp([chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to, value, data, access_list, max_fee_per_blob_gas, blob_versioned_hashes])).
+		payload := rlp.Value{List: []rlp.Value{
+			chainId.RLP(),
+			t.Nonce.RLP(),
+			t.MaxPriorityFeePerGas.RLP(),
+			t.MaxFeePerGas.RLP(),
+			t.Gas.RLP(),
+			t.To.RLP(),
+			t.Value.RLP(),
+			{String: t.Input.String()},
+			t.AccessList.RLP(),
+			t.MaxFeePerBlobGas.RLP(),
+			t.BlobVersionedHashes.RLP(),
+		}}
+		// encode the list as RLP
+		encoded, err := payload.Encode()
+		if err != nil {
+			return nil, err
+		}
+		// And return it with the 0x03 prefix
+		return NewData("0x03" + encoded[2:])
 	default:
 		return nil, errors.New("unsupported transaction type")
 	}
@@ -193,7 +216,7 @@ func (t *Transaction) Signature() (*Signature, error) {
 			return nil, errors.New("chainId is required")
 		}
 		return NewEIP2718Signature(*t.ChainId, t.R, t.S, t.V)
-	case TransactionTypeDynamicFee:
+	case TransactionTypeDynamicFee, TransactionTypeBlob:
 		return NewEIP2718Signature(*t.ChainId, t.R, t.S, t.V)
 	default:
 		return nil, errors.New("unsupported transaction type")

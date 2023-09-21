@@ -184,6 +184,7 @@ func TestTransactionTypeDynamicFee(t *testing.T) {
         "transactionIndex": "0x41",
         "value": "0x0",
         "v": "0x1",
+        "yParity": "0x1",
         "r": "0x396864e5f9132327defdb1449504252e1fa6bce73feb8cd6f348a342b198af34",
         "s": "0x44dbba72e6d3304104848277143252ee43627c82f02d1ef8e404e1bf97c70158",
         "gasPrice": "0x4a817c800",
@@ -206,11 +207,56 @@ func TestTransactionTypeDynamicFee(t *testing.T) {
 	require.NotNil(t, tx.Type)
 	require.Equal(t, eth.TransactionTypeDynamicFee, tx.Type.Int64())
 	require.Equal(t, eth.TransactionTypeDynamicFee, tx.TransactionType())
+	require.NotNil(t, tx.YParity)
+	require.Equal(t, tx.V, *tx.YParity)
 
 	j, err := json.Marshal(&tx)
 	require.NoError(t, err)
 
 	RequireEqualJSON(t, []byte(payload), j)
+}
+
+func TestTransactionTypeBlob(t *testing.T) {
+	//
+	payload := `{
+		"blockHash": "0xfc2715ff196e23ae613ed6f837abd9035329a720a1f4e8dce3b0694c867ba052",
+		"blockNumber": "0x2a1cb",
+		"from": "0xad01b55d7c3448b8899862eb335fbb17075d8de2",
+		"gas": "0x5208",
+		"gasPrice": "0x1d1a94a201c",
+		"maxFeePerGas": "0x1d1a94a201c",
+		"maxPriorityFeePerGas": "0x1d1a94a201c",
+		"maxFeePerBlobGas": "0x3e8",
+		"hash": "0x5ceec39b631763ae0b45a8fb55c373f38b8fab308336ca1dc90ecd2b3cf06d00",
+		"input": "0x",
+		"nonce": "0x1b483",
+		"to": "0x000000000000000000000000000000000000f1c1",
+		"transactionIndex": "0x0",
+		"value": "0x0",
+		"type": "0x3",
+		"accessList": [],
+		"chainId": "0x1a1f0ff42",
+		"blobVersionedHashes": [
+		  "0x01a128c46fc61395706686d6284f83c6c86dfc15769b9363171ea9d8566e6e76"
+		],
+		"v": "0x0",
+		"r": "0x343c6239323a81ef61293cb4a4d37b6df47fbf68114adb5dd41581151a077da1",
+		"s": "0x48c21f6872feaf181d37cc4f9bbb356d3f10b352ceb38d1c3b190d749f95a11b",
+		"yParity": "0x0"
+	  }`
+
+	tx := eth.Transaction{}
+	err := json.Unmarshal([]byte(payload), &tx)
+	require.NoError(t, err)
+	require.NotNil(t, tx.Type)
+	require.Equal(t, eth.TransactionTypeBlob, tx.Type.Int64())
+	require.Equal(t, eth.TransactionTypeBlob, tx.TransactionType())
+	require.NotNil(t, tx.YParity)
+	require.Equal(t, tx.V, *tx.YParity)
+
+	b, err := json.Marshal(&tx)
+	require.NoError(t, err)
+	require.JSONEq(t, payload, string(b))
 }
 
 func TestNewPendingTxNotificationParams(t *testing.T) {

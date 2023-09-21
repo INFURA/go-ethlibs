@@ -16,6 +16,10 @@ type TransactionReceipt struct {
 	Root              *Data32   `json:"root,omitempty"`
 	Status            *Quantity `json:"status,omitempty"`
 	EffectiveGasPrice *Quantity `json:"effectiveGasPrice,omitempty"`
+
+	// EIP-4844 Receipt Fields
+	BlobGasPrice *Quantity `json:"blobGasPrice,omitempty"`
+	BlobGasUsed  *Quantity `json:"blobGasUsed,omitempty"`
 }
 
 // TransactionType returns the transactions EIP-2718 type, or TransactionTypeLegacy for pre-EIP-2718 transactions.
