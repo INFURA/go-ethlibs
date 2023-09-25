@@ -40,6 +40,13 @@ type NewHeadsResult struct {
 	// EIP-4895 Withdrawals
 	WithdrawalsRoot *Data32 `json:"withdrawalsRoot,omitempty"`
 
+	// EIP-4788 Beacon Block Root
+	ParentBeaconBlockRoot *Hash `json:"parentBeaconBlockRoot,omitempty"`
+
+	// EIP-4844 Blob related block fields
+	ExcessBlobGas *Quantity `json:"excessBlobGas,omitempty"`
+	BlobGasUsed   *Quantity `json:"blobGasUsed,omitempty"`
+
 	// Ethhash POW Fields
 	Nonce   *Data8 `json:"nonce"`
 	MixHash *Data  `json:"mixHash"`
@@ -88,6 +95,13 @@ func (nh *NewHeadsResult) FromBlock(block *Block) {
 
 		// EIP-4895 Withdrawals
 		WithdrawalsRoot: block.WithdrawalsRoot,
+
+		// EIP-4788 Beacon Block Root
+		ParentBeaconBlockRoot: block.ParentBeaconBlockRoot,
+
+		// EIP-4844 Blob related block fields
+		ExcessBlobGas: block.ExcessBlobGas,
+		BlobGasUsed:   block.BlobGasUsed,
 
 		flavor: block.flavor,
 	}
@@ -159,6 +173,13 @@ func (nh NewHeadsResult) MarshalJSON() ([]byte, error) {
 			// EIP-4895 Withdrawals
 			WithdrawalsRoot *Data32 `json:"withdrawalsRoot,omitempty"`
 
+			// EIP-4788 Beacon Block Root
+			ParentBeaconBlockRoot *Hash `json:"parentBeaconBlockRoot,omitempty"`
+
+			// EIP-4844 Blob related block fields
+			ExcessBlobGas *Quantity `json:"excessBlobGas,omitempty"`
+			BlobGasUsed   *Quantity `json:"blobGasUsed,omitempty"`
+
 			Nonce   *Data8 `json:"nonce"`
 			MixHash *Data  `json:"mixHash"`
 		}
@@ -180,10 +201,13 @@ func (nh NewHeadsResult) MarshalJSON() ([]byte, error) {
 			GasUsed:   nh.GasUsed,
 			Timestamp: nh.Timestamp,
 			// Transactions:     nh.Transactions,
-			BaseFeePerGas:   nh.BaseFeePerGas,
-			WithdrawalsRoot: nh.WithdrawalsRoot,
-			Nonce:           nh.Nonce,
-			MixHash:         nh.MixHash,
+			BaseFeePerGas:         nh.BaseFeePerGas,
+			WithdrawalsRoot:       nh.WithdrawalsRoot,
+			ParentBeaconBlockRoot: nh.ParentBeaconBlockRoot,
+			ExcessBlobGas:         nh.ExcessBlobGas,
+			BlobGasUsed:           nh.BlobGasUsed,
+			Nonce:                 nh.Nonce,
+			MixHash:               nh.MixHash,
 		}
 
 		return json.Marshal(&g)
