@@ -74,6 +74,36 @@ func TestTransactionTypeLegacy(t *testing.T) {
 	RequireEqualJSON(t, []byte(payload), j)
 }
 
+func TestTransactionTypeLegacy_RequiredFields(t *testing.T) {
+	// NOTE: gasPrice is intentionally removed from this payload
+	payload := `{
+        "type": "0x0",
+        "blockHash": "0x2b27fe2bbc8ce01ac7ae8bf74f793a197cf7edbe82727588811fa9a2c4776f81",
+        "blockNumber": "0x12b1d",
+        "from": "0x2b371c0262ceab27face32fbb5270ddc6aa01ba4",
+        "gas": "0x6bdf",
+        "hash": "0xbddbb685774d8a3df036ed9fb920b48f876090a57e9e90ee60921e0510ef7090",
+        "input": "0x9c0e3f7a0000000000000000000000000000000000000000000000000000000000000078000000000000000000000000000000000000000000000000000000000000002a",
+        "nonce": "0x1c",
+        "to": "0x8e730df7c70d33118d9e5f79ab81aed0be6f6635",
+        "transactionIndex": "0x2",
+        "value": "0x0",
+        "v": "0x1b",
+        "r": "0x2a98c51c2782f664d3ce571fef0491b48f5ebbc5845fa513192e6e6b24ecdaa1",
+        "s": "0x29b8e0c67aa9c11327e16556c591dc84a7aac2f6fc57c7f93901be8ee867aebc"
+      }`
+
+	tx := eth.Transaction{}
+	err := json.Unmarshal([]byte(payload), &tx)
+	require.NoError(t, err)
+	require.NotNil(t, tx.Type)
+	require.Equal(t, eth.TransactionTypeLegacy, tx.Type.Int64())
+	require.Nil(t, tx.AccessList)
+
+	// tx is missing gasPrice
+	require.Error(t, tx.RequiredFields())
+}
+
 func TestTransactionTypeAccessList_Empty(t *testing.T) {
 	payload := `{
         "type": "0x1",
@@ -91,6 +121,7 @@ func TestTransactionTypeAccessList_Empty(t *testing.T) {
         "v": "0x1b",
         "r": "0x2a98c51c2782f664d3ce571fef0491b48f5ebbc5845fa513192e6e6b24ecdaa1",
         "s": "0x29b8e0c67aa9c11327e16556c591dc84a7aac2f6fc57c7f93901be8ee867aebc",
+		"chainId": "0x66a",
 		"accessList": []
       }`
 
@@ -126,6 +157,7 @@ func TestTransactionTypeAccessList_Populated(t *testing.T) {
         "v": "0x1b",
         "r": "0x2a98c51c2782f664d3ce571fef0491b48f5ebbc5845fa513192e6e6b24ecdaa1",
         "s": "0x29b8e0c67aa9c11327e16556c591dc84a7aac2f6fc57c7f93901be8ee867aebc",
+		"chainId": "0x66a",
 		"accessList": [
 			{ "address": "0x2b371c0262ceab27face32fbb5270ddc6aa01ba4", "storageKeys": ["0x1122334455667788990011223344556677889900112233445566778899001122", "0x0000000000000000000000000000000000000000000000000000000000000000"] },
 			{ "address": "0x8e730df7c70d33118d9e5f79ab81aed0be6f6635", "storageKeys": [] }
