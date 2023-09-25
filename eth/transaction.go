@@ -126,7 +126,6 @@ func (t *Transaction) RequiredFields() error {
 		if t.GasPrice == nil {
 			fields = append(fields, "gasPrice")
 		}
-		return nil
 	case TransactionTypeAccessList:
 		if t.ChainId == nil {
 			fields = append(fields, "chainId")
@@ -160,7 +159,7 @@ func (t *Transaction) RequiredFields() error {
 	}
 
 	if len(fields) > 0 {
-		return fmt.Errorf("missing required field(s) %s for transaction type", strings.Join(fields, ","))
+		return fmt.Errorf("missing required field(s) %s for transaction type %d", strings.Join(fields, ","), t.TransactionType())
 	}
 
 	return nil
