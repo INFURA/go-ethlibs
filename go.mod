@@ -3,7 +3,7 @@ module github.com/INFURA/go-ethlibs
 go 1.17
 
 require (
-	github.com/btcsuite/btcd v0.0.0-20190614013741-962a206e94e9
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.1-0.20230921164230-9754217aff8e
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/websocket v1.4.1
 	github.com/pkg/errors v0.8.1
