@@ -3,10 +3,11 @@ package eth
 import (
 	"encoding/hex"
 
+	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/sha3"
 
-	secp256k1 "github.com/btcsuite/btcd/btcec"
+	secp256k1 "github.com/btcsuite/btcd/btcec/v2"
 )
 
 type Signature struct {
@@ -76,16 +77,13 @@ func NewEIP155Signature(r Quantity, s Quantity, v Quantity) (*Signature, error) 
 // For the meantime, we will use btcd's eliptic curve implementation.
 func ECSign(h *Hash, privKeyBytes []byte, chainId Quantity) (*Signature, error) {
 	// code for this method inspired by https://github.com/ethereumjs/ethereumjs-util/blob/master/src/signature.ts#L15
-	priv, pub := secp256k1.PrivKeyFromBytes(secp256k1.S256(), privKeyBytes)
+	priv, pub := secp256k1.PrivKeyFromBytes(privKeyBytes)
 	addr, err := pubKeyBytesToAddress(pub.SerializeUncompressed())
 	if err != nil {
 		return nil, errors.Wrap(err, "could not convert key to ethereum address")
 	}
 
-	rawsig, err := priv.Sign(h.Bytes())
-	if err != nil {
-		return nil, errors.Wrap(err, "signing failed")
-	}
+	rawsig := ecdsa.Sign(priv, h.Bytes())
 
 	r := QuantityFromBigInt(rawsig.R)
 	s := QuantityFromBigInt(rawsig.S)

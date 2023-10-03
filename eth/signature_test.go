@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"testing"
 
-	secp256k1 "github.com/btcsuite/btcd/btcec"
+	secp256k1 "github.com/btcsuite/btcd/btcec/v2"
 	"github.com/stretchr/testify/require"
 
 	"github.com/INFURA/go-ethlibs/eth"
