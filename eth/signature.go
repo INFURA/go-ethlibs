@@ -3,10 +3,10 @@ package eth
 import (
 	"encoding/hex"
 
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/sha3"
-
-	secp256k1 "github.com/btcsuite/btcd/btcec"
 )
 
 type Signature struct {
@@ -73,32 +73,34 @@ func NewEIP155Signature(r Quantity, s Quantity, v Quantity) (*Signature, error) 
 // https://github.com/golang/go/pull/26873 <-- rejected
 // https://github.com/golang/go/issues/26776 <-- rejected
 //
-// For the meantime, we will use btcd's eliptic curve implementation.
+// For the meantime, we will use dcrd's eliptic curve implementation.
 func ECSign(h *Hash, privKeyBytes []byte, chainId Quantity) (*Signature, error) {
 	// code for this method inspired by https://github.com/ethereumjs/ethereumjs-util/blob/master/src/signature.ts#L15
-	priv, pub := secp256k1.PrivKeyFromBytes(secp256k1.S256(), privKeyBytes)
-	addr, err := pubKeyBytesToAddress(pub.SerializeUncompressed())
+	priv := secp256k1.PrivKeyFromBytes(privKeyBytes)
+	addr, err := pubKeyBytesToAddress(priv.PubKey().SerializeUncompressed())
 	if err != nil {
 		return nil, errors.Wrap(err, "could not convert key to ethereum address")
 	}
 
-	rawsig, err := priv.Sign(h.Bytes())
+	signature := ecdsa.Sign(priv, h.Bytes())
+	r, err := NewQuantity("0x" + signature.R().String())
 	if err != nil {
-		return nil, errors.Wrap(err, "signing failed")
+		return nil, errors.Wrap(err, "could not convert signature R value to quantity")
 	}
-
-	r := QuantityFromBigInt(rawsig.R)
-	s := QuantityFromBigInt(rawsig.S)
+	s, err := NewQuantity("0x" + signature.S().String())
+	if err != nil {
+		return nil, errors.Wrap(err, "could not convert signature S value to quantity")
+	}
 
 	// Unfortunately the ECDSA package we are using doesn't return the recovery V value
 	// so the only recourse is to try both values 0 or 1 and see which one produces a valid
 	// value.
 	v := QuantityFromInt64(1)
-	sender, err := ECRecover(h, &r, &s, &v)
+	sender, err := ECRecover(h, r, s, &v)
 	if err != nil || sender.String() != addr.String() {
 		// ok try the other recovery value
 		v = QuantityFromInt64(0)
-		sender, err = ECRecover(h, &r, &s, &v)
+		sender, err = ECRecover(h, r, s, &v)
 		if err != nil {
 			return nil, errors.Wrap(err, "recovery failed")
 		}
@@ -108,7 +110,7 @@ func ECSign(h *Hash, privKeyBytes []byte, chainId Quantity) (*Signature, error) 
 		return nil, errors.New("signature mismatch")
 	}
 
-	return &Signature{r, s, v, chainId}, nil
+	return &Signature{*r, *s, v, chainId}, nil
 }
 
 // EIP155Values returns the expected R,S, and V values for an EIP-155 Signature.  Namely, the V value includes the
@@ -148,10 +150,10 @@ func (s *Signature) ChainId() (*Quantity, error) {
 func ECRecover(h *Hash, r, s, v *Quantity) (*Address, error) {
 	// The code below is based heavily on the secp256k1.recoverAddress implementation at:
 	//   https://github.com/ethers-io/ethers.js/blob/34397fa2aaa9187f307881ec10f07dc035dc0854/src.ts/utils/secp256k1.ts#L109
-	// with some trial and error to get working with btcd.
+	// with some trial and error to get working with dcrd.
 	// I also used some of the code changes proposed in:
 	//   https://github.com/tendermint/tendermint/pull/3441
-	// To determine that btcd is capable of recovering ethereuem addresses.
+	// To determine that dcrd is capable of recovering ethereuem addresses.
 
 	// recover the public key
 	hashBytes, err := hex.DecodeString(h.String()[2:])
@@ -159,7 +161,7 @@ func ECRecover(h *Hash, r, s, v *Quantity) (*Address, error) {
 		return nil, errors.Wrap(err, "could not convert hash to bytes")
 	}
 
-	// NOTE: btcd's secp256k1 expects V at offset 0 NOT offset 64
+	// NOTE: dcrd's secp256k1 expects V at offset 0 NOT offset 64
 	vb := byte(v.Big().Uint64() + 27)
 	rb, sb := r.Big().Bytes(), s.Big().Bytes()
 	sig := make([]byte, 65)
@@ -167,7 +169,7 @@ func ECRecover(h *Hash, r, s, v *Quantity) (*Address, error) {
 	copy(sig[33-len(rb):33], rb)
 	copy(sig[65-len(sb):65], sb)
 
-	key, _, err := secp256k1.RecoverCompact(secp256k1.S256(), sig, hashBytes)
+	key, _, err := ecdsa.RecoverCompact(sig, hashBytes)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not recover secp256k1 key")
 	}
