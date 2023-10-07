@@ -4,15 +4,13 @@ import (
 	"encoding/json"
 )
 
-var (
-	jsonNull = json.RawMessage("null")
-)
+var jsonNull = json.RawMessage("null")
 
 type Response struct {
 	JSONRPC string      `json:"jsonrpc"`
 	ID      ID          `json:"id"`
 	Result  interface{} `json:"result,omitempty"`
-	Error   interface{} `json:"error,omitempty"`
+	Error   *Error      `json:"error,omitempty"`
 }
 
 type BatchResponse []*Response
@@ -24,7 +22,6 @@ func NewResponse() *Response {
 // MarshalJSON implements json.Marshaler and adds the "jsonrpc":"2.0"
 // property.
 func (r Response) MarshalJSON() ([]byte, error) {
-
 	if r.Error != nil {
 		response := struct {
 			JSONRPC string      `json:"jsonrpc"`
