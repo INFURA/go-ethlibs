@@ -109,7 +109,7 @@ func TestMainnetGethBlocks(t *testing.T) {
 	require.Equal(t, eth.Data("0xd783010302844765746887676f312e352e31856c696e7578"), block.ExtraData)
 	require.Equal(t, true, block.Transactions[0].Populated)
 	require.Equal(t, int64(0), block.Transactions[0].Index.Int64())
-	require.Equal(t, eth.Data("0x"), block.Transactions[0].Input)
+	require.Equal(t, eth.Input("0x"), block.Transactions[0].Input)
 
 	j, err := json.Marshal(&block)
 	require.NoError(t, err)
@@ -179,7 +179,7 @@ func TestMainnetParityBlocks(t *testing.T) {
 	require.Equal(t, eth.Data("0xd783010302844765746887676f312e352e31856c696e7578"), block.ExtraData)
 	require.Equal(t, true, block.Transactions[0].Populated)
 	require.Equal(t, int64(0), block.Transactions[0].Index.Int64())
-	require.Equal(t, eth.Data("0x"), block.Transactions[0].Input)
+	require.Equal(t, eth.Input("0x"), block.Transactions[0].Input)
 
 	j, err := json.Marshal(&block)
 	require.NoError(t, err)

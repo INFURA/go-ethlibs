@@ -100,7 +100,7 @@ func TestBlock_FromRaw_EIP2930(t *testing.T) {
 		Gas:         *eth.MustQuantity("0x7a120"),
 		GasPrice:    eth.MustQuantity("0x1"),
 		Hash:        *eth.MustHash("0x0503e1a4ead116b0d1c942c47d54d54d10ed5eaf3a57d2e974bc5cb2e8ee0c47"),
-		Input:       *eth.MustData("0x1a8451e600000000000000000000000000000000000000000000000000000000000000050000000000000000000000000000000000000000000000000000000000001000"),
+		Input:       *eth.MustInput("0x1a8451e600000000000000000000000000000000000000000000000000000000000000050000000000000000000000000000000000000000000000000000000000001000"),
 		Nonce:       *eth.MustQuantity("0xd"),
 		To:          eth.MustAddress("0xcccccccccccccccccccccccccccccccccccccccc"),
 		Index:       eth.MustQuantity("0xd"),

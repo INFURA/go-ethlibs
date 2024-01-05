@@ -12,6 +12,7 @@ import (
 )
 
 type Data string
+type Data4 Data
 type Data8 Data
 type Data20 Data
 type Data32 Data
@@ -28,6 +29,16 @@ func NewData(value string) (*Data, error) {
 	}
 
 	d := Data(parsed)
+	return &d, nil
+}
+
+func NewData4(value string) (*Data4, error) {
+	parsed, err := validateHex(value, 4, "data")
+	if err != nil {
+		return nil, err
+	}
+
+	d := Data4(parsed)
 	return &d, nil
 }
 
@@ -81,6 +92,15 @@ func NewData256(value string) (*Data256, error) {
 
 func MustData(value string) *Data {
 	d, err := NewData(value)
+	if err != nil {
+		panic(err)
+	}
+
+	return d
+}
+
+func MustData4(value string) *Data4 {
+	d, err := NewData4(value)
 	if err != nil {
 		panic(err)
 	}
