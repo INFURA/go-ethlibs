@@ -31,7 +31,7 @@ func (i Input) String() string {
 }
 
 func (i Input) Bytes() []byte {
-	return Data20(i).Bytes()
+	return Data(i).Bytes()
 }
 
 // RLP returns the Input as an RLP-encoded string, note Input can never be null
