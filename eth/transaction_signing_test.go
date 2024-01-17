@@ -18,7 +18,7 @@ func TestTransaction_Sign(t *testing.T) {
 		Gas:      eth.QuantityFromUInt64(90000),
 		To:       eth.MustAddress("0xc149Be1bcDFa69a94384b46A1F91350E5f81c1AB"),
 		Value:    eth.QuantityFromUInt64(950000000000000000),
-		Input:    *eth.MustData("0x"),
+		Input:    *eth.MustInput("0x"),
 	}
 
 	// This purposefully uses the already highly compromised keypair from the go-ethereum book:
@@ -65,7 +65,7 @@ func TestTransaction_Sign_2(t *testing.T) {
 		Gas:      eth.QuantityFromUInt64(22000),
 		To:       eth.MustAddress("0x43700db832E9Ac990D36d6279A846608643c904E"),
 		Value:    eth.QuantityFromUInt64(1000000000),
-		Input:    *eth.MustData("0x"),
+		Input:    *eth.MustInput("0x"),
 	}
 
 	signed, err := tx.Sign("fad9c8855b740a0b7ed4c221dbad0f33a83a49cad6b3fe8d5817ac83d38b6a19", chainId)
@@ -113,7 +113,7 @@ func TestTransaction_Sign_3(t *testing.T) {
 		Gas:      eth.QuantityFromUInt64(22000),
 		To:       eth.MustAddress("0x43700db832E9Ac990D36d6279A846608643c904E"),
 		Value:    eth.QuantityFromUInt64(1000000000),
-		Input:    *eth.MustData("0x"),
+		Input:    *eth.MustInput("0x"),
 	}
 
 	signed, err := tx.Sign("fad9c8855b740a0b7ed4c221dbad0f33a83a49cad6b3fe8d5817ac83d38b6a19", chainId)
@@ -201,7 +201,7 @@ func TestTransaction_Sign_EIP2930(t *testing.T) {
 		ChainId:  &chainId,
 		Gas:      eth.QuantityFromInt64(0x62d4),
 		GasPrice: eth.OptionalQuantityFromInt(0x3b9aca00),
-		Input:    eth.Data("0x"),
+		Input:    eth.Input("0x"),
 		Nonce:    eth.QuantityFromInt64(0),
 		To:       eth.MustAddress("0xdf0a88b2b68c673713a8ec826003676f272e3573"),
 		Value:    eth.QuantityFromInt64(0x1),
@@ -276,7 +276,7 @@ func TestTransaction_Sign_EIP1559(t *testing.T) {
 		ChainId:              &chainId,
 		MaxFeePerGas:         eth.OptionalQuantityFromInt(15488430592 * 2),
 		MaxPriorityFeePerGas: eth.OptionalQuantityFromInt(15488430592),
-		Input:                eth.Data("0x"),
+		Input:                eth.Input("0x"),
 		Nonce:                eth.QuantityFromInt64(0),
 		To:                   eth.MustAddress("0xdf0a88b2b68c673713a8ec826003676f272e3573"),
 		Value:                eth.QuantityFromInt64(0x1),

@@ -29,7 +29,7 @@ func (t *Transaction) FromRaw(input string) error {
 		maxFeePerGas         Quantity
 		to                   *Address
 		value                Quantity
-		data                 Data
+		data                 Input
 		v                    Quantity
 		r                    Quantity
 		s                    Quantity
@@ -332,11 +332,11 @@ func (t *Transaction) FromRaw(input string) error {
 // Note that when calling this function, the receivers MUST be pointers never values, and for "optional" receivers
 // such as Address a pointer to a pointer must be passed.  For example:
 //
-//    var (
-//      addr  *eth.Address
-//      nonce eth.Quantity
-//    )
-//    err := rlpDecodeList(payload, &addr, &nonce)
+//	var (
+//	  addr  *eth.Address
+//	  nonce eth.Quantity
+//	)
+//	err := rlpDecodeList(payload, &addr, &nonce)
 //
 // TODO: Consider making this function public once all receiver types in the eth package are supported.
 func rlpDecodeList(input interface{}, receivers ...interface{}) error {
@@ -375,6 +375,12 @@ func rlpDecodeList(input interface{}, receivers ...interface{}) error {
 				}
 				*receiver = a
 			}
+		case *Input:
+			d, err := NewInput(value.String)
+			if err != nil {
+				return errors.Wrapf(err, "could not decode list item %d to Input", i)
+			}
+			*receiver = *d
 		case *Data:
 			d, err := NewData(value.String)
 			if err != nil {
