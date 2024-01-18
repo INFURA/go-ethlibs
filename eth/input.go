@@ -1,6 +1,7 @@
 package eth
 
 import (
+	"encoding/json"
 	"github.com/INFURA/go-ethlibs/rlp"
 	"github.com/pkg/errors"
 	"strings"
@@ -48,4 +49,18 @@ func (i Input) FunctionSelector() *Data4 {
 	}
 
 	return nil
+}
+
+func (i *Input) UnmarshalJSON(data []byte) error {
+	str, err := unmarshalHex(data, -1, "data")
+	if err != nil {
+		return err
+	}
+	*i = Input(str)
+	return nil
+}
+
+func (i Input) MarshalJSON() ([]byte, error) {
+	s := string(i)
+	return json.Marshal(&s)
 }
