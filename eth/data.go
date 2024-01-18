@@ -156,9 +156,9 @@ func (d Data) String() string {
 	return string(d)
 }
 
-func (d Data8) String() string {
-	return string(d)
-}
+func (d Data4) String() string { return string(d) }
+
+func (d Data8) String() string { return string(d) }
 
 func (d Data20) String() string {
 	return string(d)
@@ -180,6 +180,13 @@ func (d Data) Bytes() []byte {
 	return b
 }
 
+func (d Data4) Bytes() []byte {
+	b, err := hex.DecodeString(d.String()[2:])
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
 func (d Data8) Bytes() []byte {
 	b, err := hex.DecodeString(d.String()[2:])
 	if err != nil {
@@ -217,6 +224,11 @@ func (d Data) Hash() Hash {
 	return hash(d)
 }
 
+// Hash returns the keccak256 hash of the Data4.
+func (d Data4) Hash() Hash {
+	return hash(d)
+}
+
 // Hash returns the keccak256 hash of the Data8.
 func (d Data8) Hash() Hash {
 	return hash(d)
@@ -243,6 +255,15 @@ func (d *Data) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	*d = Data(str)
+	return nil
+}
+
+func (d *Data4) UnmarshalJSON(data []byte) error {
+	str, err := unmarshalHex(data, 4, "data")
+	if err != nil {
+		return err
+	}
+	*d = Data4(str)
 	return nil
 }
 
@@ -329,6 +350,13 @@ func validateHex(value string, size int, typ string) (string, error) {
 
 // RLP returns the Data as an RLP-encoded string.
 func (d *Data) RLP() rlp.Value {
+	return rlp.Value{
+		String: d.String(),
+	}
+}
+
+// RLP returns the Data4 as an RLP-encoded string.
+func (d *Data4) RLP() rlp.Value {
 	return rlp.Value{
 		String: d.String(),
 	}
