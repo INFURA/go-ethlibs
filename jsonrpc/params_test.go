@@ -1,6 +1,12 @@
 package jsonrpc
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"github.com/INFURA/go-ethlibs/eth"
+	"github.com/pkg/errors"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -107,6 +113,27 @@ func TestParams_DecodeInto(t *testing.T) {
 				return []interface{}{str}, err
 			},
 		},
+		{
+			Description: "receiver's type is a struct",
+			Expected:    []interface{}{eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("0x3456789"), ToBlock: eth.MustBlockNumberOrTag("0x3456"), BlockHash: (*eth.Data32)(nil), Address: []eth.Address(nil), Topics: [][]eth.Data32(nil)}},
+			Input:       MustParams(&eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("0x3456789"), ToBlock: eth.MustBlockNumberOrTag("0x3456")}),
+			Test: func(tc *testCase) ([]interface{}, error) {
+				var rec eth.LogFilter
+				err := tc.Input.UnmarshalInto(&rec)
+				return []interface{}{rec}, err
+			},
+		},
+		{
+			Description: "multiple element in params",
+			Expected:    []interface{}{eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("0x3456789"), ToBlock: eth.MustBlockNumberOrTag("0x3456")}, eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("0x5678"), ToBlock: eth.MustBlockNumberOrTag("0x1234")}},
+			Input:       MustParams(&eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("0x3456789"), ToBlock: eth.MustBlockNumberOrTag("0x3456")}, &eth.LogFilter{FromBlock: eth.MustBlockNumberOrTag("0x5678"), ToBlock: eth.MustBlockNumberOrTag("0x1234")}),
+			Test: func(tc *testCase) ([]interface{}, error) {
+				var rec1 eth.LogFilter
+				var rec2 eth.LogFilter
+				err := tc.Input.UnmarshalInto(&rec1, &rec2)
+				return []interface{}{rec1, rec2}, err
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -133,4 +160,176 @@ func TestParams_DecodeInto(t *testing.T) {
 	// this should fail, not enough params
 	object := Object{}
 	assert.Error(t, multiple.UnmarshalSingleParam(3, &object), "should have failed")
+}
+
+func TestParams_DecodeInto_Fail(t *testing.T) {
+
+	type expected struct {
+		output []interface{}
+		err    error
+	}
+	type testCase struct {
+		Description string
+		Expected    expected
+		Input       Params
+		Test        func(tc *testCase) ([]interface{}, error)
+	}
+
+	testCases := []testCase{
+		{
+			Description: "params null",
+			Expected:    expected{output: nil, err: nil},
+			Input:       nil,
+			Test: func(tc *testCase) ([]interface{}, error) {
+				var str string
+				err := tc.Input.UnmarshalInto(str)
+				return nil, err
+			},
+		},
+		{
+			Description: "len(p)<len(rec)",
+			Expected:    expected{output: []interface{}{}, err: errors.New("not enough params to decode")},
+			Input:       MustParams("foo"),
+			Test: func(tc *testCase) ([]interface{}, error) {
+				var str string
+				var b bool
+				err := tc.Input.UnmarshalInto(&str, &b)
+				return []interface{}{}, err
+			},
+		},
+		{
+			Description: "parse err",
+			Expected:    expected{output: []interface{}{}, err: errors.New("invalid argument 0: data types must start with 0x")},
+			Input:       MustParams("2345T678"),
+			Test: func(tc *testCase) ([]interface{}, error) {
+				var str eth.Hash
+				err := tc.Input.UnmarshalInto(&str)
+				return []interface{}{}, err
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		actual, err := testCase.Test(&testCase)
+
+		assert.Equal(t, testCase.Expected.output, actual, "%#v", testCase)
+		if err != nil {
+			assert.Equal(t, testCase.Expected.err.Error(), err.Error(), "%#v", testCase)
+		} else {
+			assert.Nil(t, testCase.Expected.err, "%#v", testCase)
+		}
+	}
+
+}
+
+func TestParams_parsePositionalArguments(t *testing.T) {
+	type expected struct {
+		args []reflect.Value
+		err  error
+	}
+
+	type testCase struct {
+		Description string
+		Expected    expected
+		rawArgs     json.RawMessage
+		types       []reflect.Type
+	}
+
+	testCases := []testCase{
+		{
+			Description: "default case err",
+			Expected:    expected{args: []reflect.Value(nil), err: errors.New("non-array args")},
+			rawArgs:     []byte(`{"foo"}`),
+			types:       []reflect.Type{},
+		},
+		{
+			Description: "params nil",
+			Expected:    expected{args: nil, err: nil},
+			rawArgs:     []byte(nil),
+			types:       []reflect.Type{},
+		},
+		{
+			Description: "token err",
+			Expected:    expected{args: nil, err: errors.New("invalid character ',' looking for beginning of value")},
+			rawArgs:     []byte(","),
+			types:       []reflect.Type{},
+		},
+		{
+			Description: "reading err",
+			Expected:    expected{args: nil, err: fmt.Errorf("EOF")},
+			rawArgs:     []byte("["),
+			types:       []reflect.Type{},
+		},
+		{
+			Description: "missing value for arg",
+			Expected:    expected{args: nil, err: fmt.Errorf("missing value for required argument 0")},
+			rawArgs:     []byte(nil),
+			types:       []reflect.Type{reflect.TypeOf("foo"), reflect.TypeOf(true)},
+		},
+		{
+			Description: "works",
+			Expected:    expected{args: []reflect.Value{reflect.ValueOf("foo")}, err: nil},
+			rawArgs:     []byte(`["foo"]`),
+			types:       []reflect.Type{reflect.TypeOf("foo")},
+		},
+	}
+
+	for _, testCase := range testCases {
+
+		actual, err := parsePositionalArguments(testCase.rawArgs, testCase.types)
+		assert.ObjectsAreEqualValues(testCase.Expected.args, actual)
+		if err != nil {
+			assert.Equal(t, testCase.Expected.err.Error(), err.Error(), "%#v", testCase)
+		} else {
+			assert.Nil(t, testCase.Expected.err, "%#v", testCase)
+		}
+	}
+}
+
+func TestParams_parseArgumentArray(t *testing.T) {
+	type expected struct {
+		args []reflect.Value
+		err  error
+	}
+
+	type testCase struct {
+		Description string
+		Expected    expected
+		dec         *json.Decoder
+		types       []reflect.Type
+	}
+
+	testCases := []testCase{
+		{
+			Description: "decode subset of param",
+			Expected:    expected{args: []reflect.Value{reflect.ValueOf("foo")}, err: nil},
+			dec:         json.NewDecoder(bytes.NewReader([]byte(`["foo", 123]`))),
+			types:       []reflect.Type{reflect.TypeOf("foo")},
+		},
+		{
+			Description: "works",
+			Expected:    expected{args: []reflect.Value{reflect.ValueOf("foo")}, err: nil},
+			dec:         json.NewDecoder(bytes.NewReader([]byte(`["foo"]`))),
+			types:       []reflect.Type{reflect.TypeOf("foo")},
+		},
+
+		{
+			Description: "EOF",
+			Expected:    expected{args: []reflect.Value{reflect.ValueOf(nil)}, err: fmt.Errorf("EOF")},
+			dec:         json.NewDecoder(bytes.NewReader([]byte(``))),
+			types:       []reflect.Type{reflect.TypeOf("foo")},
+		},
+	}
+
+	for _, testCase := range testCases {
+		_, _ = testCase.dec.Token()
+		actual, err := parseArgumentArray(testCase.dec, testCase.types)
+		assert.ObjectsAreEqualValues(testCase.Expected.args, actual)
+		if err != nil {
+			assert.Equal(t, testCase.Expected.err, err, "%#v", testCase)
+		} else {
+			assert.Nil(t, testCase.Expected.err, "%#v", testCase)
+		}
+	}
+
 }
