@@ -1,0 +1,5 @@
+eth/zz_deepcopy_test.go{
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+  }
+}
