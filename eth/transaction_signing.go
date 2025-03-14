@@ -42,8 +42,8 @@ func (t *Transaction) Sign(privateKey string, chainId Quantity) (*Data, error) {
 	switch t.TransactionType() {
 	case TransactionTypeLegacy:
 		t.R, t.S, t.V = signature.EIP155Values()
-	case TransactionTypeAccessList, TransactionTypeDynamicFee, TransactionTypeBlob:
-		// set chainId and RSV to EIP2718 values
+	case TransactionTypeAccessList, TransactionTypeDynamicFee, TransactionTypeBlob, TransactionTypeSetCode:
+		// set chainID and RSV to EIP2718 values
 		t.ChainId = &chainId
 		t.R, t.S, t.V = signature.EIP2718Values()
 	default:
@@ -184,6 +184,28 @@ func (t *Transaction) SigningPreimage(chainId Quantity) (*Data, error) {
 		}
 		// And return it with the 0x03 prefix
 		return NewData("0x03" + encoded[2:])
+	case TransactionTypeSetCode:
+		// The signature values y_parity, r, and s are calculated by constructing a secp256k1 signature over the following digest:
+		// keccak256(0x04 || rlp([chainID, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to, value, data, access_list, authorization_list, y_parity, r, s]))
+		payload := rlp.Value{List: []rlp.Value{
+			chainId.RLP(),
+			t.Nonce.RLP(),
+			t.MaxPriorityFeePerGas.RLP(),
+			t.MaxFeePerGas.RLP(),
+			t.Gas.RLP(),
+			t.To.RLP(),
+			t.Value.RLP(),
+			{String: t.Input.String()},
+			t.AccessList.RLP(),
+			t.AuthorizationList.RLP(),
+		}}
+		// encode the list as RLP
+		encoded, err := payload.Encode()
+		if err != nil {
+			return nil, err
+		}
+		// And return it with the 0x04 prefix
+		return NewData("0x04" + encoded[2:])
 	default:
 		return nil, errors.New("unsupported transaction type")
 	}
@@ -216,7 +238,7 @@ func (t *Transaction) Signature() (*Signature, error) {
 			return nil, errors.New("chainId is required")
 		}
 		return NewEIP2718Signature(*t.ChainId, t.R, t.S, t.V)
-	case TransactionTypeDynamicFee, TransactionTypeBlob:
+	case TransactionTypeDynamicFee, TransactionTypeBlob, TransactionTypeSetCode:
 		return NewEIP2718Signature(*t.ChainId, t.R, t.S, t.V)
 	default:
 		return nil, errors.New("unsupported transaction type")

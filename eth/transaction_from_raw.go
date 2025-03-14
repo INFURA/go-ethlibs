@@ -34,6 +34,7 @@ func (t *Transaction) FromRaw(input string) error {
 		r                    Quantity
 		s                    Quantity
 		accessList           AccessList
+		authorizationList    AuthorizationList
 		maxFeePerBlobGas     Quantity
 		blobVersionedHashes  []Hash
 	)
@@ -271,7 +272,55 @@ func (t *Transaction) FromRaw(input string) error {
 		t.Hash = raw.Hash()
 		t.From = *sender
 		return nil
+	case firstByte == byte(TransactionTypeSetCode):
+		// EIP-7702 transaction
+		// 0x04 || rlp([chainID, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to, value, data, access_list, authorization_list, y_parity, r, s])
+		payload := "0x" + input[4:]
+		decodedErr := rlpDecodeList(payload, &chainId, &nonce, &maxPriorityFeePerGas, &maxFeePerGas, &gasLimit, &to, &value, &data, &accessList, &authorizationList, &v, &r, &s)
+		if decodedErr != nil {
+			return errors.Wrap(decodedErr, "could not decode RLP components")
+		}
 
+		// fill in the fields
+		t.Type = OptionalQuantityFromInt(int(firstByte))
+		t.Nonce = nonce
+		t.MaxPriorityFeePerGas = &maxPriorityFeePerGas
+		t.MaxFeePerGas = &maxFeePerGas
+		t.Gas = gasLimit
+		t.To = to
+		t.Value = value
+		t.Input = data
+		t.AccessList = &accessList
+		t.AuthorizationList = &authorizationList
+		t.V = v
+		t.YParity = &v
+		t.R = r
+		t.S = s
+		t.ChainId = &chainId
+
+		signingHash, signErr := t.SigningHash(chainId)
+		if signErr != nil {
+			return signErr
+		}
+
+		signature, sigErr := NewEIP2718Signature(chainId, r, s, v)
+		if sigErr != nil {
+			return sigErr
+		}
+
+		sender, recoverErr := signature.Recover(signingHash)
+		if recoverErr != nil {
+			return recoverErr
+		}
+
+		raw, rawErr := t.RawRepresentation()
+		if rawErr != nil {
+			return rawErr
+		}
+
+		t.Hash = raw.Hash()
+		t.From = *sender
+		return nil
 	case firstByte > 0x7f:
 		// In EIP-2718 types larger than 0x7f are reserved since they potentially conflict with legacy RLP encoded
 		// transactions.  As such we can attempt to decode any such transactions as legacy format and attempt to
@@ -413,6 +462,12 @@ func rlpDecodeList(input interface{}, receivers ...interface{}) error {
 				return errors.Wrapf(err, "could not decode list item %d to AccessList", i)
 			}
 			*receiver = accessList
+		case *AuthorizationList:
+			authorizationList, err := NewAuthorizationListFromRLP(value)
+			if err != nil {
+				return errors.Wrapf(err, "could not decode list item %d to AuthorizationList", i)
+			}
+			*receiver = authorizationList
 		default:
 			return errors.Errorf("unsupported decode receiver %s", reflect.TypeOf(receiver).String())
 		}

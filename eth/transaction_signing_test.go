@@ -339,6 +339,129 @@ func TestTransaction_Sign_EIP1559(t *testing.T) {
 
 }
 
+func TestTransaction_Sign_EIP7702(t *testing.T) {
+	/*
+		unsigned transaction
+		{
+		    "type":"0x4",
+			"chainId":"0x1",
+			"nonce":"0x0",
+			"to":"0x71562b71999873db5b286df957af199ec94617f7",
+			"gas":"0x7a120",
+			"maxPriorityFeePerGas":"0x2",
+			"maxFeePerGas":"0x12a05f200",
+			"value":"0x0",
+			"input":"0x",
+			"accessList":[],
+			"authorizationList":[
+			    {"chainId":"0x1","address":"0x000000000000000000000000000000000000aaaa","nonce":"0x1","yParity":"0x1","r":"0xf7e3e597fc097e71ed6c26b14b25e5395bc8510d58b9136af439e12715f2d721","s":"0x6cf7c3d7939bfdb784373effc0ebb0bd7549691a513f395e3cdabf8602724987"},
+				{"chainId":"0x0","address":"0x000000000000000000000000000000000000bbbb","nonce":"0x0","yParity":"0x1","r":"0x5011890f198f0356a887b0779bde5afa1ed04e6acb1e3f37f8f18c7b6f521b98","s":"0x56c3fa3456b103f3ef4a0acb4b647b9cab9ec4bc68fbcdf1e10b49fb2bcbcf61"}
+			],
+		    "v":"0x0",
+			"r":"0x0",
+			"s":"0x0",
+			"yParity":"0x0",
+			"hash":"0x18e9c60fcdf98300ddf743ccf3015822b05eb8c42154dac82c7e1e065af16e45"
+		}
+	*/
+	// signed transaction generated with go-ethereum
+	// {"type":"0x4","chainId":"0x1","nonce":"0x0","to":"0x71562b71999873db5b286df957af199ec94617f7","gas":"0x7a120","gasPrice":null,"maxPriorityFeePerGas":"0x2","maxFeePerGas":"0x12a05f200","value":"0x0","input":"0x","accessList":[],"authorizationList":[{"chainId":"0x1","address":"0x000000000000000000000000000000000000aaaa","nonce":"0x1","yParity":"0x1","r":"0xf7e3e597fc097e71ed6c26b14b25e5395bc8510d58b9136af439e12715f2d721","s":"0x6cf7c3d7939bfdb784373effc0ebb0bd7549691a513f395e3cdabf8602724987"},{"chainId":"0x0","address":"0x000000000000000000000000000000000000bbbb","nonce":"0x0","yParity":"0x1","r":"0x5011890f198f0356a887b0779bde5afa1ed04e6acb1e3f37f8f18c7b6f521b98","s":"0x56c3fa3456b103f3ef4a0acb4b647b9cab9ec4bc68fbcdf1e10b49fb2bcbcf61"}],"v":"0x0","r":"0xe4ad40ffd468299b18a775ab3b743687a47087569a2d798b51ed02ae0920703b","s":"0x6b55c02a6000a3a344ba290c185321057a7994cd2537deeb3c254091a680d248","yParity":"0x0","hash":"0xb81ac1a9321c1a57605c9beef606967b8866eb53fb63650678b8ba586e5c1ad9"}
+
+	chainId := eth.QuantityFromInt64(0x01)
+	tx := eth.Transaction{
+		Type:                 eth.MustQuantity("0x4"),
+		ChainId:              &chainId,
+		MaxFeePerGas:         eth.MustQuantity("0x12a05f200"),
+		MaxPriorityFeePerGas: eth.MustQuantity("0x2"),
+		Input:                eth.Input("0x"),
+		From:                 *eth.MustAddress("0x96216849c49358b10257cb55b28ea603c874b05e"),
+		Nonce:                eth.QuantityFromInt64(0),
+		Gas:                  eth.QuantityFromInt64(0x7a120),
+		To:                   eth.MustAddress("0x71562b71999873db5b286df957af199ec94617f7"),
+		Value:                eth.QuantityFromInt64(0x0),
+		AccessList:           &eth.AccessList{},
+		AuthorizationList: &eth.AuthorizationList{
+			eth.SetCodeAuthorization{
+				ChainID: eth.MustQuantity("0x1"),
+				Address: *eth.MustAddress("0x000000000000000000000000000000000000aaaa"),
+				Nonce:   eth.QuantityFromInt64(0x1),
+				V:       eth.QuantityFromInt64(0x1),
+				R:       *eth.MustQuantity("0xf7e3e597fc097e71ed6c26b14b25e5395bc8510d58b9136af439e12715f2d721"),
+				S:       *eth.MustQuantity("0x6cf7c3d7939bfdb784373effc0ebb0bd7549691a513f395e3cdabf8602724987"),
+			},
+			eth.SetCodeAuthorization{
+				ChainID: eth.MustQuantity("0x0"),
+				Address: *eth.MustAddress("0x000000000000000000000000000000000000bbbb"),
+				Nonce:   eth.QuantityFromInt64(0x0),
+				V:       eth.QuantityFromInt64(0x1),
+				R:       *eth.MustQuantity("0x5011890f198f0356a887b0779bde5afa1ed04e6acb1e3f37f8f18c7b6f521b98"),
+				S:       *eth.MustQuantity("0x56c3fa3456b103f3ef4a0acb4b647b9cab9ec4bc68fbcdf1e10b49fb2bcbcf61"),
+			},
+		},
+		YParity: eth.MustQuantity("0x0"),
+		V:       eth.QuantityFromInt64(0x0),
+		R:       eth.QuantityFromInt64(0),
+		S:       eth.QuantityFromInt64(0),
+	}
+
+	rlpData, err := rlp.Value{List: []rlp.Value{
+		tx.ChainId.RLP(),
+		tx.Nonce.RLP(),
+		tx.MaxPriorityFeePerGas.RLP(),
+		tx.MaxFeePerGas.RLP(),
+		tx.Gas.RLP(),
+		tx.To.RLP(),
+		tx.Value.RLP(),
+		tx.Input.RLP(),
+		tx.AccessList.RLP(),
+		tx.AuthorizationList.RLP(),
+	}}.Encode()
+	require.NoError(t, err)
+
+	// make sure raw tx is what we expect it to be
+	expectedUnsigned := "0x04f8e201800285012a05f2008307a1209471562b71999873db5b286df957af199ec94617f78080c0f8b8f85a0194000000000000000000000000000000000000aaaa0101a0f7e3e597fc097e71ed6c26b14b25e5395bc8510d58b9136af439e12715f2d721a06cf7c3d7939bfdb784373effc0ebb0bd7549691a513f395e3cdabf8602724987f85a8094000000000000000000000000000000000000bbbb8001a05011890f198f0356a887b0779bde5afa1ed04e6acb1e3f37f8f18c7b6f521b98a056c3fa3456b103f3ef4a0acb4b647b9cab9ec4bc68fbcdf1e10b49fb2bcbcf61808080"
+	unsigned, err := tx.RawRepresentation()
+	require.NoError(t, err)
+	require.Equal(t, expectedUnsigned, unsigned.String(), "unsigned tx mismatch")
+
+	// which should match exactly what SigningPreimage returns
+	expectedPreimage := "0x04" + rlpData[2:]
+	preimage, err := tx.SigningPreimage(chainId)
+	require.NoError(t, err)
+	require.Equal(t, expectedPreimage, preimage.String(), "preimage mismatch")
+
+	// So now we can sign the transaction with the same key used to sign
+	signed, err := tx.Sign("fad9c8855b740a0b7ed4c221dbad0f33a83a49cad6b3fe8d5817ac83d38b6a19", chainId)
+	require.NoError(t, err)
+
+	expectedHash := "0xb81ac1a9321c1a57605c9beef606967b8866eb53fb63650678b8ba586e5c1ad9"
+	require.Equal(t, expectedHash, signed.Hash().String(), "hash mismatch")
+
+	// And get back the exact same signed transaction
+	expectedSigned := `0x04f9012201800285012a05f2008307a1209471562b71999873db5b286df957af199ec94617f78080c0f8b8f85a0194000000000000000000000000000000000000aaaa0101a0f7e3e597fc097e71ed6c26b14b25e5395bc8510d58b9136af439e12715f2d721a06cf7c3d7939bfdb784373effc0ebb0bd7549691a513f395e3cdabf8602724987f85a8094000000000000000000000000000000000000bbbb8001a05011890f198f0356a887b0779bde5afa1ed04e6acb1e3f37f8f18c7b6f521b98a056c3fa3456b103f3ef4a0acb4b647b9cab9ec4bc68fbcdf1e10b49fb2bcbcf6180a0e4ad40ffd468299b18a775ab3b743687a47087569a2d798b51ed02ae0920703ba06b55c02a6000a3a344ba290c185321057a7994cd2537deeb3c254091a680d248`
+	require.Equal(t, expectedSigned, signed.String(), "signed tx mismatch")
+
+	// Double check signature is still valid
+	tx2 := eth.Transaction{}
+	err = tx2.FromRaw(signed.String())
+	require.NoError(t, err)
+
+	// And verify that .From, .Hash, .R, .S., .V, and .YParity are all set and match the original transaction
+	require.Equal(t, *eth.MustAddress("0x96216849c49358b10257cb55b28ea603c874b05e"), tx2.From)
+	require.Equal(t, "0xb81ac1a9321c1a57605c9beef606967b8866eb53fb63650678b8ba586e5c1ad9", tx2.Hash.String(), "hash mismatch")
+	require.Equal(t, "0xe4ad40ffd468299b18a775ab3b743687a47087569a2d798b51ed02ae0920703b", tx2.R.String(), "r mismatch")
+	require.Equal(t, "0x6b55c02a6000a3a344ba290c185321057a7994cd2537deeb3c254091a680d248", tx2.S.String(), "s mismatch")
+	require.Equal(t, "0x0", tx2.V.String(), "v mismatch")
+	require.Equal(t, "0x0", tx2.YParity.String(), "yParity mismatch")
+
+	// Verify that the recovered address matches the original address
+	signingHash, err := tx2.SigningHash(chainId)
+	require.NoError(t, err)
+	recoveredAddress, err := eth.ECRecover(signingHash, &tx2.R, &tx2.S, &tx2.V)
+	require.NoError(t, err)
+	require.Equal(t, *eth.MustAddress("0x96216849c49358b10257cb55b28ea603c874b05e"), *recoveredAddress)
+}
+
 func TestTransaction_Sign_InvalidTxType(t *testing.T) {
 	tx := eth.Transaction{
 		Type: eth.MustQuantity("0x7f"),
