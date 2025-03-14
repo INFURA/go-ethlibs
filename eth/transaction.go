@@ -16,6 +16,7 @@ var (
 	TransactionTypeAccessList = int64(0x1) // TransactionTypeAccessList refers to EIP-2930 transactions.
 	TransactionTypeDynamicFee = int64(0x2) // TransactionTypeDynamicFee refers to EIP-1559 transactions.
 	TransactionTypeBlob       = int64(0x3) // TransactionTypeBlob refers to EIP-4844 "blob" transactions.
+	TransactionTypeSetCode    = int64(0x4) // TransactionTypeSetCode refers to EIP-7702 transactions.
 )
 
 type Transaction struct {
@@ -64,6 +65,9 @@ type Transaction struct {
 	// JSON Marshalling.  As such, this field is only populated when decoding a
 	// raw transaction in "Network Representation" and the fields must be accessed directly.
 	BlobBundle *BlobsBundleV1 `json:"-"`
+
+	// EIP-7702
+	AuthorizationList *AuthorizationList `json:"authorizationList,omitempty"`
 
 	// Keep the source so we can recreate its expected representation
 	source string
@@ -153,6 +157,27 @@ func (t *Transaction) RequiredFields() error {
 		if t.To == nil {
 			// Contract creation not supported in blob txs
 			fields = append(fields, "to")
+		}
+	case TransactionTypeSetCode:
+		// From EIP-7702:
+		// The fields chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit,
+		// destination, value, data, and access_list of the outer transaction follow the same
+		// semantics as EIP-4844. Note, this means a null destination is not valid.
+		if t.ChainId == nil {
+			fields = append(fields, "chainId")
+		}
+		if t.MaxFeePerGas == nil {
+			fields = append(fields, "maxFeePerGas")
+		}
+		if t.MaxPriorityFeePerGas == nil {
+			fields = append(fields, "maxPriorityFeePerGas")
+		}
+		// Contract creation is not supported for setcode transactions
+		if t.To == nil {
+			fields = append(fields, "to")
+		}
+		if t.AuthorizationList == nil {
+			fields = append(fields, "authorizationList")
 		}
 	default:
 		return errors.New("unsupported transaction type")
@@ -279,6 +304,34 @@ func (t *Transaction) RawRepresentation() (*Data, error) {
 		} else {
 			return NewData(typePrefix + encodedPayload[2:])
 		}
+	case TransactionTypeSetCode:
+		// EIP-7702
+		// rlp([chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, destination, value, data, access_list, authorization_list, signature_y_parity, signature_r, signature_s])
+		// authorization_list = [[chain_id, address, nonce, y_parity, r, s], ...]
+		typePrefix, err := t.Type.RLP().Encode()
+		if err != nil {
+			return nil, err
+		}
+		payload := rlp.Value{List: []rlp.Value{
+			t.ChainId.RLP(),
+			t.Nonce.RLP(),
+			t.MaxPriorityFeePerGas.RLP(),
+			t.MaxFeePerGas.RLP(),
+			t.Gas.RLP(),
+			t.To.RLP(),
+			t.Value.RLP(),
+			{String: t.Input.String()},
+			t.AccessList.RLP(),
+			t.AuthorizationList.RLP(),
+			t.YParity.RLP(),
+			t.R.RLP(),
+			t.S.RLP(),
+		}}
+		if encodedPayload, err := payload.Encode(); err != nil {
+			return nil, err
+		} else {
+			return NewData(typePrefix + encodedPayload[2:])
+		}
 	default:
 		return nil, errors.New("unsupported transaction type")
 	}
@@ -292,7 +345,7 @@ func (t *Transaction) NetworkRepresentation() (*Data, error) {
 	}
 
 	switch t.TransactionType() {
-	case TransactionTypeLegacy, TransactionTypeAccessList, TransactionTypeDynamicFee:
+	case TransactionTypeLegacy, TransactionTypeAccessList, TransactionTypeDynamicFee, TransactionTypeSetCode:
 		// For most transaction types, the "Raw" and "Network" representations are the same
 		return t.RawRepresentation()
 	case TransactionTypeBlob:

@@ -191,6 +191,31 @@ func TestTransaction_FromRawEIP4844(t *testing.T) {
 	require.Equal(t, "0xc00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", tx.BlobBundle.Proofs[0].String())
 }
 
+func TestTransaction_FromRawEIP7702(t *testing.T) {
+	// Transaction: {"type":"0x4","chainId":"0x1","nonce":"0x0","to":"0x71562b71999873db5b286df957af199ec94617f7","gas":"0x7a120","gasPrice":null,"maxPriorityFeePerGas":"0x2","maxFeePerGas":"0x12a05f200","value":"0x0","input":"0x","accessList":[],"authorizationList":[{"chainId":"0x1","address":"0x000000000000000000000000000000000000aaaa","nonce":"0x1","yParity":"0x1","r":"0xf7e3e597fc097e71ed6c26b14b25e5395bc8510d58b9136af439e12715f2d721","s":"0x6cf7c3d7939bfdb784373effc0ebb0bd7549691a513f395e3cdabf8602724987"},{"chainId":"0x0","address":"0x000000000000000000000000000000000000bbbb","nonce":"0x0","yParity":"0x1","r":"0x5011890f198f0356a887b0779bde5afa1ed04e6acb1e3f37f8f18c7b6f521b98","s":"0x56c3fa3456b103f3ef4a0acb4b647b9cab9ec4bc68fbcdf1e10b49fb2bcbcf61"}],"v":"0x1","r":"0x6d5ddb9420ce5d9ff7d1bc6fcf1098cc648a68207489c0fcfee54dc61352353a","s":"0x4ba532c2cfc4a1163e7ffd3d92dd5815b37ddcfa3293e1c4ee86f9604b6b59a2","yParity":"0x1","hash":"0x6a75a08b5be2bbdf655c788ede009fbc84caf63f15c060619b376554fac8d6cd"}
+	hash := `0x6a75a08b5be2bbdf655c788ede009fbc84caf63f15c060619b376554fac8d6cd`
+	raw := `0x04f9012201800285012a05f2008307a1209471562b71999873db5b286df957af199ec94617f78080c0f8b8f85a0194000000000000000000000000000000000000aaaa0101a0f7e3e597fc097e71ed6c26b14b25e5395bc8510d58b9136af439e12715f2d721a06cf7c3d7939bfdb784373effc0ebb0bd7549691a513f395e3cdabf8602724987f85a8094000000000000000000000000000000000000bbbb8001a05011890f198f0356a887b0779bde5afa1ed04e6acb1e3f37f8f18c7b6f521b98a056c3fa3456b103f3ef4a0acb4b647b9cab9ec4bc68fbcdf1e10b49fb2bcbcf6101a06d5ddb9420ce5d9ff7d1bc6fcf1098cc648a68207489c0fcfee54dc61352353aa04ba532c2cfc4a1163e7ffd3d92dd5815b37ddcfa3293e1c4ee86f9604b6b59a2`
+
+	tx := eth.Transaction{}
+	err := tx.FromRaw(raw)
+	require.NoError(t, err)
+	require.Equal(t, hash, tx.Hash.String())
+	require.Equal(t, "0x4", tx.Type.String(), "expected set code transaction type")
+
+	require.NotNil(t, tx.AuthorizationList)
+	authList := *tx.AuthorizationList
+	require.NotEmpty(t, authList)
+	require.Equal(t, 2, len(authList))
+
+	firstAuth := authList[0]
+	// {"chainId":"0x1","address":"0x000000000000000000000000000000000000aaaa","nonce":"0x1","yParity":"0x1","r":"0xf7e3e597fc097e71ed6c26b14b25e5395bc8510d58b9136af439e12715f2d721","s":"0x6cf7c3d7939bfdb784373effc0ebb0bd7549691a513f395e3cdabf8602724987"}
+	require.Equal(t, "0x1", firstAuth.ChainID.String())
+	require.Equal(t, "0x000000000000000000000000000000000000aaaa", firstAuth.Address.String())
+	require.Equal(t, "0x1", firstAuth.V.String())
+	require.Equal(t, "0xf7e3e597fc097e71ed6c26b14b25e5395bc8510d58b9136af439e12715f2d721", firstAuth.R.String())
+	require.Equal(t, "0x6cf7c3d7939bfdb784373effc0ebb0bd7549691a513f395e3cdabf8602724987", firstAuth.S.String())
+}
+
 func TestTransaction_FromRaw_BesuBlobs(t *testing.T) {
 	// The tests in this function are derived from:
 	// https://github.com/hyperledger/besu/blob/main/ethereum/core/src/test/java/org/hyperledger/besu/ethereum/core/encoding/BlobTransactionEncodingTest.java#L42
