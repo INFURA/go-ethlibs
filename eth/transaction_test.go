@@ -291,6 +291,74 @@ func TestTransactionTypeBlob(t *testing.T) {
 	require.JSONEq(t, payload, string(b))
 }
 
+func TestTransactionTypeSetCode(t *testing.T) {
+	payload := `{
+		"blockHash": "0xfc2715ff196e23ae613ed6f837abd9035329a720a1f4e8dce3b0694c867ba052",
+		"blockNumber": "0x2a1cb",
+		"from": "0xad01b55d7c3448b8899862eb335fbb17075d8de2",
+		"gas": "0x5208",
+		"gasPrice": "0x1d1a94a201c",
+		"maxFeePerGas": "0x1d1a94a201c",
+		"maxPriorityFeePerGas": "0x1d1a94a201c",
+		"maxFeePerBlobGas": "0x3e8",
+		"hash": "0x5ceec39b631763ae0b45a8fb55c373f38b8fab308336ca1dc90ecd2b3cf06d00",
+		"input": "0x",
+		"nonce": "0x1b483",
+		"to": "0x000000000000000000000000000000000000f1c1",
+		"transactionIndex": "0x0",
+		"value": "0x0",
+		"type": "0x4",
+		"accessList": [],
+		"chainId": "0x1a1f0ff42",
+		"authorizationList": [
+			{
+				"chainId": "0x1",
+				"address": "0xad01b55d7c3448b8899862eb335fbb17075d8de2",
+				"nonce": "0x1b",
+				"yParity": "0x0",
+				"r": "0x343c6239323a81ef61293cb4a4d37b6df47fbf68114adb5dd41581151a077da1",
+				"s": "0x48c21f6872feaf181d37cc4f9bbb356d3f10b352ceb38d1c3b190d749f95a11b"
+			},
+			{
+				"chainId": "0x1",
+				"address": "0x000000000000000000000000000000000000aaaa",
+				"nonce": "0x1",
+				"yParity": "0x1",
+				"r": "0xf7e3e597fc097e71ed6c26b14b25e5395bc8510d58b9136af439e12715f2d721",
+				"s": "0x6cf7c3d7939bfdb784373effc0ebb0bd7549691a513f395e3cdabf8602724987"
+			}
+		],
+		"v": "0x0",
+		"r": "0x343c6239323a81ef61293cb4a4d37b6df47fbf68114adb5dd41581151a077da1",
+		"s": "0x48c21f6872feaf181d37cc4f9bbb356d3f10b352ceb38d1c3b190d749f95a11b",
+		"yParity": "0x0"
+	  }`
+
+	tx := eth.Transaction{}
+	err := json.Unmarshal([]byte(payload), &tx)
+	require.NoError(t, err)
+	require.NotNil(t, tx.Type)
+	require.Equal(t, eth.TransactionTypeSetCode, tx.Type.Int64())
+	require.Equal(t, eth.TransactionTypeSetCode, tx.TransactionType())
+	require.NotNil(t, tx.YParity)
+	require.Equal(t, tx.V, *tx.YParity)
+
+	b, err := json.Marshal(&tx)
+	require.NoError(t, err)
+	require.JSONEq(t, payload, string(b))
+
+	nr, err := tx.NetworkRepresentation()
+	require.NoError(t, err, "failed to get network representation")
+	require.NotNil(t, nr, "network representation is nil")
+
+	err = tx.RequiredFields()
+	require.NoError(t, err, "failed to check required fields")
+
+	rr, err := tx.RawRepresentation()
+	require.NoError(t, err, "failed to get raw representation")
+	require.NotNil(t, rr, "raw representation is nil")
+}
+
 func TestNewPendingTxNotificationParams(t *testing.T) {
 
 	{
