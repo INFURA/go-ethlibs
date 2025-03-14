@@ -1,6 +1,12 @@
 [![GoDoc](https://godoc.org/github.com/INFURA/go-ethlibs?status.svg)](http://godoc.org/github.com/INFURA/go-ethlibs)
 [![Go Report Card](https://goreportcard.com/badge/github.com/INFURA/go-ethlibs)](https://goreportcard.com/report/github.com/INFURA/go-ethlibs)
 
+# Deprecated Repository
+
+<div style="border: 2px solid red; padding: 10px; border-radius: 5px; background-color: #ffe6e6; color: black;">
+⚠ ️This repository is deprecated and no longer maintained.⚠ 
+</div>
+
 # go-ethlibs: Go Ethereum Libraries
 
 A sandbox of helpers related to interacting with Ethereum nodes.
