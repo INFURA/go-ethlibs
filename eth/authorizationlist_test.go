@@ -50,5 +50,4 @@ func TestAuthorizationList_FromRLP(t *testing.T) {
 		require.Equal(t, srcAuth.R.String(), auth.R.String(), "authorization R not equal")
 		require.Equal(t, srcAuth.S.String(), auth.S.String(), "authorization S not equal")
 	}
-
 }

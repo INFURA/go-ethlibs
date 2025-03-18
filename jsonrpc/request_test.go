@@ -8,7 +8,6 @@ import (
 )
 
 func TestUnmarshalGoodRequests(t *testing.T) {
-
 	type TestCase struct {
 		Description string
 		Raw         string
@@ -108,7 +107,7 @@ func TestUnmarshalGoodRequests(t *testing.T) {
 		assert.Equal(t, testCase.Request.Method, parsed.Method)
 		assert.Equal(t, testCase.Request.Params, parsed.Params)
 
-		//remarshal without error
+		// remarshal without error
 		_, err = json.Marshal(&parsed)
 		assert.Nil(t, err, "Got err '%v' re-Marshaling parsed JSON")
 	}
@@ -149,7 +148,6 @@ func TestUnmarshalBadRequests(t *testing.T) {
 }
 
 func TestRemarshalRequestWithNetworks(t *testing.T) {
-
 	type TestCase struct {
 		Description string
 		Raw         string
@@ -249,7 +247,7 @@ func TestRemarshalRequestWithNetworks(t *testing.T) {
 		assert.Equal(t, testCase.Request.Method, parsed.Method)
 		assert.Equal(t, testCase.Request.Params, parsed.Params)
 
-		//remarshal as a RequestWithNetwork without error
+		// remarshal as a RequestWithNetwork without error
 		network := "mainnet"
 		b, err := json.Marshal(RequestWithNetwork{&parsed, network})
 		assert.Nil(t, err, "Got err '%v' re-Marshaling parsed JSON")
@@ -263,7 +261,6 @@ func TestRemarshalRequestWithNetworks(t *testing.T) {
 }
 
 func TestMarshalGoodRequests(t *testing.T) {
-
 	type TestCase struct {
 		Description string
 		Expected    string

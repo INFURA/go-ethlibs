@@ -3,15 +3,14 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
+
 	"github.com/INFURA/go-ethlibs/eth"
 	"github.com/INFURA/go-ethlibs/jsonrpc"
 	"github.com/INFURA/go-ethlibs/node"
-	"log"
 )
 
-var (
-	target = flag.String("target", "", "target URL")
-)
+var target = flag.String("target", "", "target URL")
 
 func main() {
 	flag.Parse()

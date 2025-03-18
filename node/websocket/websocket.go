@@ -238,7 +238,6 @@ func (c *connection) loop() {
 						case outbound.chResult <- &patchedResponse:
 							return
 						}
-
 					}(msg)
 					continue
 				}
@@ -269,13 +268,11 @@ func (c *connection) loop() {
 						case subscription.ch <- &_copy:
 							return
 						}
-
 					}(msg)
 				}
 				c.subscriptionsMu.RUnlock()
 			}
 		}
-
 	})
 
 	// Writer
@@ -392,7 +389,6 @@ func (c *connection) URL() string {
 }
 
 func (c *connection) Request(ctx context.Context, r *jsonrpc.Request) (*jsonrpc.RawResponse, error) {
-
 	outbound := outboundRequest{
 		request:  r,
 		chResult: make(chan *jsonrpc.RawResponse),
@@ -575,7 +571,6 @@ func (c *connection) NewHeads(ctx context.Context) (Subscription, error) {
 
 // if full is set to true, includeTransactions will be set to true for subscription parameters
 func (c *connection) NewPendingTransaction(ctx context.Context, full ...bool) (Subscription, error) {
-
 	var r jsonrpc.Request
 	if full != nil {
 		r = jsonrpc.Request{

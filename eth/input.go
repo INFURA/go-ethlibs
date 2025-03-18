@@ -2,9 +2,10 @@ package eth
 
 import (
 	"encoding/json"
+	"strings"
+
 	"github.com/INFURA/go-ethlibs/rlp"
 	"github.com/pkg/errors"
-	"strings"
 )
 
 type Input Data

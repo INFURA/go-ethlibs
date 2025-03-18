@@ -9,7 +9,6 @@ import (
 )
 
 func TestBlockNumberOrTag_MarshalJSON(t *testing.T) {
-
 	{
 		tag := eth.MustBlockNumberOrTag("latest")
 		b, err := json.Marshal(&tag)

@@ -202,7 +202,6 @@ func TestTransactionReceipts(t *testing.T) {
 		require.Equal(t, eth.TransactionTypeAccessList, receipt.Type.Int64())
 		require.Equal(t, eth.TransactionTypeAccessList, receipt.TransactionType())
 	}
-
 }
 
 func TestTransactionReceipt_4844(t *testing.T) {

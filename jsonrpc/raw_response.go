@@ -17,7 +17,6 @@ type RawResponse struct {
 // MarshalJSON implements json.Marshaler and adds the "jsonrpc":"2.0"
 // property.
 func (r RawResponse) MarshalJSON() ([]byte, error) {
-
 	if r.Error != nil {
 		response := struct {
 			JSONRPC string          `json:"jsonrpc"`

@@ -45,8 +45,8 @@ func (n *Notification) UnmarshalJSON(data []byte) error {
 //
 // Example:
 //
-//   var newHead eth.NewHeads
-//   err := notification.UnmarshalParamsInto(&newHead)
+//	var newHead eth.NewHeads
+//	err := notification.UnmarshalParamsInto(&newHead)
 //
 // IMPORTANT: While Go will compile with non-pointer receivers, the Unmarshal attempt will
 // *always* fail with an error.

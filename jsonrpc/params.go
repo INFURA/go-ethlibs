@@ -10,8 +10,10 @@ import (
 // arrays is their input parameter; this differs from the official JSONRPC spec, which allows
 // parameters of any type.
 // But, this assumption makes handling Params in our Ethereum API use-cases *so* much easier.
-type Param json.RawMessage
-type Params []Param
+type (
+	Param  json.RawMessage
+	Params []Param
+)
 
 // MarshalJSON returns m as the JSON encoding of m.
 func (m Param) MarshalJSON() ([]byte, error) {
@@ -35,8 +37,7 @@ func (m *Param) UnmarshalJSON(data []byte) error {
 //
 // Examples:
 //
-//   request.Params = jsonrpc.MustParams("latest", true)
-//
+//	request.Params = jsonrpc.MustParams("latest", true)
 func MustParams(params ...interface{}) Params {
 	out, err := MakeParams(params...)
 	if err != nil {
@@ -52,8 +53,7 @@ func MustParams(params ...interface{}) Params {
 //
 // Examples:
 //
-//   params, err := jsonrpc.MakeParams(someComplexObject, "string", true)
-//
+//	params, err := jsonrpc.MakeParams(someComplexObject, "string", true)
 func MakeParams(params ...interface{}) (Params, error) {
 	if len(params) == 0 {
 		return nil, nil
@@ -77,9 +77,9 @@ func MakeParams(params ...interface{}) (Params, error) {
 //
 // Example:
 //
-//   var blockNum string
-//   var fullBlock bool
-//   err := request.Params.UnmarshalInto(&blockNum, &fullBlock)
+//	var blockNum string
+//	var fullBlock bool
+//	err := request.Params.UnmarshalInto(&blockNum, &fullBlock)
 //
 // IMPORTANT: While Go will compile with non-pointer receivers, the Unmarshal attempt will
 // *always* fail with an error.
@@ -107,7 +107,8 @@ func (p Params) UnmarshalInto(receivers ...interface{}) error {
 // decoding the entire Params array.
 //
 // Example:
-//   err := request.Params.UnmarshalSingleParam(pos, &blockNum)
+//
+//	err := request.Params.UnmarshalSingleParam(pos, &blockNum)
 func (p Params) UnmarshalSingleParam(pos int, receiver interface{}) error {
 	if pos > (len(p) - 1) {
 		return errors.New("not enough parameters to decode position")

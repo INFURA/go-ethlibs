@@ -1,3 +1,4 @@
+// Package node 提供以太坊节点连接和通信功能
 package node
 
 import (
@@ -17,6 +18,12 @@ import (
 	"github.com/INFURA/go-ethlibs/jsonrpc"
 )
 
+// newLoopingTransport 创建一个新的循环传输层实例
+// ctx 用于控制传输层的生命周期
+// conn 实现了connCloser接口的连接对象
+// readMessage 用于读取消息的函数
+// writeMessage 用于写入消息的函数
+// 返回初始化好的循环传输层实例
 func newLoopingTransport(ctx context.Context, conn connCloser, readMessage readMessageFunc, writeMessage writeMessageFunc) *loopingTransport {
 	t := loopingTransport{
 		conn:                   conn,
@@ -36,69 +43,76 @@ func newLoopingTransport(ctx context.Context, conn connCloser, readMessage readM
 	return &t
 }
 
+// connCloser 定义了连接关闭和超时设置的接口
 type connCloser interface {
-	// Close closes the connection.
-	// Any blocked Read or Write operations will be unblocked and return errors.
+	// Close 关闭连接
+	// 任何被阻塞的读写操作都将被解除阻塞并返回错误
 	Close() error
 
-	// SetReadDeadline sets the deadline for future Read calls
-	// and any currently-blocked Read call.
-	// A zero value for t means Read will not time out.
+	// SetReadDeadline 设置未来读取操作的截止时间
+	// 对当前被阻塞的读取操作也生效
+	// t为零值表示读取操作不会超时
 	SetReadDeadline(t time.Time) error
 
-	// SetWriteDeadline sets the deadline for future Write calls
-	// and any currently-blocked Write call.
-	// Even if write times out, it may return n > 0, indicating that
-	// some of the data was successfully written.
-	// A zero value for t means Write will not time out.
+	// SetWriteDeadline 设置未来写入操作的截止时间
+	// 对当前被阻塞的写入操作也生效
+	// 即使写入超时，也可能返回n>0，表示部分数据已成功写入
+	// t为零值表示写入操作不会超时
 	SetWriteDeadline(t time.Time) error
 }
 
+// readMessageFunc 定义了读取消息的函数类型
 type readMessageFunc func() ([]byte, error)
+
+// writeMessageFunc 定义了写入消息的函数类型
 type writeMessageFunc func(payload []byte) error
 
+// subscriptionRequest 表示订阅请求的结构体
 type subscriptionRequest struct {
-	request  *jsonrpc.Request
-	response *jsonrpc.Response
-	chResult chan *subscription
-	chError  chan error
+	request  *jsonrpc.Request   // JSON-RPC请求对象
+	response *jsonrpc.Response  // JSON-RPC响应对象
+	chResult chan *subscription // 用于接收订阅结果的通道
+	chError  chan error         // 用于接收错误的通道
 }
 
+// outboundRequest 表示出站请求的结构体
 type outboundRequest struct {
-	request     *jsonrpc.Request
-	response    *jsonrpc.RawResponse
-	chResult    chan *jsonrpc.RawResponse
-	chError     chan error
-	chAbandoned chan struct{}
+	request     *jsonrpc.Request          // JSON-RPC请求对象
+	response    *jsonrpc.RawResponse      // 原始JSON-RPC响应对象
+	chResult    chan *jsonrpc.RawResponse // 用于接收响应结果的通道
+	chError     chan error                // 用于接收错误的通道
+	chAbandoned chan struct{}             // 用于标记请求是否被放弃的通道
 }
 
+// loopingTransport 实现了循环传输层的核心功能
 type loopingTransport struct {
-	conn connCloser
-	ctx  context.Context
+	conn connCloser      // 底层连接对象
+	ctx  context.Context // 控制传输层生命周期的上下文
 
-	counter                uint64
-	chToBackend            chan jsonrpc.Request
-	chSubscriptionRequests chan *subscriptionRequest
-	chOutboundRequests     chan *outboundRequest
+	counter                uint64                    // 请求计数器
+	chToBackend            chan jsonrpc.Request      // 发送到后端的请求通道
+	chSubscriptionRequests chan *subscriptionRequest // 订阅请求通道
+	chOutboundRequests     chan *outboundRequest     // 出站请求通道
 
-	subscriptonRequests map[jsonrpc.ID]*subscriptionRequest
-	outboundRequests    map[jsonrpc.ID]*outboundRequest
-	requestMu           sync.RWMutex
+	subscriptonRequests map[jsonrpc.ID]*subscriptionRequest // 订阅请求映射表
+	outboundRequests    map[jsonrpc.ID]*outboundRequest     // 出站请求映射表
+	requestMu           sync.RWMutex                        // 请求映射表的读写锁
 
-	subscriptions   map[string]*subscription
-	subscriptionsMu sync.RWMutex
+	subscriptions   map[string]*subscription // 活跃订阅映射表
+	subscriptionsMu sync.RWMutex             // 订阅映射表的读写锁
 
-	readMu      sync.Mutex
-	readMessage readMessageFunc
+	readMu      sync.Mutex      // 读取操作的互斥锁
+	readMessage readMessageFunc // 读取消息的函数
 
-	writeMu      sync.Mutex
-	writeMessage writeMessageFunc
+	writeMu      sync.Mutex       // 写入操作的互斥锁
+	writeMessage writeMessageFunc // 写入消息的函数
 }
 
+// loop 启动循环传输层的主循环，处理消息的读取、写入和订阅管理
 func (t *loopingTransport) loop() {
 	g, ctx := errgroup.WithContext(t.ctx)
 
-	// Reader
+	// 启动读取器协程
 	g.Go(func() error {
 		for {
 			t.readMu.Lock()
@@ -117,12 +131,13 @@ func (t *loopingTransport) loop() {
 			}
 			// log.Printf("[SPAM] read: %s", string(payload))
 
-			// is it a request, notification, or response?
+			// 解析消息类型（请求、通知或响应）
 			msg, err := jsonrpc.Unmarshal(payload)
 			if err != nil {
 				return errors.Wrap(err, "unrecognized message from backend websocket connection")
 			}
 
+			// 根据消息类型进行不同的处理
 			switch msg := msg.(type) {
 			case *jsonrpc.RawResponse:
 				// log.Printf("[SPAM] response: %p", msg)
@@ -197,7 +212,6 @@ func (t *loopingTransport) loop() {
 						case o.chResult <- &patchedResponse:
 							return
 						}
-
 					}(outbound, msg)
 					continue
 				}
@@ -229,7 +243,7 @@ func (t *loopingTransport) loop() {
 		}
 	})
 
-	// Writer
+	// 启动写入器协程
 	g.Go(func() error {
 		for {
 			select {
@@ -273,7 +287,7 @@ func (t *loopingTransport) loop() {
 		}
 	})
 
-	// Processor
+	// 启动处理器协程，处理订阅请求和出站请求
 	g.Go(func() error {
 		for {
 			select {

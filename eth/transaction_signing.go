@@ -163,7 +163,7 @@ func (t *Transaction) SigningPreimage(chainId Quantity) (*Data, error) {
 		return NewData("0x02" + encoded[2:])
 	case TransactionTypeBlob:
 		// The signature values y_parity, r, and s are calculated by constructing a secp256k1 signature over the following digest:
-		//keccak256(BLOB_TX_TYPE || rlp([chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to, value, data, access_list, max_fee_per_blob_gas, blob_versioned_hashes])).
+		// keccak256(BLOB_TX_TYPE || rlp([chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to, value, data, access_list, max_fee_per_blob_gas, blob_versioned_hashes])).
 		payload := rlp.Value{List: []rlp.Value{
 			chainId.RLP(),
 			t.Nonce.RLP(),

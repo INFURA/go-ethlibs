@@ -21,7 +21,6 @@ func RequireEqualJSON(t *testing.T, expected, actual []byte, msgAndArgs ...inter
 }
 
 func TestMainnetGethBlocks(t *testing.T) {
-
 	partial := `{
     "difficulty": "0xbfabcdbd93dda",
     "extraData": "0x737061726b706f6f6c2d636e2d6e6f64652d3132",
