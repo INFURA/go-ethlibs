@@ -8,10 +8,10 @@ import (
 	context "context"
 	reflect "reflect"
 
+	gomock "github.com/golang/mock/gomock"
 	eth "github.com/justinwongcn/go-ethlibs/eth"
 	jsonrpc "github.com/justinwongcn/go-ethlibs/jsonrpc"
 	node "github.com/justinwongcn/go-ethlibs/node"
-	gomock "github.com/golang/mock/gomock"
 )
 
 // MockRequester is a mock of Requester interface.

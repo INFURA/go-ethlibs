@@ -54,8 +54,10 @@ type connCloser interface {
 	SetWriteDeadline(t time.Time) error
 }
 
-type readMessageFunc func() ([]byte, error)
-type writeMessageFunc func(payload []byte) error
+type (
+	readMessageFunc  func() ([]byte, error)
+	writeMessageFunc func(payload []byte) error
+)
 
 type subscriptionRequest struct {
 	request  *jsonrpc.Request
@@ -197,7 +199,6 @@ func (t *loopingTransport) loop() {
 						case o.chResult <- &patchedResponse:
 							return
 						}
-
 					}(outbound, msg)
 					continue
 				}

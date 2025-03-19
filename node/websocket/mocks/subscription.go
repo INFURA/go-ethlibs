@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	jsonrpc "github.com/justinwongcn/go-ethlibs/jsonrpc"
 	gomock "github.com/golang/mock/gomock"
+	jsonrpc "github.com/justinwongcn/go-ethlibs/jsonrpc"
 )
 
 // MockSubscription is a mock of Subscription interface.

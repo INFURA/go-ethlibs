@@ -88,11 +88,11 @@ func TestUnmarshalGoodResponses(t *testing.T) {
 		assert.Equal(t, testCase.Response.Result, parsed.Result)
 		assert.Equal(t, testCase.Response.Error, parsed.Error)
 
-		//remarshal without error
+		// remarshal without error
 		remarshalled, err := json.Marshal(parsed)
 		assert.Nil(t, err, "Got err '%v' re-Marshaling parsed JSON", err)
 
-		//log.Printf("[TEST] Remarshalled: %s", string(remarshalled))
+		// log.Printf("[TEST] Remarshalled: %s", string(remarshalled))
 
 		err = json.Unmarshal(remarshalled, &parsed)
 		assert.Nil(t, err, "Got err '%v' re-Unmarshaling marshalled JSON", err)
@@ -119,7 +119,7 @@ func TestUnmarshalBadResponses(t *testing.T) {
 	for _, testCase := range testCases {
 		parsed := Response{}
 		err := json.Unmarshal([]byte(testCase.Raw), &parsed)
-		//log.Printf("[TEST] Expected err: %v", err)
+		// log.Printf("[TEST] Expected err: %v", err)
 		if assert.NotNil(t, err, "Expected err but got %v parsing: %s", err, testCase.Raw) == false {
 			continue
 		}

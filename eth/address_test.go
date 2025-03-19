@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	`github.com/justinwongcn/go-ethlibs/eth`
+	"github.com/justinwongcn/go-ethlibs/eth"
 )
 
 func TestAddressChecksums(t *testing.T) {

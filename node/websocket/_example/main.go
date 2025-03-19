@@ -14,8 +14,10 @@ import (
 	"github.com/justinwongcn/go-ethlibs/node/websocket"
 )
 
-var endpoint = flag.String("URL", "wss://mainnet.infura.io/ws", "The websocket endpoint to connect to")
-var verbose = flag.Bool("verbose", false, "if set newHeads and block JSON will be printed")
+var (
+	endpoint = flag.String("URL", "wss://mainnet.infura.io/ws", "The websocket endpoint to connect to")
+	verbose  = flag.Bool("verbose", false, "if set newHeads and block JSON will be printed")
+)
 
 func main() {
 	flag.Parse()

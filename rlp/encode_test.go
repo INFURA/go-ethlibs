@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	`github.com/justinwongcn/go-ethlibs/rlp`
+	"github.com/justinwongcn/go-ethlibs/rlp"
 )
 
 func TestValue_Encode(t *testing.T) {

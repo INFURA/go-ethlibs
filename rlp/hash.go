@@ -10,7 +10,6 @@ import (
 
 // Hash returns the keccak256 hash of the encoded RLP value as a hexadecimal string prefixed with 0x
 func (v Value) Hash() (string, error) {
-
 	sum, err := v.HashToBytes()
 	if err != nil {
 		return "", err

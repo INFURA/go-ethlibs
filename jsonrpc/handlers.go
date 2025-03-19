@@ -11,13 +11,13 @@ import (
 // RequestHandlerFunc is a helper for handling JSONRPC Requests over HTTP
 // It can be used by microservices to handle JSONRPC methods.  For example:
 //
-// http.Handle("/", RequestHandlerFunc(func(ctx context.Context, r *Request) (interface{}, *Error) {
-//		if r.Method != "eth_blockNumber" {
-//			return nil, MethodNotSupported(fmt.Sprintf("unsupported method %s", r.Method))
-//		}
+//	http.Handle("/", RequestHandlerFunc(func(ctx context.Context, r *Request) (interface{}, *Error) {
+//			if r.Method != "eth_blockNumber" {
+//				return nil, MethodNotSupported(fmt.Sprintf("unsupported method %s", r.Method))
+//			}
 //
-//		return "0x123456", nil
-//	}))
+//			return "0x123456", nil
+//		}))
 func RequestHandlerFunc(fn requestHandlerFunc) *requestHandlerFunc {
 	return &fn
 }

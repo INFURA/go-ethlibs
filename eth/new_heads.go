@@ -65,7 +65,6 @@ type NewHeadsResult struct {
 // FromBlock can be used to populate a NewHeadsResult with the contents of a Block.
 // It does a best effort to emulate a NewHeadsResult with the same flavor as the Block.
 func (nh *NewHeadsResult) FromBlock(block *Block) {
-
 	*nh = NewHeadsResult{
 		Number:           *block.Number,
 		Hash:             *block.Hash,

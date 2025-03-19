@@ -10,7 +10,6 @@ import (
 )
 
 func TestNewHeadsNotificationParams(t *testing.T) {
-
 	{
 		params := eth.NewHeadsNotificationParams{}
 
@@ -71,7 +70,6 @@ func TestNewHeadsNotificationParams(t *testing.T) {
 }
 
 func TestNewHeadsResult_FromBlock(t *testing.T) {
-
 	type TestCase struct {
 		Source   string
 		Block    string

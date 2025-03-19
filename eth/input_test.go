@@ -1,8 +1,9 @@
 package eth
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestInput_FunctionSelector(t *testing.T) {
@@ -29,5 +30,4 @@ func TestInput_FunctionSelector(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, input.FunctionSelector(), MustData4("0xa4136862"))
 	})
-
 }

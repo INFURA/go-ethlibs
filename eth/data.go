@@ -11,16 +11,20 @@ import (
 	"github.com/justinwongcn/go-ethlibs/rlp"
 )
 
-type Data string
-type Data4 Data
-type Data8 Data
-type Data20 Data
-type Data32 Data
-type Data256 Data
+type (
+	Data    string
+	Data4   Data
+	Data8   Data
+	Data20  Data
+	Data32  Data
+	Data256 Data
+)
 
 // Aliases
-type Hash = Data32
-type Topic = Data32
+type (
+	Hash  = Data32
+	Topic = Data32
+)
 
 func NewData(value string) (*Data, error) {
 	parsed, err := validateHex(value, -1, "data")
@@ -187,6 +191,7 @@ func (d Data4) Bytes() []byte {
 	}
 	return b
 }
+
 func (d Data8) Bytes() []byte {
 	b, err := hex.DecodeString(d.String()[2:])
 	if err != nil {

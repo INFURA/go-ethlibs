@@ -7,7 +7,6 @@ import (
 )
 
 func TestMakeParams(t *testing.T) {
-
 	type testCase struct {
 		Description string
 		Expected    Params
@@ -52,7 +51,6 @@ func TestMakeParams(t *testing.T) {
 }
 
 func TestParams_DecodeInto(t *testing.T) {
-
 	type testCase struct {
 		Description string
 		Expected    []interface{}
