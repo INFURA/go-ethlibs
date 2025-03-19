@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/INFURA/go-ethlibs/eth"
+	"github.com/justinwongcn/go-ethlibs/eth"
 	"github.com/stretchr/testify/require"
 )
 

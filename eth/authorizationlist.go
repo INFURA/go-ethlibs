@@ -1,7 +1,7 @@
 package eth
 
 import (
-	"github.com/INFURA/go-ethlibs/rlp"
+	"github.com/justinwongcn/go-ethlibs/rlp"
 	"github.com/pkg/errors"
 )
 

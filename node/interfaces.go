@@ -6,8 +6,8 @@ package node
 import (
 	"context"
 
-	"github.com/INFURA/go-ethlibs/eth"
-	"github.com/INFURA/go-ethlibs/jsonrpc"
+	"github.com/justinwongcn/go-ethlibs/eth"
+	"github.com/justinwongcn/go-ethlibs/jsonrpc"
 )
 
 type Requester interface {
@@ -45,6 +45,9 @@ type Client interface {
 
 	// GasPrice (Legacy) returns the suggested gas price
 	GasPrice(ctx context.Context) (uint64, error)
+
+	// GetBalance returns the balance of the account of given address
+	GetBalance(ctx context.Context, address eth.Address, numberOrTag eth.BlockNumberOrTag) (uint64, error)
 
 	// GetTransactionCount get the pending nonce for public address
 	GetTransactionCount(ctx context.Context, address eth.Address, numberOrTag eth.BlockNumberOrTag) (uint64, error)

@@ -1,5 +1,5 @@
-[![GoDoc](https://godoc.org/github.com/INFURA/go-ethlibs?status.svg)](http://godoc.org/github.com/INFURA/go-ethlibs)
-[![Go Report Card](https://goreportcard.com/badge/github.com/INFURA/go-ethlibs)](https://goreportcard.com/report/github.com/INFURA/go-ethlibs)
+[![GoDoc](https://godoc.org/github.com/justinwongcn/go-ethlibs?status.svg)](http://godoc.org/github.com/justinwongcn/go-ethlibs)
+[![Go Report Card](https://goreportcard.com/badge/github.com/justinwongcn/go-ethlibs)](https://goreportcard.com/report/github.com/justinwongcn/go-ethlibs)
 
 # go-ethlibs: Go Ethereum Libraries
 

@@ -8,8 +8,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/INFURA/go-ethlibs/eth"
-	"github.com/INFURA/go-ethlibs/jsonrpc"
+	"github.com/justinwongcn/go-ethlibs/eth"
+	"github.com/justinwongcn/go-ethlibs/jsonrpc"
 )
 
 var (
@@ -298,6 +298,32 @@ func (c *client) GasPrice(ctx context.Context) (uint64, error) {
 	response, err := c.Request(ctx, &request)
 	if err != nil {
 		return 0, errors.Wrap(err, "could not make request")
+	}
+
+	q := eth.Quantity{}
+	err = json.Unmarshal(response.Result, &q)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not decode result")
+	}
+
+	return q.UInt64(), err
+}
+
+func (c *client) GetBalance(ctx context.Context, address eth.Address, numberOrTag eth.BlockNumberOrTag) (uint64, error) {
+	request := jsonrpc.Request{
+		ID:     jsonrpc.ID{Num: 1},
+		Method: "eth_getBalance",
+		Params: jsonrpc.MustParams(address, &numberOrTag),
+	}
+
+	applyContext(ctx, &request)
+	response, err := c.Request(ctx, &request)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not make request")
+	}
+
+	if response.Error != nil {
+		return 0, errors.New(string(*response.Error))
 	}
 
 	q := eth.Quantity{}

@@ -3,7 +3,7 @@ package eth
 import (
 	"github.com/pkg/errors"
 
-	"github.com/INFURA/go-ethlibs/rlp"
+	"github.com/justinwongcn/go-ethlibs/rlp"
 )
 
 type AccessList []AccessListEntry

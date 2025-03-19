@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/INFURA/go-ethlibs/eth"
-	"github.com/INFURA/go-ethlibs/jsonrpc"
-	"github.com/INFURA/go-ethlibs/node"
+	"github.com/justinwongcn/go-ethlibs/eth"
+	"github.com/justinwongcn/go-ethlibs/jsonrpc"
+	"github.com/justinwongcn/go-ethlibs/node"
 	"log"
 )
 

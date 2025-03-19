@@ -3,7 +3,7 @@ package eth
 import (
 	"github.com/pkg/errors"
 
-	"github.com/INFURA/go-ethlibs/rlp"
+	"github.com/justinwongcn/go-ethlibs/rlp"
 )
 
 // FromRaw populates Block fields from the RLP-encoded raw block input string.

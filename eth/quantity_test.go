@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/INFURA/go-ethlibs/eth"
-	"github.com/INFURA/go-ethlibs/jsonrpc"
+	"github.com/justinwongcn/go-ethlibs/eth"
+	"github.com/justinwongcn/go-ethlibs/jsonrpc"
 )
 
 func TestQuantityFromUInt64(t *testing.T) {
@@ -87,7 +87,7 @@ func TestQuantity_DeepCopyInto(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			// This is basically the same pattern as the auto-generated eth.Block.DeepCopy
-			// code here: https://github.com/INFURA/go-ethlibs/blob/master/eth/zz_deepcopy_generated.go#L19
+			// code here: https://github.com/justinwongcn/go-ethlibs/blob/master/eth/zz_deepcopy_generated.go#L19
 			cpy := src
 			src.DeepCopyInto(&cpy)
 

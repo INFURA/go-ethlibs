@@ -1,4 +1,4 @@
-module github.com/INFURA/go-ethlibs
+module github.com/justinwongcn/go-ethlibs
 
 go 1.17
 

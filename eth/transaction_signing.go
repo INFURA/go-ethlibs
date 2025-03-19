@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/INFURA/go-ethlibs/rlp"
+	"github.com/justinwongcn/go-ethlibs/rlp"
 )
 
 // Sign uses the hex-encoded private key and chainId to update the R, S, and V values

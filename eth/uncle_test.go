@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/INFURA/go-ethlibs/eth"
+	"github.com/justinwongcn/go-ethlibs/eth"
 )
 
 func TestMainnetGethUncles(t *testing.T) {

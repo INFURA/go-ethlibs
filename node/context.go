@@ -3,7 +3,7 @@ package node
 import (
 	"context"
 
-	"github.com/INFURA/go-ethlibs/jsonrpc"
+	"github.com/justinwongcn/go-ethlibs/jsonrpc"
 )
 
 type contextKey string

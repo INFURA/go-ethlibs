@@ -1,6 +1,6 @@
 package eth
 
-import "github.com/INFURA/go-ethlibs/rlp"
+import "github.com/justinwongcn/go-ethlibs/rlp"
 
 type Withdrawal struct {
 	Index          Quantity `json:"index"`

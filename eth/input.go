@@ -2,7 +2,7 @@ package eth
 
 import (
 	"encoding/json"
-	"github.com/INFURA/go-ethlibs/rlp"
+	"github.com/justinwongcn/go-ethlibs/rlp"
 	"github.com/pkg/errors"
 	"strings"
 )

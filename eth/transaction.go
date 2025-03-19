@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/INFURA/go-ethlibs/rlp"
+	"github.com/justinwongcn/go-ethlibs/rlp"
 )
 
 type Condition json.RawMessage

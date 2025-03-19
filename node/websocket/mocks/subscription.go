@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	jsonrpc "github.com/INFURA/go-ethlibs/jsonrpc"
+	jsonrpc "github.com/justinwongcn/go-ethlibs/jsonrpc"
 	gomock "github.com/golang/mock/gomock"
 )
 

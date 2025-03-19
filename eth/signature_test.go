@@ -7,7 +7,7 @@ import (
 	secp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/stretchr/testify/require"
 
-	"github.com/INFURA/go-ethlibs/eth"
+	"github.com/justinwongcn/go-ethlibs/eth"
 )
 
 func TestECSignAndRecover(t *testing.T) {
