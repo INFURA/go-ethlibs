@@ -1,9 +1,13 @@
 package jsonrpc
 
 import (
+	"bytes"
 	"encoding/json"
-
+	"fmt"
 	"github.com/pkg/errors"
+	"io"
+	"reflect"
+	"strings"
 )
 
 // Params is an ARRAY of json.RawMessages.  This is because *Ethereum* RPCs always use
@@ -74,7 +78,8 @@ func MakeParams(params ...interface{}) (Params, error) {
 // UnmarshalInto will decode Params into the passed in values, which
 // must be pointer receivers.  The type of the passed in value is used to Unmarshal the data.
 // UnmarshalInto will fail if the parameters cannot be converted to the passed-in types.
-//
+// Check each type of each param, return an error if it's not the right one and which argument.
+
 // Example:
 //
 //   var blockNum string
@@ -83,6 +88,7 @@ func MakeParams(params ...interface{}) (Params, error) {
 //
 // IMPORTANT: While Go will compile with non-pointer receivers, the Unmarshal attempt will
 // *always* fail with an error.
+
 func (p Params) UnmarshalInto(receivers ...interface{}) error {
 	if p == nil {
 		return nil
@@ -92,11 +98,30 @@ func (p Params) UnmarshalInto(receivers ...interface{}) error {
 		return errors.New("not enough params to decode")
 	}
 
+	// Return an array of the receivers' types and check if the receiver is a ptr
+	receiversType, err := listTypes(receivers)
+	if err != nil {
+		return err
+	}
+
+	var paramElement []string
+	for _, i := range p {
+		paramElement = append(paramElement, string(i))
+	}
+
+	// Return p Params in json.RawMessage type with [] to be parsed
+	rawParams := json.RawMessage("[" + strings.Join(paramElement, ",") + "]")
+
+	receiversValues, err := parsePositionalArguments(rawParams, receiversType)
+	if err != nil {
+		return err
+	}
+
 	for i, r := range receivers {
-		err := json.Unmarshal(p[i], r)
-		if err != nil {
-			return err
+		if receiversValues[i].IsZero() {
+			continue
 		}
+		reflect.ValueOf(r).Elem().Set(receiversValues[i].Elem())
 	}
 
 	return nil
@@ -116,4 +141,70 @@ func (p Params) UnmarshalSingleParam(pos int, receiver interface{}) error {
 	param := p[pos]
 	err := json.Unmarshal(param, receiver)
 	return err
+}
+
+// parsePositionalArguments tries to parse the given args to an array of values with the
+// given types. It returns the parsed values or an error when the args could not be
+// parsed. Missing optional arguments are returned as reflect.Zero values.
+func parsePositionalArguments(rawArgs json.RawMessage, types []reflect.Type) ([]reflect.Value, error) {
+	dec := json.NewDecoder(bytes.NewReader(rawArgs))
+	var args []reflect.Value
+	tok, err := dec.Token()
+	switch {
+	case err == io.EOF || tok == nil && err == nil:
+	// "params" is optional and may be empty. Also allow "params":null even though it's
+	// not in the spec because our own client used to send it.
+	case err != nil:
+		return nil, err
+	case tok == json.Delim('['):
+		// Read argument array.
+		if args, err = parseArgumentArray(dec, types); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, errors.New("non-array args")
+	}
+	// Set any missing args to nil.
+	for i := len(args); i < len(types); i++ {
+		if types[i].Kind() != reflect.Ptr {
+			return nil, fmt.Errorf("missing value for required argument %d", i)
+		}
+		args = append(args, reflect.Zero(types[i]))
+	}
+	return args, nil
+}
+
+func parseArgumentArray(dec *json.Decoder, types []reflect.Type) ([]reflect.Value, error) {
+	args := make([]reflect.Value, 0, len(types))
+
+	for i := 0; dec.More(); i++ {
+		if i >= len(types) { //no error when decoding a subset of param
+			return args, nil
+		}
+		argval := reflect.New(types[i])
+
+		if err := dec.Decode(argval.Interface()); err != nil {
+			return args, fmt.Errorf("invalid argument %d: %v", i, err)
+		}
+
+		if argval.IsNil() && types[i].Kind() != reflect.Ptr {
+			return args, fmt.Errorf("missing value for required argument %d", i)
+		}
+		args = append(args, argval.Elem())
+	}
+	// Read end of args array.
+	_, err := dec.Token()
+	return args, err
+}
+
+func listTypes(a []interface{}) ([]reflect.Type, error) {
+	var arrayType []reflect.Type
+	for _, i := range a {
+		v := reflect.ValueOf(i).Type()
+		if v.Kind() != reflect.Ptr {
+			return nil, fmt.Errorf("the receiver %d is not a pointer", i)
+		}
+		arrayType = append(arrayType, v)
+	}
+	return arrayType, nil
 }
