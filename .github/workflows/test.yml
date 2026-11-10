@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Start Wiz sensor
-        uses: Consensys/github-actions/wiz-sensor@0d49727726a93ea318de84a7b23cadecabcbffb4 # main, 2026-10-23
+        uses: Consensys/github-actions/wiz-sensor@1daaa118f66bacf74d8bcf5271fd9e210ce035ce # main, 2026-10-23
         with:
           enabled: ${{ vars.WIZ_SENSOR_ENABLED }}
           token: ${{ secrets.WIZ_SENSOR_TOKEN }}
