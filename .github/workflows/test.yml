@@ -8,11 +8,6 @@ jobs:
     name: Unit tests
     runs-on: ubuntu-latest
     steps:
-      - name: Start Wiz sensor
-        uses: consensys-vertical-apps/shared-services-workflows/.github/actions/wiz-sensor@ee5456cf63f32f96987af955f66bd6b1b8b5cbd8 # v1.19.1
-        with:
-          enabled: ${{ vars.WIZ_SENSOR_ENABLED }}
-          token: ${{ secrets.WIZ_SENSOR_TOKEN }}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
