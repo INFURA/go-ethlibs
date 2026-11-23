@@ -31,7 +31,7 @@ func NewQuantity(value string) (*Quantity, error) {
 	q.s = value
 
 	if !strings.HasPrefix(value, "0x") {
-		return nil, errors.New("quantity values must start with 0x")
+		return nil, errors.New("hex string without 0x prefix")
 	}
 
 	if value == "0x" {
