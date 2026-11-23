@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 
 	"github.com/pkg/errors"
+
+	"github.com/INFURA/go-ethlibs/rlp"
 )
 
 type Log struct {
@@ -21,6 +23,20 @@ type Log struct {
 	// Parity-specific fields
 	TxLogIndex *Quantity `json:"transactionLogIndex,omitempty"`
 	Type       *string   `json:"type,omitempty"`
+}
+
+func (l *Log) RLP() rlp.Value {
+	topics := make([]rlp.Value, len(l.Topics))
+	for i := range l.Topics {
+		topics[i] = l.Topics[i].RLP()
+	}
+	return rlp.Value{
+		List: []rlp.Value{
+			l.Address.RLP(),
+			{List: topics},
+			l.Data.RLP(),
+		},
+	}
 }
 
 type addrOrArray []Address
