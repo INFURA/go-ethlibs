@@ -19,6 +19,8 @@ type subscription struct {
 	conn            Requester
 }
 
+var _ Subscription = &subscription{}
+
 func (s *subscription) Response() *jsonrpc.RawResponse {
 	return s.response
 }
@@ -115,6 +117,18 @@ func (s *subscription) dispatch(ctx context.Context, n jsonrpc.Notification) {
 	// Important note: the `n` argument to this function is intentionally a by-value copy
 	// of the full struct rahter than a pointer.  This is to ensure that this function owns
 	// the pointer that is written to the dispatch channel.
+
+	// TODO: Add a timeout:
+	/*
+		goroutine profile: total 383412
+		382748 @ 0x4315e0 0x44101b 0x97d270 0x97de8a 0x45ef01
+		#	0x97d26f	github.com/INFURA/go-ethlibs/node.(*subscription).dispatch+0x14f		/go/src/github.com/INFURA/off-chain-logs/vendor/github.com/INFURA/go-ethlibs/node/subscription.go:119
+		#	0x97de89	github.com/INFURA/go-ethlibs/node.(*loopingTransport).loop.func1.3+0x139	/go/src/github.com/INFURA/off-chain-logs/vendor/github.com/INFURA/go-ethlibs/node/loop.go:225
+
+		104 @ 0x4315e0 0x405b78 0x405b4e 0x40583b 0x97fab4 0x968194 0x45ef01
+		#	0x97fab3	github.com/INFURA/go-ethlibs/node.(*loopingTransport).loop.func4+0x53	/go/src/github.com/INFURA/off-chain-logs/vendor/github.com/INFURA/go-ethlibs/node/loop.go:326
+		#	0x968193	golang.org/x/sync/errgroup.(*Group).Go.func1+0x63			/go/src/github.com/INFURA/off-chain-logs/vendor/golang.org/x/sync/errgroup/errgroup.go:57
+	*/
 
 	select {
 	case <-ctx.Done():
